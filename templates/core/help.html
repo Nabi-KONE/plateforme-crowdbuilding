@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Centre d'Aide - crowdBuilding{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold text-primary mb-3">Centre d'Aide</h1>
+                <p class="lead">Trouvez les réponses à vos questions</p>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="fw-bold mb-0">Foire Aux Questions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading1">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                    Comment s'inscrire sur la plateforme ?
+                                </button>
+                            </h2>
+                            <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Cliquez sur "S'inscrire" et choisissez votre profil (Investisseur ou Promoteur). 
+                                    Remplissez le formulaire et attendez la validation de votre compte par nos administrateurs.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading2">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                    Comment investir dans un projet ?
+                                </button>
+                            </h2>
+                            <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Une fois votre compte validé, vous pouvez parcourir les projets disponibles, 
+                                    choisir celui qui vous intéresse et cliquer sur "Investir".
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading3">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                                    Comment soumettre un projet ?
+                                </button>
+                            </h2>
+                            <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    En tant que promoteur, vous pouvez créer un nouveau projet en remplissant 
+                                    le formulaire de soumission avec toutes les informations requises.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading4">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse4">
+                                    Comment sont calculés les rendements ?
+                                </button>
+                            </h2>
+                            <div id="collapse4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Les rendements sont calculés selon le taux défini par le promoteur 
+                                    et la durée du projet. Ils sont payés mensuellement ou à la fin du projet.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading5">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse5">
+                                    Mes investissements sont-ils sécurisés ?
+                                </button>
+                            </h2>
+                            <div id="collapse5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Oui, tous les projets sont validés par nos administrateurs et 
+                                    les promoteurs doivent fournir des garanties avant la validation.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="fw-bold mb-0">Besoin d'aide supplémentaire ?</h3>
+                </div>
+                <div class="card-body text-center">
+                    <p class="text-muted mb-4">
+                        Si vous ne trouvez pas la réponse à votre question, n'hésitez pas à nous contacter.
+                    </p>
+                    <a href="{% url 'core:contact' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-envelope me-2"></i>Nous contacter
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

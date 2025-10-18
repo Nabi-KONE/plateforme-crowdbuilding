@@ -1,0 +1,532 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inscription - crowdBuilding{% endblock %}
+
+{% block extra_css %}
+<style>
+.role-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.role-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.role-card.selected {
+    border-color: var(--primary-color);
+    background-color: rgba(44, 62, 80, 0.05);
+}
+
+.role-card .card-body {
+    text-align: center;
+    padding: 2rem;
+}
+
+.role-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.form-section {
+    display: none;
+}
+
+.form-section.active {
+    display: block;
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.step {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 10px;
+    font-weight: bold;
+    background-color: #e9ecef;
+    color: #6c757d;
+}
+
+.step.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.step.completed {
+    background-color: var(--success-color);
+    color: white;
+}
+
+.promoteur-fields {
+    background-color: rgba(52, 152, 219, 0.05);
+    padding: 1.5rem;
+    border-radius: 10px;
+    border-left: 4px solid var(--primary-color);
+}
+
+/* Styles pour l'œil du mot de passe */
+.password-container {
+    position: relative;
+}
+
+.password-toggle {
+    color: #6c757d;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    z-index: 5;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-toggle:hover {
+    color: var(--primary-color);
+    background: #f8f9fa;
+}
+
+.password-toggle.active {
+    color: var(--primary-color);
+}
+
+.password-field {
+    padding-right: 3.5rem !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h2 class="fw-bold text-primary mb-2">
+                            <i class="fas fa-building me-2"></i>crowdBuilding
+                        </h2>
+                        <p class="text-muted">Créez votre compte et rejoignez notre communauté</p>
+                    </div>
+
+                    <!-- Indicateur d'étapes -->
+                    <div class="step-indicator">
+                        <div class="step active" id="step1">1</div>
+                        <div class="step" id="step2">2</div>
+                        <div class="step" id="step3">3</div>
+                    </div>
+
+                    <!-- Étape 1: Sélection du rôle -->
+                    <div id="role-selection" class="form-section active">
+                        <h4 class="fw-bold text-center mb-4">Choisissez votre profil</h4>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="role-card card h-100" data-role="INVESTISSEUR">
+                                    <div class="card-body">
+                                        <i class="fas fa-chart-line role-icon text-success"></i>
+                                        <h5 class="fw-bold">Investisseur</h5>
+                                        <p class="text-muted">Financez des projets immobiliers et obtenez des rendements attractifs sur vos investissements.</p>
+                                        <div class="mt-3">
+                                            <span class="badge bg-success">Rendements attractifs</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="role-card card h-100" data-role="PROMOTEUR">
+                                    <div class="card-body">
+                                        <i class="fas fa-hammer role-icon text-primary"></i>
+                                        <h5 class="fw-bold">Promoteur</h5>
+                                        <p class="text-muted">Présentez vos projets immobiliers et obtenez le financement nécessaire pour les réaliser.</p>
+                                        <div class="mt-3">
+                                            <span class="badge bg-primary">Financement facile</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button type="button" class="btn btn-primary btn-lg" id="continue-btn" disabled>
+                                Continuer <i class="fas fa-arrow-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Étape 2: Formulaire d'inscription -->
+                    <div id="registration-form" class="form-section">
+                        <form method="post" enctype="multipart/form-data" id="signup-form">
+                            {% csrf_token %}
+                            <input type="hidden" id="selected-role" name="type_role" value="">
+                            
+                            <h4 class="fw-bold mb-4" id="form-title">Informations personnelles</h4>
+                            
+                            <!-- Informations personnelles -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="prenom" class="form-label">
+                                        <i class="fas fa-user me-2"></i>Prénom *
+                                    </label>
+                                    <input type="text" class="form-control" id="prenom" name="prenom" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="nom" class="form-label">
+                                        <i class="fas fa-user me-2"></i>Nom *
+                                    </label>
+                                    <input type="text" class="form-control" id="nom" name="nom" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope me-2"></i>Adresse email *
+                                </label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="telephone" class="form-label">
+                                    <i class="fas fa-phone me-2"></i>Téléphone *
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">+226</span>
+                                    <input type="tel" class="form-control" id="telephone" name="telephone" 
+                                           pattern="[0-9]{8}" placeholder="XX XX XX XX" maxlength="8" required>
+                                </div>
+                            
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="profession" class="form-label">
+                                    <i class="fas fa-briefcase me-2"></i>Profession *
+                                </label>
+                                <select class="form-select" id="profession" name="profession" required>
+                                    <option value="">Sélectionnez votre profession</option>
+                                    <optgroup label="Secteur Public">
+                                        <option value="Fonctionnaire">Fonctionnaire</option>
+                                        <option value="Agent de l'État">Agent de l'État</option>
+                                        <option value="Militaire">Militaire</option>
+                                        <option value="Gendarme">Gendarme</option>
+                                        <option value="Policier">Policier</option>
+                                        <option value="Enseignant">Enseignant</option>
+                                        <option value="Médecin">Médecin</option>
+                                        <option value="Infirmier">Infirmier</option>
+                                    </optgroup>
+                                    <optgroup label="Secteur Privé">
+                                        <option value="Ingénieur">Ingénieur</option>
+                                        <option value="Informaticien">Informaticien</option>
+                                        <option value="Comptable">Comptable</option>
+                                        <option value="Banquier">Banquier</option>
+                                        <option value="Assureur">Assureur</option>
+                                        <option value="Commercial">Commercial</option>
+                                        <option value="Manager">Manager</option>
+                                        <option value="Consultant">Consultant</option>
+                                    </optgroup>
+                                    <optgroup label="Commerce & Services">
+                                        <option value="Commerçant">Commerçant</option>
+                                        <option value="Restaurateur">Restaurateur</option>
+                                        <option value="Transporteur">Transporteur</option>
+                                        <option value="Artisan">Artisan</option>
+                                        <option value="Coiffeur">Coiffeur</option>
+                                        <option value="Électricien">Électricien</option>
+                                        <option value="Plombier">Plombier</option>
+                                    </optgroup>
+                                    <optgroup label="Agriculture & Élevage">
+                                        <option value="Agriculteur">Agriculteur</option>
+                                        <option value="Éleveur">Éleveur</option>
+                                        <option value="Agro-pasteur">Agro-pasteur</option>
+                                    </optgroup>
+                                    <optgroup label="Diaspora">
+                                        <option value="Expatrié - Europe">Expatrié - Europe</option>
+                                        <option value="Expatrié - Amérique">Expatrié - Amérique</option>
+                                        <option value="Expatrié - Afrique">Expatrié - Afrique</option>
+                                        <option value="Expatrié - Asie">Expatrié - Asie</option>
+                                    </optgroup>
+                                    <optgroup label="Autres">
+                                        <option value="Retraité">Retraité</option>
+                                        <option value="Étudiant">Étudiant</option>
+                                        <option value="Chômeur">Chômeur</option>
+                                        <option value="Autre">Autre</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+
+                            <!-- Champs conditionnels pour les promoteurs -->
+                            <div class="promoteur-fields" style="display: none;">
+
+                                
+                                <div class="mb-3">
+                                    <label for="entreprise" class="form-label">
+                                        <i class="fas fa-building me-2"></i>Entreprise/Organisation
+                                    </label>
+                                    <input type="text" class="form-control" id="entreprise" name="entreprise">
+                                    <small class="form-text text-muted">Nom de votre entreprise ou organisation</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="experience" class="form-label">
+                                        <i class="fas fa-chart-line me-2"></i>Expérience en promotion immobilière
+                                    </label>
+                                    <select class="form-select" id="experience" name="experience">
+                                        <option value="">Sélectionnez votre niveau d'expérience</option>
+                                        <option value="Débutant (0-2 ans)">Débutant (0-2 ans)</option>
+                                        <option value="Intermédiaire (2-5 ans)">Intermédiaire (2-5 ans)</option>
+                                        <option value="Expérimenté (5-10 ans)">Expérimenté (5-10 ans)</option>
+                                        <option value="Expert (+10 ans)">Expert (+10 ans)</option>
+                                    </select>
+                                    <small class="form-text text-muted">Votre expérience dans le domaine immobilier</small>
+                                </div>
+                            </div>
+
+                            <!-- Mot de passe -->
+                            <div class="mb-3">
+                                <label for="password1" class="form-label">
+                                    <i class="fas fa-lock me-2"></i>Mot de passe *
+                                </label>
+                                <div class="password-container position-relative">
+                                    <input type="password" class="form-control password-field" id="password1" name="password1" required>
+                                    <button type="button" class="password-toggle position-absolute top-50 end-0 translate-middle-y me-3 border-0 bg-transparent" 
+                                            data-target="password1">
+                                        <i class="fas fa-eye-slash"></i>
+                                    </button>
+                                </div>
+                                <small class="form-text text-muted">Minimum 8 caractères</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="password2" class="form-label">
+                                    <i class="fas fa-lock me-2"></i>Confirmer le mot de passe *
+                                </label>
+                                <div class="password-container position-relative">
+                                    <input type="password" class="form-control password-field" id="password2" name="password2" required>
+                                    <button type="button" class="password-toggle position-absolute top-50 end-0 translate-middle-y me-3 border-0 bg-transparent" 
+                                            data-target="password2">
+                                        <i class="fas fa-eye-slash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Conditions -->
+                            <div class="mb-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="conditions" name="conditions" required>
+                                    <label class="form-check-label" for="conditions">
+                                        J'accepte les <a href="#" class="text-primary">conditions générales d'utilisation</a> 
+                                        et la <a href="#" class="text-primary">politique de confidentialité</a>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Boutons -->
+                            <div class="d-flex justify-content-between">
+                                <button type="button" class="btn btn-outline-secondary" id="back-btn">
+                                    <i class="fas fa-arrow-left me-2"></i>Retour
+                                </button>
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-user-plus me-2"></i>Créer mon compte
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Étape 3: Confirmation -->
+                    <div id="confirmation" class="form-section">
+                        <div class="text-center">
+                            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                            <h4 class="fw-bold text-success mb-3">Inscription réussie !</h4>
+                            <p class="text-muted mb-4">
+                                Votre compte a été créé avec succès. Un administrateur va valider votre compte 
+                                et vous recevrez une notification par email une fois validé.
+                            </p>
+                            <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// FONCTION POUR L'ŒIL DU MOT DE PASSE
+function setupPasswordToggles() {
+    console.log('Initializing password toggles...');
+    
+    const toggleButtons = document.querySelectorAll('.password-toggle');
+    console.log('Found toggle buttons:', toggleButtons.length);
+    
+    toggleButtons.forEach(button => {
+        // Supprimer les écouteurs existants pour éviter les doublons
+        button.replaceWith(button.cloneNode(true));
+    });
+
+    // Référencer à nouveau après le clone
+    const newToggleButtons = document.querySelectorAll('.password-toggle');
+    
+    newToggleButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const targetId = this.getAttribute('data-target');
+            const passwordInput = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+            
+            console.log('Toggle clicked for:', targetId);
+            console.log('Current input type:', passwordInput.type);
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+                this.classList.add('active');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+                this.classList.remove('active');
+            }
+        });
+        
+        // Ajouter aussi un événement keypress pour l'accessibilité
+        button.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+}
+
+// VOTRE CODE EXISTANT AVEC L'INITIALISATION
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded - initializing...');
+    
+    // INITIALISER LES ŒILS EN PREMIER
+    setupPasswordToggles();
+    
+    // VOTRE CODE EXISTANT
+    const roleCards = document.querySelectorAll('.role-card');
+    const continueBtn = document.getElementById('continue-btn');
+    const backBtn = document.getElementById('back-btn');
+    const selectedRoleInput = document.getElementById('selected-role');
+    const roleSelection = document.getElementById('role-selection');
+    const registrationForm = document.getElementById('registration-form');
+    const confirmation = document.getElementById('confirmation');
+    const promoteurFields = document.querySelector('.promoteur-fields');
+    const formTitle = document.getElementById('form-title');
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
+
+    let selectedRole = '';
+
+    // Sélection du rôle
+    roleCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Retirer la sélection précédente
+            roleCards.forEach(c => c.classList.remove('selected'));
+            
+            // Ajouter la sélection à la carte cliquée
+            this.classList.add('selected');
+            
+            // Activer le bouton continuer
+            selectedRole = this.dataset.role;
+            continueBtn.disabled = false;
+        });
+    });
+
+    // Continuer vers le formulaire
+    continueBtn.addEventListener('click', function() {
+        if (selectedRole) {
+            selectedRoleInput.value = selectedRole;
+            
+            // Mettre à jour le titre du formulaire
+            if (selectedRole === 'PROMOTEUR') {
+                formTitle.textContent = 'Informations Promoteur';
+                promoteurFields.style.display = 'block';
+            } else {
+                formTitle.textContent = 'Informations Investisseur';
+                promoteurFields.style.display = 'none';
+            }
+            
+            // Afficher le formulaire
+            roleSelection.classList.remove('active');
+            registrationForm.classList.add('active');
+            
+            // Mettre à jour les étapes
+            step1.classList.remove('active');
+            step1.classList.add('completed');
+            step2.classList.add('active');
+            
+            // RÉINITIALISER LES ŒILS APRÈS LE CHANGEMENT DE SECTION
+            setTimeout(setupPasswordToggles, 100);
+        }
+    });
+
+    // Retour à la sélection de rôle
+    backBtn.addEventListener('click', function() {
+        registrationForm.classList.remove('active');
+        roleSelection.classList.add('active');
+        
+        // Mettre à jour les étapes
+        step2.classList.remove('active');
+        step1.classList.remove('completed');
+        step1.classList.add('active');
+    });
+
+    // Formatage du téléphone
+    const phoneInput = document.getElementById('telephone');
+    phoneInput.addEventListener('input', function() {
+        let value = this.value.replace(/\D/g, ''); // Supprimer tout sauf les chiffres
+        if (value.length > 8) {
+            value = value.substring(0, 8);
+        }
+        this.value = value;
+    });
+
+    // Validation du formulaire
+    const signupForm = document.getElementById('signup-form');
+    signupForm.addEventListener('submit', function(e) {
+        const password1 = document.getElementById('password1').value;
+        const password2 = document.getElementById('password2').value;
+        
+        if (password1 !== password2) {
+            e.preventDefault();
+            alert('Les mots de passe ne correspondent pas.');
+            return false;
+        }
+        
+        if (password1.length < 8) {
+            e.preventDefault();
+            alert('Le mot de passe doit contenir au moins 8 caractères.');
+            return false;
+        }
+    });
+    
+    console.log('All initialization complete');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,201 @@
+<!-- Dashboard Investisseur -->
+<div class="row">
+    <!-- Statistiques des investissements -->
+    <div class="col-12 mb-4">
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <h4 class="fw-bold">{{ stats_investissements.total }}</h4>
+                        <small>Total Investissements</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <h4 class="fw-bold">{{ stats_investissements.montant_total|floatformat:0 }}</h4>
+                        <small>Montant Investi (FCFA)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <h4 class="fw-bold">{{ projets_investis.count }}</h4>
+                        <small>Projets Financés</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <h4 class="fw-bold">{{ rendement_attendu|floatformat:0 }}</h4>
+                        <small>Rendement Attendu (FCFA)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plus-circle me-2"></i>Actions rapides
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'projects:list' %}" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>Découvrir des projets
+                    </a>
+                    <a href="{% url 'investments:my_investments' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-2"></i>Mes investissements
+                    </a>
+                    <a href="{% url 'documents:upload' %}" class="btn btn-outline-info">
+                        <i class="fas fa-upload me-2"></i>Uploader des documents
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portefeuille -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-wallet me-2"></i>Mon portefeuille
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Investissement total</span>
+                        <strong class="text-primary">{{ stats_investissements.montant_total|floatformat:0 }} FCFA</strong>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Rendement attendu</span>
+                        <strong class="text-success">{{ rendement_attendu|floatformat:0 }} FCFA</strong>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Nombre de projets</span>
+                        <strong class="text-info">{{ projets_investis.count }}</strong>
+                    </div>
+                </div>
+                {% if projets_investis.count > 0 %}
+                <div class="mt-3">
+                    <small class="text-muted">Rendement moyen attendu</small>
+                    <div class="fw-bold text-warning">
+                        {% widthratio rendement_attendu stats_investissements.montant_total 100 %}%
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Projets recommandés -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-star me-2"></i>Projets recommandés
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for projet in projets_recommandes %}
+                <div class="mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                    <h6 class="mb-1">{{ projet.titre }}</h6>
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between mb-1">
+                            <small class="text-muted">Financement</small>
+                            <small class="fw-bold">{{ projet.taux_financement|floatformat:1 }}%</small>
+                        </div>
+                        <div class="progress" style="height: 5px;">
+                            <div class="progress-bar" style="width: {{ projet.taux_financement }}%"></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-success fw-bold">{{ projet.taux_rendement }}% rendement</small>
+                        <a href="{% url 'projects:detail' projet.id %}" class="btn btn-sm btn-outline-primary">
+                            Voir
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-star fa-2x mb-2"></i>
+                    <p>Aucune recommandation</p>
+                    <a href="{% url 'projects:list' %}" class="btn btn-sm btn-primary">Voir tous les projets</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Investissements récents -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>Mes investissements récents
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if investissements_recents %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Projet</th>
+                                <th>Montant</th>
+                                <th>Rendement attendu</th>
+                                <th>Date</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for investissement in investissements_recents %}
+                            <tr>
+                                <td>
+                                    <strong>{{ investissement.projet.titre }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ investissement.projet.reference }}</small>
+                                </td>
+                                <td class="fw-bold">{{ investissement.montant|floatformat:0 }} FCFA</td>
+                                <td class="text-success fw-bold">{{ investissement.calculer_rendement|floatformat:0 }} FCFA</td>
+                                <td>{{ investissement.date_investissement|date:"d/m/Y" }}</td>
+                                <td>
+                                    <span class="badge bg-{% if investissement.statut == 'CONFIRME' %}success{% elif investissement.statut == 'EN_ATTENTE' %}warning{% else %}danger{% endif %}">
+                                        {{ investissement.get_statut_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'projects:detail' investissement.projet.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-coins fa-3x mb-3"></i>
+                    <p>Aucun investissement pour le moment</p>
+                    <a href="{% url 'projects:list' %}" class="btn btn-primary">Commencer à investir</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>

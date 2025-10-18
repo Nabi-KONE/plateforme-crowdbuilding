@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ project.titre }} - crowdBuilding{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Contenu principal -->
+        <div class="col-lg-8">
+            <!-- En-tête du projet -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge bg-primary mb-2">{{ project.reference }}</span>
+                            <h1 class="h3 fw-bold">{{ project.titre }}</h1>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ project.localisation }}, {{ project.ville }}
+                            </p>
+                        </div>
+                        <span class="badge bg-{% if project.statut == 'VALIDE' %}success{% elif project.statut == 'EN_COURS_FINANCEMENT' %}info{% else %}secondary{% endif %} fs-6">
+                            {{ project.get_statut_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Description du projet
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ project.description|linebreaks }}</p>
+                </div>
+            </div>
+
+            <!-- Informations du promoteur -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user me-2"></i>Promoteur
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                            <i class="fas fa-user fa-lg"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">{{ project.promoteur.nom_complet }}</h6>
+                            <p class="text-muted mb-0">{{ project.promoteur.profession }}</p>
+                            {% if project.promoteur.entreprise %}
+                            <small class="text-muted">{{ project.promoteur.entreprise }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Résumé financier -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>Résumé financier
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Barre de progression -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Financement</span>
+                            <span class="fw-bold">{{ project.taux_financement|floatformat:1 }}%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar" role="progressbar" style="width: {{ project.taux_financement }}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Statistiques -->
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <div class="fw-bold text-primary">{{ project.montant_total|floatformat:0 }}</div>
+                            <small class="text-muted">Montant total (FCFA)</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="fw-bold text-success">{{ project.montant_collecte|floatformat:0 }}</div>
+                            <small class="text-muted">Collecté (FCFA)</small>
+                        </div>
+                    </div>
+
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <div class="fw-bold text-warning">{{ project.taux_rendement }}%</div>
+                            <small class="text-muted">Rendement</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="fw-bold text-info">{{ project.duree }}</div>
+                            <small class="text-muted">Durée (mois)</small>
+                        </div>
+                    </div>
+
+                    <!-- Bouton d'investissement -->
+                    {% if user.is_authenticated and user.est_investisseur and project.est_financeable %}
+                    <div class="d-grid">
+                        <a href="{% url 'investments:create' project.id %}" class="btn btn-success btn-lg">
+                            <i class="fas fa-coins me-2"></i>Investir maintenant
+                        </a>
+                    </div>
+                    {% elif not user.is_authenticated %}
+                    <div class="d-grid">
+                        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>S'inscrire pour investir
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Informations temporelles -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-calendar me-2"></i>Calendrier
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted">Date de début</small>
+                        <div class="fw-bold">{{ project.date_debut|date:"d/m/Y" }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">Date de fin</small>
+                        <div class="fw-bold">{{ project.date_fin|date:"d/m/Y" }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">Date de création</small>
+                        <div class="fw-bold">{{ project.date_creation|date:"d/m/Y" }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Actions</h6>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-share me-2"></i>Partager
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-heart me-2"></i>Ajouter aux favoris
+                        </button>
+                        <button class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-question-circle me-2"></i>Poser une question
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tableau de bord - crowdBuilding{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- En-tête du dashboard -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 fw-bold mb-1">Tableau de bord</h1>
+                    <p class="text-muted mb-0">
+                        Bienvenue, {{ user.prenom }} ! 
+                        {% if role_actif %}
+                            Vous êtes connecté en tant que <span class="badge bg-primary">{{ role_actif.get_type_display }}</span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    {% if user.roles.count > 1 %}
+                    <a href="{% url 'accounts:switch_role' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-tag me-2"></i>Changer de rôle
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages d'état du compte -->
+    {% if not user.est_investisseur and not user.est_promoteur and not user.est_administrateur %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-clock me-3 fa-2x"></i>
+                    <div>
+                        <h5 class="alert-heading mb-1">Compte en attente de validation</h5>
+                        <p class="mb-0">
+                            Votre compte est en cours de validation par nos administrateurs. 
+                            Vous recevrez une notification dès qu'il sera validé.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Dashboard selon le rôle -->
+    {% if user.est_administrateur %}
+        {% include 'core/dashboard_admin.html' %}
+    {% elif user.est_promoteur %}
+        {% include 'core/dashboard_promoteur.html' %}
+    {% elif user.est_investisseur %}
+        {% include 'core/dashboard_investisseur.html' %}
+    {% else %}
+        {% include 'core/dashboard_attente.html' %}
+    {% endif %}
+
+    <!-- Notifications récentes -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bell me-2"></i>Notifications récentes
+                    </h5>
+                    <a href="{% url 'accounts:notifications' %}" class="btn btn-sm btn-outline-primary">
+                        Voir toutes
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% for notification in user.notifications.all|slice:":5" %}
+                    <div class="d-flex align-items-start mb-3 {% if not forloop.last %}border-bottom pb-3{% endif %}">
+                        <div class="flex-shrink-0">
+                            {% if not notification.lue %}
+                            <span class="badge bg-primary rounded-pill">•</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="mb-1 {% if not notification.lue %}fw-bold{% endif %}">{{ notification.titre }}</h6>
+                            <p class="text-muted mb-1">{{ notification.contenu|truncatewords:20 }}</p>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>{{ notification.date_creation|timesince }} ago
+                            </small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-bell-slash fa-3x mb-3"></i>
+                        <p>Aucune notification pour le moment</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}crowdBuilding - Plateforme de Financement Participatif Immobilier{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Construisons ensemble l'avenir du Burkina Faso
+                </h1>
+                <p class="lead mb-4">
+                    crowdBuilding connecte les promoteurs immobiliers et les investisseurs 
+                    pour financer des projets qui transforment notre pays.
+                </p>
+                <div class="d-flex gap-3">
+                    {% if not user.is_authenticated %}
+                        <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>Commencer maintenant
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'projects:list' %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-project-diagram me-2"></i>Voir les projets
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-image text-center">
+                    <i class="fas fa-building display-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistiques -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 mb-4">
+                <div class="stat-card">
+                    <i class="fas fa-home fa-3x text-primary mb-3"></i>
+                    <h3 class="fw-bold">{{ stats.total_projets }}</h3>
+                    <p class="text-muted">Projets financés</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-card">
+                    <i class="fas fa-users fa-3x text-success mb-3"></i>
+                    <h3 class="fw-bold">{{ stats.total_investisseurs }}</h3>
+                    <p class="text-muted">Investisseurs actifs</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-card">
+                    <i class="fas fa-coins fa-3x text-warning mb-3"></i>
+                    <h3 class="fw-bold">{{ stats.montant_total_collecte|floatformat:0 }} FCFA</h3>
+                    <p class="text-muted">Montant collecté</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stat-card">
+                    <i class="fas fa-chart-line fa-3x text-info mb-3"></i>
+                    <h3 class="fw-bold">{{ stats.projets_actifs }}</h3>
+                    <p class="text-muted">Projets actifs</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Comment ça marche -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center mb-5">
+                <h2 class="fw-bold mb-3">Comment ça marche ?</h2>
+                <p class="lead text-muted">
+                    Notre plateforme simplifie le financement participatif immobilier 
+                    en 3 étapes simples
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="how-it-works-card text-center p-4">
+                    <div class="step-number bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                        <span class="fw-bold">1</span>
+                    </div>
+                    <h5 class="fw-bold mb-3">Créez votre compte</h5>
+                    <p class="text-muted">
+                        Inscrivez-vous en tant que promoteur ou investisseur. 
+                        Notre équipe valide rapidement votre compte.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="how-it-works-card text-center p-4">
+                    <div class="step-number bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                        <span class="fw-bold">2</span>
+                    </div>
+                    <h5 class="fw-bold mb-3">Proposez ou investissez</h5>
+                    <p class="text-muted">
+                        Les promoteurs soumettent leurs projets. 
+                        Les investisseurs choisissent où placer leur argent.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="how-it-works-card text-center p-4">
+                    <div class="step-number bg-warning text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                        <span class="fw-bold">3</span>
+                    </div>
+                    <h5 class="fw-bold mb-3">Suivez et bénéficiez</h5>
+                    <p class="text-muted">
+                        Suivez l'avancement des projets en temps réel 
+                        et recevez vos rendements.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Projets en vedette -->
+{% if projets_vedette %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center mb-5">
+                <h2 class="fw-bold mb-3">Projets en vedette</h2>
+                <p class="lead text-muted">
+                    Découvrez les derniers projets immobiliers validés sur notre plateforme
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            {% for projet in projets_vedette %}
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <span class="badge bg-primary">{{ projet.reference }}</span>
+                            <span class="badge bg-success">{{ projet.get_statut_display }}</span>
+                        </div>
+                        <h5 class="card-title fw-bold">{{ projet.titre }}</h5>
+                        <p class="card-text text-muted">{{ projet.description|truncatewords:20 }}</p>
+                        
+                        <!-- Barre de progression -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small class="text-muted">Financement</small>
+                                <small class="fw-bold">{{ projet.taux_financement|floatformat:1 }}%</small>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" style="width: {{ projet.taux_financement }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row text-center mb-3">
+                            <div class="col-6">
+                                <small class="text-muted">Montant total</small>
+                                <div class="fw-bold">{{ projet.montant_total|floatformat:0 }} FCFA</div>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted">Rendement</small>
+                                <div class="fw-bold text-success">{{ projet.taux_rendement }}%</div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-map-marker-alt me-1"></i>{{ projet.localisation }}
+                            </small>
+                            <a href="{% url 'projects:detail' projet.id %}" class="btn btn-outline-primary btn-sm">
+                                Voir le projet
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'projects:list' %}" class="btn btn-primary">
+                <i class="fas fa-list me-2"></i>Voir tous les projets
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Projets populaires -->
+{% if projets_populaires %}
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center mb-5">
+                <h2 class="fw-bold mb-3">Projets les plus financés</h2>
+                <p class="lead text-muted">
+                    Ces projets ont suscité le plus d'engouement chez nos investisseurs
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            {% for projet in projets_populaires %}
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body text-center">
+                        <div class="popularity-badge bg-warning text-dark rounded-pill px-3 py-1 mb-3">
+                            <i class="fas fa-fire me-1"></i>Populaire
+                        </div>
+                        <h5 class="card-title fw-bold">{{ projet.titre }}</h5>
+                        <p class="card-text text-muted">{{ projet.description|truncatewords:15 }}</p>
+                        
+                        <div class="popularity-stats mb-3">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="fw-bold text-primary">{{ projet.total_investissements }}</div>
+                                    <small class="text-muted">Investisseurs</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="fw-bold text-success">{{ projet.taux_financement|floatformat:0 }}%</div>
+                                    <small class="text-muted">Financé</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="fw-bold text-warning">{{ projet.taux_rendement }}%</div>
+                                    <small class="text-muted">Rendement</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <a href="{% url 'projects:detail' projet.id %}" class="btn btn-primary">
+                            Découvrir le projet
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h2 class="fw-bold mb-3">Prêt à participer au développement du Burkina Faso ?</h2>
+                <p class="lead mb-4">
+                    Rejoignez notre communauté de promoteurs et d'investisseurs 
+                    qui construisent ensemble l'avenir de notre pays.
+                </p>
+                {% if not user.is_authenticated %}
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg">
+                        <i class="fas fa-rocket me-2"></i>Commencer maintenant
+                    </a>
+                    <a href="{% url 'core:about' %}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-info-circle me-2"></i>En savoir plus
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

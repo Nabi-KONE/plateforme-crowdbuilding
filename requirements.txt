@@ -1,0 +1,39 @@
+# Django et dépendances principales
+Django==4.2.7
+python-dotenv==1.0.0
+
+# Base de données
+mysqlclient==2.2.0
+PyMySQL==1.1.0
+
+# Gestion des fichiers et images
+Pillow==10.1.0
+
+# Sécurité
+cryptography==41.0.7
+
+# Email
+django-anymail==10.1
+
+# Développement et debugging
+django-debug-toolbar==4.2.0
+django-extensions==3.2.3
+
+# Tests
+pytest==7.4.3
+pytest-django==4.7.0
+factory-boy==3.3.0
+
+# Documentation
+sphinx==7.2.6
+
+# Déploiement
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# Monitoring
+sentry-sdk==1.38.0
+
+# API (pour futures extensions)
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
