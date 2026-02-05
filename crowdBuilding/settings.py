@@ -29,16 +29,24 @@ DJANGO_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',  # AJOUTEZ CETTE LIGNE
+    'crispy_forms',
+    'crispy_bootstrap5',  # Si vous utilisez Bootstrap 5
+
+
 ]
 
 LOCAL_APPS = [
     'apps.core',
-    'apps.accounts',
+    'apps.accounts.apps.AccountsConfig',  # ⚡ Préciser le AppConfig
     'apps.projects',
     'apps.investments',
     'apps.documents',
     'apps.notifications',
+    'apps.admin_perso.apps.AdminPersoConfig',  # ⚡ Préciser le AppConfig
+    'apps.payments',
 ]
+
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS
 
@@ -65,6 +73,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'apps.admin_perso.context_processors.global_stats',
             ],
         },
     },
@@ -128,7 +137,11 @@ LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'core:dashboard'
 LOGOUT_REDIRECT_URL = 'core:home'
 
-# Email Configuration (pour les notifications)
+# =================================================
+# VERSION COMPLÈTE (EXISTANT + MODIFICATIONS)
+# =================================================
+
+# Email Configuration (pour les notifications) - EXISTANT
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Pour le développement
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
@@ -136,7 +149,23 @@ EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() == 'true'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 
-# Messages Framework
+#  AJOUTER CETTE LIGNE
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'crowdBuilding <noreply@crowdbuilding.bf>')
+
+#  AJOUTER CE BLOC CONDITIONNEL (optionnel mais recommandé)
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    print("⚠️  Mode développement : Les emails sont affichés dans la console")
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# AJOUTER CES CONFIGURATIONS PASSWORD RESET
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/'
+PASSWORD_RESET_TIMEOUT = 86400  # 24 heures
+
+# Messages Framework - EXISTANT (À GARDER)
 from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {
     messages.DEBUG: 'debug',
@@ -145,6 +174,7 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'danger',
 }
+
 
 # Security Settings
 SECURE_BROWSER_XSS_FILTER = True
@@ -158,6 +188,9 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 # File Upload Settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # Logging
 LOGGING = {

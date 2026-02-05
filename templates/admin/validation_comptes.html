@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Valider les Comptes - CrowdBuilding{% endblock %}
+
+{% block extra_css %}
+<style>
+.user-card {
+    border-left: 4px solid #ffc107;
+    transition: all 0.3s ease;
+}
+
+.user-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.avatar {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    font-size: 1.1em;
+}
+
+.stat-card {
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.filter-active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    border: none;
+}
+
+.user-item {
+    transition: all 0.3s ease;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- En-tête -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 fw-bold mb-1">
+                        <i class="fas fa-user-check me-2"></i>Validation des Comptes
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Gestion des demandes d'inscription en attente de validation
+                    </p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-warning fs-6">{{ utilisateurs_attente.count }} en attente</span>
+                </div>
+            </div>
+
+            <!-- Statistiques CORRIGÉES -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card stat-card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h2 class="fw-bold">{{ utilisateurs_attente.count }}</h2>
+                            <small>Total en attente</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h2 class="fw-bold">{{ promoteurs_count }}</h2>
+                            <small>Promoteurs</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h2 class="fw-bold">{{ investisseurs_count }}</h2>
+                            <small>Investisseurs</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h2 class="fw-bold">{{ valides_aujourdhui_count }}</h2>
+                            <small>Validés aujourd'hui</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtres CORRIGÉS -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary filter-btn active filter-active" data-filter="all">
+                            Tous ({{ utilisateurs_attente.count }})
+                        </button>
+                        <button type="button" class="btn btn-outline-primary filter-btn" data-filter="PROMOTEUR">
+                            Promoteurs ({{ promoteurs_count }})
+                        </button>
+                        <button type="button" class="btn btn-outline-primary filter-btn" data-filter="INVESTISSEUR">
+                            Investisseurs ({{ investisseurs_count }})
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des utilisateurs en attente -->
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user-clock me-2"></i>Utilisateurs en attente de validation
+                    </h5>
+                    {% if utilisateurs_attente %}
+                    <div class="text-muted small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Cliquez sur "Refuser" pour voir le motif
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if utilisateurs_attente %}
+                        <div class="row" id="usersContainer">
+                            {% for utilisateur in utilisateurs_attente %}
+                            <div class="col-md-6 col-lg-4 mb-4 user-item" data-role="{{ utilisateur.get_role_actif.type }}">
+                                <div class="card user-card h-100">
+                                    <div class="card-body">
+                                        <!-- En-tête utilisateur -->
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="avatar me-3">
+                                                {{ utilisateur.prenom|first }}{{ utilisateur.nom|first }}
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-0 fw-bold">{{ utilisateur.prenom }} {{ utilisateur.nom }}</h6>
+                                                <small class="text-muted">ID: {{ utilisateur.id }}</small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Informations -->
+                                        <div class="mb-3">
+                                            <div class="row small">
+                                                <div class="col-12 mb-2">
+                                                    <i class="fas fa-envelope text-muted me-2"></i>
+                                                    <span class="text-break">{{ utilisateur.email }}</span>
+                                                </div>
+                                                <div class="col-12 mb-2">
+                                                    <i class="fas fa-phone text-muted me-2"></i>
+                                                    {{ utilisateur.telephone|default:"Non renseigné" }}
+                                                </div>
+                                                <div class="col-12">
+                                                    <i class="fas fa-calendar text-muted me-2"></i>
+                                                    Inscrit le {{ utilisateur.date_joined|date:"d/m/Y" }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Rôle -->
+                                        <div class="mb-3">
+                                            {% with role=utilisateur.get_role_actif %}
+                                                <span class="badge bg-{% if role.type == 'PROMOTEUR' %}primary{% else %}success{% endif %} fs-6">
+                                                    <i class="fas fa-{% if role.type == 'PROMOTEUR' %}hard-hat{% else %}chart-line{% endif %} me-1"></i>
+                                                    {{ role.get_type_display }}
+                                                </span>
+                                            {% endwith %}
+                                        </div>
+
+                                        <!-- Actions CORRIGÉES -->
+                                        <div class="d-grid gap-2">
+                                            <!-- Bouton Valider -->
+                                            <form method="post" action="{% url 'accounts:validate_user' utilisateur.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-success w-100" 
+                                                        onclick="return confirm('Êtes-vous sûr de vouloir valider le compte de {{ utilisateur.prenom }} {{ utilisateur.nom }} ?')">
+                                                    <i class="fas fa-check me-1"></i>Valider le compte
+                                                </button>
+                                            </form>
+                                            
+                                            <!-- Bouton Refuser CORRIGÉ - UN SEUL MODAL GLOBAL -->
+                                            <button type="button" class="btn btn-outline-danger w-100" 
+                                                    onclick="openRefuseModal({{ utilisateur.id }}, '{{ utilisateur.prenom }}', '{{ utilisateur.nom }}')">
+                                                <i class="fas fa-times me-1"></i>Refuser
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- Aucun utilisateur en attente -->
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                            <h4 class="text-success">Aucun utilisateur en attente</h4>
+                            <p class="text-muted">Tous les comptes ont été traités.</p>
+                            <a href="{% url 'core:dashboard' %}" class="btn btn-primary">
+                                <i class="fas fa-arrow-left me-2"></i>Retour au tableau de bord
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de refus GLOBAL CORRIGÉ - UN SEUL MODAL POUR TOUS -->
+<div class="modal fade" id="refuseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Refuser le compte
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="" id="refuseForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Vous êtes sur le point de refuser le compte de <strong id="userName"></strong>.
+                    </div>
+                    <div class="mb-3">
+                        <label for="motif" class="form-label fw-bold">
+                            Motif du refus <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="motif" name="motif" rows="4" 
+                                  placeholder="Veuillez indiquer la raison du refus (ex: documents manquants, informations incomplètes...)" 
+                                  required></textarea>
+                        <div class="form-text">
+                            Ce motif sera communiqué à l'utilisateur.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-ban me-1"></i>Confirmer le refus
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables globales
+let currentUserId = null;
+
+// Fonction pour ouvrir le modal de refus CORRIGÉE
+function openRefuseModal(userId, prenom, nom) {
+    currentUserId = userId;
+    const userName = `${prenom} ${nom}`;
+    
+    // Mettre à jour le modal
+    document.getElementById('userName').textContent = userName;
+    document.getElementById('refuseForm').action = `{% url 'accounts:reject_user' 0 %}`.replace('0', userId);
+    
+    // Afficher le modal
+    const refuseModal = new bootstrap.Modal(document.getElementById('refuseModal'));
+    refuseModal.show();
+}
+
+// Filtrage des utilisateurs
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const userItems = document.querySelectorAll('.user-item');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Retirer la classe active de tous les boutons
+            filterButtons.forEach(btn => {
+                btn.classList.remove('active', 'filter-active');
+                btn.classList.add('btn-outline-primary');
+            });
+            
+            // Ajouter la classe active au bouton cliqué
+            this.classList.add('active', 'filter-active');
+            this.classList.remove('btn-outline-primary');
+            
+            const filter = this.dataset.filter;
+            
+            // Filtrer les utilisateurs
+            userItems.forEach(item => {
+                if (filter === 'all') {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = item.dataset.role === filter ? 'block' : 'none';
+                }
+            });
+        });
+    });
+
+    // Auto-focus sur le motif lors de l'ouverture du modal
+    const refuseModal = document.getElementById('refuseModal');
+    if (refuseModal) {
+        refuseModal.addEventListener('shown.bs.modal', function () {
+            document.getElementById('motif').focus();
+        });
+        
+        refuseModal.addEventListener('hidden.bs.modal', function () {
+            document.getElementById('motif').value = '';
+            currentUserId = null;
+        });
+    }
+
+    // Messages toast
+    {% if messages %}
+        {% for message in messages %}
+            showToast('{{ message.tags }}', '{{ message }}');
+        {% endfor %}
+    {% endif %}
+});
+
+function showToast(type, message) {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" 
+             role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+    
+    const toastContainer = document.getElementById('toast-container') || createToastContainer();
+    toastContainer.innerHTML += toastHtml;
+    
+    const toastElement = toastContainer.lastElementChild;
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '9999';
+    document.body.appendChild(container);
+    return container;
+}
+</script>
+{% endblock %}

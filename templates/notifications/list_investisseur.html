@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Mes Notifications - Espace Investisseur{% endblock %}
+
+{% block content %}
+<style>
+    /* STYLES SIMPLIFIÉS ET FOCALISÉS */
+    .notification-header {
+        background: linear-gradient(135deg, #1a237e 0%, #311b92 100%);
+        color: white;
+        padding: 40px 30px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .notification-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .notification-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    }
+    
+    .notification-unread {
+        border-left: 4px solid #667eea;
+        background-color: #f8f9ff;
+    }
+    
+    .notification-project {
+        background: linear-gradient(135deg, #f8f9ff, #eef1ff);
+        border-radius: 10px;
+        padding: 12px;
+        margin-top: 10px;
+        border-left: 3px solid #667eea;
+    }
+    
+    .filter-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: transparent;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- EN-TÊTE JOURNAL D'ÉVÉNEMENTS -->
+    <div class="notification-header">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-3">📬 Journal d'événements</h1>
+                <p class="lead mb-0 opacity-90">
+                    Suivi centralisé des actualités de vos projets CrowdBuilding
+                    <span class="d-block mt-2 small">
+                        <i class="fas fa-newspaper me-1"></i>Informations validées par la plateforme
+                    </span>
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-lg-0 mt-4">
+                <div class="d-flex flex-column align-items-lg-end gap-3">
+                    <div class="bg-white text-dark rounded-pill px-4 py-2 d-inline-block">
+                        <i class="fas fa-bell me-2 text-primary"></i>
+                        <span class="fw-bold">{{ total_count }}</span> événement{{ total_count|pluralize }}
+                    </div>
+                    <a href="{% url 'investments:dashboard_investisseur' %}" 
+                       class="btn btn-outline-light rounded-pill px-4">
+                        <i class="fas fa-arrow-left me-2"></i>Retour au tableau de bord
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTRES SIMPLIFIÉS -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div>
+                            <span class="fw-bold me-3">Filtrer :</span>
+                            <div class="btn-group" role="group">
+                                <a href="?filter=toutes" 
+                                   class="btn btn-outline-primary btn-sm filter-btn {% if request.GET.filter == 'toutes' or not request.GET.filter %}active{% endif %}">
+                                    <i class="fas fa-list me-1"></i>Tous les événements
+                                </a>
+                                <a href="?filter=non_lues" 
+                                   class="btn btn-outline-primary btn-sm filter-btn {% if request.GET.filter == 'non_lues' %}active{% endif %}">
+                                    <i class="fas fa-envelope me-1"></i>Non lus
+                                </a>
+                                <a href="?filter=projets" 
+                                   class="btn btn-outline-info btn-sm filter-btn {% if request.GET.filter == 'projets' %}active{% endif %}">
+                                    <i class="fas fa-building me-1"></i>Projets seulement
+                                </a>
+                            </div>
+                        </div>
+                        
+                        {% if unread_count > 0 %}
+                        <form method="POST" action="{% url 'notifications:mark_all_read' %}" class="mb-0">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-check-double me-2"></i>
+                                Tout marquer comme lu
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATISTIQUES CONTEXTUELLES (UTILES ICI) -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card border-start border-primary border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1">Événements non lus</h6>
+                            <h4 class="mb-0">{{ unread_count }}</h4>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-bell fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card border-start border-success border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1">Capital confirmé</h6>
+                            <h4 class="mb-0">{{ total_confirme|intcomma }} FCFA</h4>
+
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-money-bill-wave fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card border-start border-warning border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-muted mb-1">Projets suivis</h6>
+                            <h4 class="mb-0">{{ nb_projets_investis }}</h4>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-building fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LISTE DES ÉVÉNEMENTS -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2"></i>Historique des événements
+                        <small class="text-muted ms-2">• Seulement les informations validées par la plateforme</small>
+                    </h5>
+                </div>
+                
+                <div class="card-body p-0">
+                    {% if notifications %}
+                        <div class="list-group list-group-flush">
+                            {% for notification in notifications %}
+                            <div class="list-group-item border-0 py-4 {% if not notification.lue %}notification-unread{% endif %}">
+                                <div class="d-flex align-items-start">
+                                    <!-- Icône selon le type (FOCUS PROJETS) -->
+                                    <div class="me-3 mt-1 flex-shrink-0">
+                                        {% if notification.type == 'COMPTE_RENDU_PUBLIE' or notification.type == 'ETAPE_TERMINEE' %}
+                                        <div class="rounded-circle bg-success text-white p-2" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        {% elif notification.type == 'CONFIRMATION_INVESTISSEMENT' %}
+                                        <div class="rounded-circle bg-primary text-white p-2" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        {% elif notification.type == 'PROJET_MIS_A_JOUR' %}
+                                        <div class="rounded-circle bg-info text-white p-2" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </div>
+                                        {% else %}
+                                        <div class="rounded-circle bg-secondary text-white p-2" style="width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                                            <i class="fas fa-newspaper"></i>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Contenu -->
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h6 class="mb-0 fw-bold">
+                                                    {% if not notification.lue %}
+                                                        <span class="badge bg-danger me-2">NOUVEAU</span>
+                                                    {% endif %}
+                                                    {{ notification.titre }}
+                                                </h6>
+                                                <small class="text-muted">
+                                                    <i class="far fa-clock me-1"></i>
+                                                    {{ notification.date_creation|date:"d/m/Y à H:i" }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                        
+                                        <p class="mb-3">{{ notification.contenu|linebreaksbr }}</p>
+                                        
+                                        <!-- CONTEXTE PROJET (ESSENTIEL) -->
+                                        {% if notification.projet %}
+                                        <div class="notification-project">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-building text-primary me-2 fs-5"></i>
+                                                <div>
+                                                    <strong class="d-block mb-1">Projet concerné</strong>
+                                                    <a href="{% url 'projects:detail' notification.projet.id %}" 
+                                                       class="text-decoration-none fw-bold">
+                                                        {{ notification.projet.titre }}
+                                                    </a>
+                                                    {% if notification.projet.localisation %}
+                                                    <div class="small text-muted mt-1">
+                                                        <i class="fas fa-map-marker-alt me-1"></i>
+                                                        {{ notification.projet.localisation }}
+                                                    </div>
+                                                    {% endif %}
+                                                    {% if notification.projet.statut %}
+                                                    <div class="small mt-1">
+                                                        <span class="badge bg-light text-dark">
+                                                            {% if notification.projet.statut == 'EN_CONSTRUCTION' %}
+                                                                <i class="fas fa-hammer me-1"></i>En construction
+                                                            {% elif notification.projet.statut == 'EN_CAMPAGNE' %}
+                                                                <i class="fas fa-bullhorn me-1"></i>En campagne
+                                                            {% else %}
+                                                                <i class="fas fa-check-circle me-1"></i>Terminé
+                                                            {% endif %}
+                                                        </span>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <!-- ACTIONS -->
+                                        <div class="d-flex gap-2 mt-3">
+                                            {% if not notification.lue %}
+                                            <form method="POST" action="{% url 'notifications:mark_read' notification.id %}" 
+                                                  class="d-inline">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                    <i class="fas fa-check me-1"></i>Marquer comme lu
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                            
+                                            {% if notification.projet %}
+                                            <a href="{% url 'projects:detail' notification.projet.id %}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-chart-line me-1"></i>Suivre le projet
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- PAGINATION -->
+                        {% if page_obj.has_other_pages %}
+                        <div class="card-footer bg-white border-0">
+                            <nav aria-label="Navigation">
+                                <ul class="pagination justify-content-center mb-0">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}">
+                                            <i class="fas fa-chevron-left me-1"></i>Précédent
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    
+                                    {% for num in page_obj.paginator.page_range %}
+                                        {% if num == page_obj.number %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                        {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}">{{ num }}</a>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}">
+                                            Suivant<i class="fas fa-chevron-right ms-1"></i>
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+                        
+                    {% else %}
+                        <!-- ÉTAT VIDE (FOCUS SUIVI DE PROJETS) -->
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <div class="display-1 text-muted">
+                                    <i class="fas fa-newspaper"></i>
+                                </div>
+                            </div>
+                            <h4 class="fw-bold mb-3">Journal d'événements vide</h4>
+                            <p class="text-muted mb-4">
+                                Votre historique d'événements liés à vos projets est actuellement vide.<br>
+                                Dès qu'un projet sera mis à jour ou qu'un rapport sera publié,<br>
+                                l'information apparaîtra automatiquement ici.
+                            </p>
+                            <div class="d-flex justify-content-center gap-3">
+                                <a href="{% url 'investments:dashboard_investisseur' %}" 
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-dashboard me-2"></i>
+                                    Retour au cockpit
+                                </a>
+                                <a href="{% url 'projects:list' %}" 
+                                   class="btn btn-primary">
+                                    <i class="fas fa-building me-2"></i>
+                                    Explorer les projets
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirmation pour "Tout marquer comme lu"
+    const markAllForm = document.querySelector('form[action*="mark_all_read"]');
+    if (markAllForm) {
+        markAllForm.addEventListener('submit', function(e) {
+            if (!confirm('Marquer tous les événements comme lus ?')) {
+                e.preventDefault();
+            }
+        });
+    }
+    
+    // Animation simple pour les cartes
+    const cards = document.querySelectorAll('.notification-card');
+    cards.forEach(card => {
+        card.style.transition = 'all 0.3s ease';
+    });
+});
+</script>
+{% endblock %}

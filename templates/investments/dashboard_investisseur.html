@@ -1,0 +1,764 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Tableau de Bord Investisseur - CrowdBuilding{% endblock %}
+
+{% block content %}
+<style>
+    /* STYLES MODERNES ET ÉLÉGANTS - MISE À JOUR */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #11998e, #38ef7d);
+        --warning-gradient: linear-gradient(135deg, #f7971e, #ffd200);
+        --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --progress-gradient: linear-gradient(135deg, #8A2387, #E94057, #F27121);
+        --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        --card-shadow-hover: 0 15px 50px rgba(0, 0, 0, 0.12);
+        --border-radius: 20px;
+        --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    }
+
+    /* Header moderne amélioré */
+    .dashboard-header {
+        background: linear-gradient(135deg, #1a237e 0%, #311b92 100%);
+        border-radius: var(--border-radius);
+        padding: 50px 40px;
+        margin-bottom: 50px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        border: none;
+    }
+
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M49 67c8.484 0 15-6.516 15-15s-6.516-15-15-15-15 6.516-15 15 6.516 15 15 15zm96 50c8.484 0 15-6.516 15-15s-6.516-15-15-15-15 6.516-15 15 6.516 15 15 15zm-86-14c3.657 0 6-2.343 6-6s-2.343-6-6-6-6 2.343-6 6 2.343 6 6 6zm126 62c3.657 0 6-2.343 6-6s-2.343-6-6-6-6 2.343-6 6 2.343 6 6 6zM68 180c3.657 0 6-2.343 6-6s-2.343-6-6-6-6 2.343-6 6 2.343 6 6 6zm112-152c3.657 0 6-2.343 6-6s-2.343-6-6-6-6 2.343-6 6 2.343 6 6 6zM24 172c4.862 0 8-3.138 8-8s-3.138-8-8-8-8 3.138-8 8 3.138 8 8 8zm56-130c4.862 0 8-3.138 8-8s-3.138-8-8-8-8 3.138-8 8 3.138 8 8 8zm46-22c6.072 0 10-3.928 10-10s-3.928-10-10-10-10 3.928-10 10 3.928 10 10 10zm-12 120c4.862 0 8-3.138 8-8s-3.138-8-8-8-8 3.138-8 8 3.138 8 8 8zm58 44c6.072 0 10-3.928 10-10s-3.928-10-10-10-10 3.928-10 10 3.928 10 10 10zM64 126c6.072 0 10-3.928 10-10s-3.928-10-10-10-10 3.928-10 10 3.928 10 10 10zm114-26c6.072 0 10-3.928 10-10s-3.928-10-10-10-10 3.928-10 10 3.928 10 10 10zm-18-42c2.43 0 4-1.57 4-4s-1.57-4-4-4-4 1.57-4 4 1.57 4 4 4zM120 182c2.43 0 4-1.57 4-4s-1.57-4-4-4-4 1.57-4 4 1.57 4 4 4zM70 82c2.43 0 4-1.57 4-4s-1.57-4-4-4-4 1.57-4 4 1.57 4 4 4zM24 120c2.43 0 4-1.57 4-4s-1.57-4-4-4-4 1.57-4 4 1.57 4 4 4z' fill='%23ffffff' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.4;
+    }
+
+    .header-badge {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px);
+        border-radius: 50px;
+        padding: 10px 25px;
+        display: inline-block;
+        margin-bottom: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        letter-spacing: 0.5px;
+    }
+
+    /* Cartes statistiques modernes améliorées */
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(0, 0, 0, 0.03);
+        transition: var(--transition);
+        box-shadow: var(--card-shadow);
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+        padding: 30px 25px;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+        background: var(--primary-gradient);
+    }
+
+    .stat-card.montant::before {
+        background: var(--success-gradient);
+    }
+
+    .stat-card.parts::before {
+        background: linear-gradient(135deg, #8A2387, #E94057);
+    }
+
+    .stat-card.projets::before {
+        background: var(--warning-gradient);
+    }
+
+    .stat-card.encours::before {
+        background: var(--info-gradient);
+    }
+
+    .stat-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 25px;
+        font-size: 1.8rem;
+        position: relative;
+        z-index: 1;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .stat-icon.montant {
+        background: linear-gradient(135deg, rgba(17, 153, 142, 0.15), rgba(56, 239, 125, 0.15));
+        color: #11998e;
+    }
+
+    .stat-icon.parts {
+        background: linear-gradient(135deg, rgba(138, 35, 135, 0.15), rgba(233, 64, 87, 0.15));
+        color: #8A2387;
+    }
+
+    .stat-icon.projets {
+        background: linear-gradient(135deg, rgba(247, 151, 30, 0.15), rgba(255, 210, 0, 0.15));
+        color: #f7971e;
+    }
+
+    .stat-icon.encours {
+        background: linear-gradient(135deg, rgba(79, 172, 254, 0.15), rgba(0, 242, 254, 0.15));
+        color: #4facfe;
+    }
+
+    /* Progrès des projets */
+    .progress-card {
+        background: white;
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(0, 0, 0, 0.03);
+        transition: var(--transition);
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .progress-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .progress-card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 25px;
+        position: relative;
+    }
+
+    .progress-bar-custom {
+        height: 8px;
+        border-radius: 10px;
+        background: #e9ecef;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 10px;
+        background: var(--progress-gradient);
+        position: relative;
+        transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .progress-bar-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    /* Notifications */
+    .notification-card {
+        background: white;
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(0, 0, 0, 0.03);
+        transition: var(--transition);
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .notification-item {
+        padding: 20px 25px;
+        border-bottom: 1px solid #f5f5f5;
+        transition: all 0.3s ease;
+    }
+
+    .notification-item:hover {
+        background: #f8f9ff;
+        transform: translateX(5px);
+    }
+
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+
+    .notification-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #667eea;
+        display: inline-block;
+        margin-right: 10px;
+    }
+
+    .notification-dot.unread {
+        background: #ff4757;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    /* Table moderne */
+    .modern-table {
+        background: white;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+    }
+
+    .table-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px 30px;
+    }
+
+    .table-body {
+        padding: 0;
+    }
+
+    .table-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr auto;
+        align-items: center;
+        padding: 20px 30px;
+        border-bottom: 1px solid #f1f3f9;
+        transition: background-color 0.2s ease;
+    }
+
+    .table-row:hover {
+        background-color: #f8f9ff;
+    }
+
+    .status-badge {
+        padding: 8px 15px;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .status-confirmed {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+    }
+
+    .status-construction {
+        background: rgba(13, 202, 240, 0.1);
+        color: #0dcaf0;
+    }
+
+    .status-progress {
+        background: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+
+    /* Boutons d'action */
+    .quick-action-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 15px;
+        padding: 15px 25px;
+        font-weight: 600;
+        transition: var(--transition);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        margin-bottom: 15px;
+        text-decoration: none;
+    }
+
+    .quick-action-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dashboard-header {
+            padding: 40px 25px;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            margin: -20px -20px 40px -20px;
+        }
+
+        .stat-card {
+            padding: 25px 20px;
+        }
+
+        .table-row {
+            grid-template-columns: 1fr;
+            gap: 15px;
+            padding: 20px;
+        }
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- EN-TÊTE PERSONNALISÉE -->
+    <div class="dashboard-header animate-fade-in-up">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="header-badge">
+                    <i class="fas fa-rocket me-2"></i>COCKPIT INVESTISSEUR
+                </span>
+                <h1 class="display-5 fw-bold mb-3">Bienvenue, 
+                    {% if user.get_full_name %}
+                        {{ user.get_full_name }}
+                    {% elif user.nom_complet %}
+                        {{ user.nom_complet }}
+                    {% else %}
+                        Cher Investisseur
+                    {% endif %}
+                    👋
+                </h1>
+                <p class="lead mb-0 opacity-90">
+                    Centre de pilotage de vos investissements CrowdBuilding
+                    <span class="d-block mt-2 small">
+                        <i class="fas fa-shield-alt me-1"></i>Rôle : Investisseur confirmé
+                    </span>
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-lg-0 mt-4">
+                <div class="d-flex justify-content-lg-end gap-3">
+                    <a href="{% url 'investments:mes_investissements' %}" 
+                       class="btn btn-light btn-lg rounded-pill px-4">
+                        <i class="fas fa-chart-pie me-2"></i>Mes investissements
+                    </a>
+                    <a href="{% url 'projects:list' %}" 
+                       class="btn btn-outline-light btn-lg rounded-pill px-4">
+                        <i class="fas fa-building me-2"></i>Nouveaux projets
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CARTES STATISTIQUES PRINCIPALES -->
+    <div class="row mb-5 g-4">
+        <div class="col-xl-3 col-lg-6">
+            <div class="stat-card montant animate-fade-in-up" style="animation-delay: 0.1s">
+                <div class="stat-icon montant mb-4">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div class="h1 fw-bold text-dark mb-2">
+                    {{ stats_investissements.montant_total|floatformat:0|intcomma|default:"0" }} <span class="fs-4">FCFA</span>
+                </div>
+                <div class="text-muted">MONTANT TOTAL INVESTI</div>
+                <div class="mt-3 small text-success">
+                    <i class="fas fa-trend-up me-1"></i>Capital engagé
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-lg-6">
+            <div class="stat-card parts animate-fade-in-up" style="animation-delay: 0.2s">
+                <div class="stat-icon parts mb-4">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="h1 fw-bold text-dark mb-2">
+                    {% with total_parts=stats_investissements.total %}
+                        {{ total_parts|default:"0" }}
+                    {% endwith %}
+                </div>
+                <div class="text-muted">INVESTISSEMENTS</div>
+                <div class="mt-3 small" style="color: #8A2387;">
+                    <i class="fas fa-project-diagram me-1"></i>Actifs diversifiés
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-lg-6">
+            <div class="stat-card projets animate-fade-in-up" style="animation-delay: 0.3s">
+                <div class="stat-icon projets mb-4">
+                    <i class="fas fa-city"></i>
+                </div>
+                <div class="h1 fw-bold text-dark mb-2">
+                    {{ projets_investis|length|default:"0" }}
+                </div>
+                <div class="text-muted">PROJETS FINANCÉS</div>
+                <div class="mt-3 small text-warning">
+                    <i class="fas fa-map-marker-alt me-1"></i>{{ projets_investis|length }} projets distincts
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-lg-6">
+            <div class="stat-card encours animate-fade-in-up" style="animation-delay: 0.4s">
+                <div class="stat-icon encours mb-4">
+                    <i class="fas fa-hard-hat"></i>
+                </div>
+                <div class="h1 fw-bold text-dark mb-2">
+                    {{ projets_en_cours|default:"0" }}
+                </div>
+                <div class="text-muted">PROJETS EN COURS</div>
+                <div class="mt-3 small text-info">
+                    <i class="fas fa-sync-alt me-1"></i>En progression active
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- COLONNE GAUCHE : ACTIONS RAPIDES ET PROGRESSION -->
+        <div class="col-lg-8">
+            <!-- AVANCEMENT DES PROJETS -->
+            <div class="progress-card mb-4 animate-fade-in-up" style="animation-delay: 0.5s">
+                <div class="progress-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tasks me-2"></i>AVANCEMENT DES PROJETS ACTIFS
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    {% if projets_investis %}
+                        {% for projet in projets_investis|slice:":3" %}
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-1">{{ projet.titre|truncatechars:40 }}</h6>
+                                    <small class="text-muted">
+                                        <i class="far fa-calendar-alt me-1"></i>
+                                        Dernier rapport : {% now "d/m/Y" %}
+                                    </small>
+                                </div>
+                                <div>
+                                    <span class="badge bg-light text-dark">
+                                        {% if projet.statut == 'EN_CONSTRUCTION' %}
+                                            <i class="fas fa-hammer me-1"></i>En construction
+                                        {% elif projet.statut == 'EN_CAMPAGNE' %}
+                                            <i class="fas fa-bullhorn me-1"></i>En campagne
+                                        {% else %}
+                                            <i class="fas fa-check-circle me-1"></i>Terminé
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="progress-bar-custom mb-2">
+                                <div class="progress-bar-fill" style="width: 
+                                    {% if projet.statut == 'EN_CONSTRUCTION' %}65%
+                                    {% elif projet.statut == 'EN_CAMPAGNE' %}85%
+                                    {% else %}100%
+                                    {% endif %}">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted">
+                                <span>
+                                    <i class="fas fa-map-pin me-1"></i>{{ projet.localisation }}
+                                </span>
+                                <span>
+                                    {% if projet.statut == 'EN_CONSTRUCTION' %}
+                                        Dernière étape : Fondations
+                                    {% elif projet.statut == 'EN_CAMPAGNE' %}
+                                        Financement : {{ projet.taux_financement|default:"0" }}%
+                                    {% else %}
+                                        Livraison : Terminée
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% if not forloop.last %}<hr class="my-3">{% endif %}
+                        {% endfor %}
+                        
+                        {% if projets_investis|length > 3 %}
+                        <div class="text-center mt-4">
+                            <a href="{% url 'investments:mes_investissements' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-list me-2"></i>Voir tous les projets ({{ projets_investis|length }})
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="display-1 text-muted mb-4">
+                                <i class="fas fa-city"></i>
+                            </div>
+                            <h5 class="fw-bold mb-3">Aucun projet actif</h5>
+                            <p class="text-muted mb-4">Commencez à investir pour suivre l'avancement de vos projets</p>
+                            <a href="{% url 'projects:list' %}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-building me-2"></i>Découvrir les projets
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- INVESTISSEMENTS RÉCENTS -->
+            <div class="modern-table animate-fade-in-up" style="animation-delay: 0.6s">
+                <div class="table-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">
+                                <i class="fas fa-history me-2"></i>INVESTISSEMENTS RÉCENTS
+                            </h5>
+                        </div>
+                        <div class="col-auto">
+                            <span class="badge bg-light text-dark">{{ investissements_recents|length }} opération(s)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-body">
+                    {% if investissements_recents %}
+                        <div class="table-row bg-light d-none d-md-grid">
+                            <div class="fw-bold">Projet</div>
+                            <div class="fw-bold text-center">Montant</div>
+                            <div class="fw-bold text-center">Date</div>
+                            <div class="fw-bold text-center">Statut</div>
+                            <div class="fw-bold text-center">Action</div>
+                        </div>
+
+                        {% for investissement in investissements_recents|slice:":5" %}
+                        <div class="table-row">
+                            <div>
+                                <div class="fw-bold mb-1">{{ investissement.projet.titre|truncatechars:30 }}</div>
+                                <small class="text-muted">{{ investissement.reference }}</small>
+                            </div>
+                            
+                            <div class="text-center">
+                                <span class="fw-bold text-primary">{{ investissement.montant|floatformat:0|intcomma }} FCFA</span>
+                            </div>
+                            
+                            <div class="text-center">
+                                <span class="text-muted">{{ investissement.date_investissement|date:"d/m/Y" }}</span>
+                            </div>
+                            
+                            <div class="text-center">
+                                {% if investissement.statut == 'CONFIRME' %}
+                                    <span class="status-badge status-confirmed">
+                                        <i class="fas fa-check-circle me-1"></i>Confirmé
+                                    </span>
+                                {% elif investissement.statut == 'EN_ATTENTE' %}
+                                    <span class="status-badge status-progress">
+                                        <i class="fas fa-clock me-1"></i>En attente
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-progress">
+                                        <i class="fas fa-times-circle me-1"></i>Annulé
+                                    </span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="text-center">
+                                <a href="{% url 'projects:detail' investissement.projet.id %}" 
+                                   class="btn btn-sm btn-outline-primary rounded-circle"
+                                   title="Suivre le projet"
+                                   style="width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-chart-line"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="text-center p-4 border-top">
+                            <a href="{% url 'investments:mes_investissements' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-list me-2"></i>Voir l'historique complet
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="display-1 text-muted mb-4">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <h5 class="fw-bold mb-3">Aucun investissement récent</h5>
+                            <p class="text-muted mb-4">Votre historique d'investissement apparaîtra ici</p>
+                            <a href="{% url 'projects:list' %}" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>Explorer les opportunités
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- COLONNE DROITE : ACTIONS ET NOTIFICATIONS -->
+        <div class="col-lg-4">
+            <!-- ACTIONS RAPIDES -->
+            <div class="progress-card mb-4 animate-fade-in-up" style="animation-delay: 0.7s">
+                <div class="progress-card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>ACTIONS RAPIDES
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-grid gap-3">
+                        <a href="{% url 'projects:list' %}" class="quick-action-btn">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-search me-3 fs-5"></i>
+                                <div>
+                                    <div class="fw-bold">Découvrir des projets</div>
+                                    <small class="opacity-75">Nouvelles opportunités</small>
+                                </div>
+                            </div>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        
+                        <a href="{% url 'investments:mes_investissements' %}" class="quick-action-btn" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-chart-pie me-3 fs-5"></i>
+                                <div>
+                                    <div class="fw-bold">Mes investissements</div>
+                                    <small class="opacity-75">Portefeuille détaillé</small>
+                                </div>
+                            </div>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DERNIÈRES NOTIFICATIONS -->           
+            <div class="notification-card animate-fade-in-up" style="animation-delay: 0.8s">
+                <div class="progress-card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h5 class="mb-0">
+                                <i class="fas fa-bell me-2"></i>DERNIÈRES NOTIFICATIONS
+                            </h5>
+                        </div>
+                        <div class="col-auto">
+                            <span class="badge bg-light text-dark">{{ notifications_unread|default:"0" }} non lue(s)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if notifications %}
+                        {% for notification in notifications %}
+                        <div class="notification-item">
+                            <div class="d-flex">
+                                <span class="notification-dot {% if not notification.lue %}unread{% endif %}"></span>
+                                <div class="flex-grow-1 ms-2">
+                                    <h6 class="fw-bold mb-1">{{ notification.titre }}</h6>
+                                    <p class="small text-muted mb-0">{{ notification.contenu|truncatechars:60 }}</p>
+                                    <small class="text-muted">
+                                        <i class="far fa-clock me-1"></i>{{ notification.date_creation|date:"d/m/Y" }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="text-center p-3 border-top">
+                            <a href="{% url 'notifications:list' %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-list me-1"></i>Toutes les notifications
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center p-4">
+                            <div class="text-muted mb-2">
+                                <i class="fas fa-bell-slash fa-2x"></i>
+                            </div>
+                            <p class="text-muted mb-0">Aucune notification</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript pour les interactions -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation au défilement
+    const observerOptions = {
+        threshold: 0.05,
+        rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const delay = entry.target.dataset.delay || 0;
+                setTimeout(() => {
+                    entry.target.classList.add('animate-fade-in-up');
+                }, delay);
+            }
+        });
+    }, observerOptions);
+
+    // Observer les éléments
+    document.querySelectorAll('.stat-card, .progress-card, .modern-table, .notification-card').forEach((el, index) => {
+        el.dataset.delay = index * 100;
+        observer.observe(el);
+    });
+
+    // Animation des barres de progression
+    const progressBars = document.querySelectorAll('.progress-bar-fill');
+    progressBars.forEach(bar => {
+        bar.style.width = '0%';
+        setTimeout(() => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 300);
+        }, 500);
+    });
+
+    // Effet de survol amélioré
+    const cards = document.querySelectorAll('.stat-card, .progress-card, .notification-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.zIndex = '10';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.zIndex = '1';
+        });
+    });
+});
+</script>
+{% endblock %}

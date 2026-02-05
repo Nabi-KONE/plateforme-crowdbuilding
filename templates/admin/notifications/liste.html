@@ -1,0 +1,541 @@
+<!-- templates/notifications/admin_list.html -->
+{% extends 'admin/base_site.html' %}
+{% load static %}
+
+{% block title %}Notifications Administrateur - CrowdBuilding{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    /* Styles compatibles avec Django Admin */
+    .dashboard {
+        background: #f8f9fa;
+        padding: 20px;
+    }
+    
+    .module {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .module h2 {
+        background: #417690;
+        color: white;
+        padding: 8px 15px;
+        margin: 0;
+        font-size: 14px;
+        font-weight: 400;
+    }
+    
+    .module table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .module th {
+        background: #f5f5f5;
+        border-bottom: 1px solid #e0e0e0;
+        padding: 8px 10px;
+        text-align: left;
+        font-weight: 600;
+        color: #666;
+    }
+    
+    .module td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .module tr:hover td {
+        background: #f9f9f9;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        padding: 15px;
+        text-align: center;
+    }
+    
+    .stat-card h3 {
+        font-size: 24px;
+        margin: 0 0 5px 0;
+        color: #417690;
+    }
+    
+    .stat-card p {
+        margin: 0;
+        color: #666;
+        font-size: 13px;
+    }
+    
+    .quick-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    
+    .action-button {
+        background: #417690;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 13px;
+    }
+    
+    .action-button:hover {
+        background: #205067;
+    }
+    
+    .action-button.warning {
+        background: #f0ad4e;
+    }
+    
+    .action-button.danger {
+        background: #d9534f;
+    }
+    
+    .action-button.success {
+        background: #5cb85c;
+    }
+    
+    .filter-form {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .form-row {
+        display: flex;
+        gap: 15px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+    
+    .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #666;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    
+    .btn {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+    
+    .btn-primary {
+        background: #417690;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #205067;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .badge {
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    
+    .badge-success {
+        background: #28a745;
+        color: white;
+    }
+    
+    .badge-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .badge-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .badge-info {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .notification-item {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-left: 4px solid #417690;
+        border-radius: 4px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    
+    .notification-item.unread {
+        background: #f8f9ff;
+        border-left-color: #dc3545;
+    }
+    
+    .notification-item.high-priority {
+        border-left-color: #dc3545;
+    }
+    
+    .notification-item.medium-priority {
+        border-left-color: #ffc107;
+    }
+    
+    .pagination {
+        display: flex;
+        gap: 5px;
+        list-style: none;
+        padding: 0;
+        margin: 20px 0;
+    }
+    
+    .page-item.active .page-link {
+        background: #417690;
+        color: white;
+    }
+    
+    .page-link {
+        padding: 5px 10px;
+        border: 1px solid #dee2e6;
+        color: #417690;
+        text-decoration: none;
+        border-radius: 3px;
+    }
+    
+    .page-link:hover {
+        background: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <!-- En-tête -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h1 style="margin: 0 0 5px 0; color: #333; font-size: 24px;">
+                <i class="fas fa-shield-alt" style="color: #417690; margin-right: 10px;"></i>
+                Panel de Contrôle - Notifications
+            </h1>
+            <p style="margin: 0; color: #666;">
+                Gestion complète des validations et notifications système
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'admin_perso:index' %}" class="action-button">
+                <i class="fas fa-tachometer-alt"></i> Dashboard Admin
+            </a>
+            <a href="{% url 'core:dashboard' %}" class="action-button success">
+                <i class="fas fa-user"></i> Mon tableau
+            </a>
+        </div>
+    </div>
+
+    <!-- Cartes de statistiques -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>{{ total_count }}</h3>
+            <p>Total notifications</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ unread_count }}</h3>
+            <p>Non lues</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ last_24h_count }}</h3>
+            <p>24 dernières heures</p>
+        </div>
+        <div class="stat-card">
+            <h3>{{ unique_users_count }}</h3>
+            <p>Utilisateurs concernés</p>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="quick-actions">
+        <a href="{% url 'admin_perso:accounts_role_changelist' %}?statut__exact=EN_ATTENTE_VALIDATION" 
+           class="action-button warning">
+            <i class="fas fa-user-check"></i>
+            Validation des comptes
+            {% if roles_en_attente > 0 %}
+            <span class="badge" style="background: white; color: #f0ad4e; margin-left: 5px;">
+                {{ roles_en_attente }}
+            </span>
+            {% endif %}
+        </a>
+        
+        <a href="{% url 'admin_perso:projects_projet_changelist' %}?statut__exact=SOUMIS" 
+           class="action-button">
+            <i class="fas fa-project-diagram"></i>
+            Validation des projets
+            {% if projets_en_attente > 0 %}
+            <span class="badge" style="background: white; color: #417690; margin-left: 5px;">
+                {{ projets_en_attente }}
+            </span>
+            {% endif %}
+        </a>
+        
+        <a href="{% url 'admin_perso:gestion_investissements' %}" 
+           class="action-button success">
+            <i class="fas fa-chart-line"></i>
+            Activité financière
+        </a>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filter-form">
+        <h3 style="margin: 0 0 15px 0; color: #666; font-size: 16px;">
+            <i class="fas fa-filter" style="margin-right: 8px;"></i>Filtres avancés
+        </h3>
+        <form method="get" class="form-row">
+            <div class="form-group">
+                <label>Type de notification</label>
+                <select name="type" class="form-control">
+                    <option value="">Tous les types</option>
+                    {% for type_value, type_label in notification_types %}
+                    <option value="{{ type_value }}" {% if current_filters.type == type_value %}selected{% endif %}>
+                        {{ type_label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Statut lecture</label>
+                <select name="read_status" class="form-control">
+                    <option value="">Tous</option>
+                    <option value="unread" {% if current_filters.read_status == 'unread' %}selected{% endif %}>Non lues</option>
+                    <option value="read" {% if current_filters.read_status == 'read' %}selected{% endif %}>Lues</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Période</label>
+                <select name="date_filter" class="form-control">
+                    <option value="">Toute période</option>
+                    <option value="today" {% if current_filters.date_filter == 'today' %}selected{% endif %}>Aujourd'hui</option>
+                    <option value="week" {% if current_filters.date_filter == 'week' %}selected{% endif %}>7 derniers jours</option>
+                    <option value="month" {% if current_filters.date_filter == 'month' %}selected{% endif %}>30 derniers jours</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="display: flex; gap: 10px; align-items: center;">
+                <button type="submit" class="btn btn-primary" style="height: 34px;">
+                    <i class="fas fa-search" style="margin-right: 5px;"></i> Filtrer
+                </button>
+                <a href="{% url 'notifications:admin_list' %}" class="btn btn-secondary" style="height: 34px;">
+                    <i class="fas fa-times" style="margin-right: 5px;"></i> Réinitialiser
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Liste des notifications -->
+    <div class="module">
+        <h2>
+            Liste des notifications ({{ total_count }})
+            {% if unread_count > 0 %}
+            <span style="background: #dc3545; padding: 2px 8px; border-radius: 10px; font-size: 12px; margin-left: 10px;">
+                {{ unread_count }} non lues
+            </span>
+            {% endif %}
+            {% if unread_count > 0 %}
+            <form method="post" action="{% url 'notifications:mark_all_read' %}" style="display: inline; margin-left: 10px;">
+                {% csrf_token %}
+                <button type="submit" style="background: #5cb85c; color: white; border: none; padding: 3px 10px; border-radius: 3px; cursor: pointer; font-size: 12px;">
+                    <i class="fas fa-check-double"></i> Tout marquer comme lu
+                </button>
+            </form>
+            {% endif %}
+        </h2>
+        
+        <div style="padding: 15px;">
+            {% if notifications %}
+                {% for notification in notifications %}
+                <div class="notification-item {% if not notification.lue %}unread{% endif %} 
+                    {% if 'HAUTE' in notification.titre %}high-priority{% elif 'NORMALE' in notification.titre %}medium-priority{% endif %}">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                {% if not notification.lue %}
+                                <span class="badge badge-danger" style="margin-right: 10px;">Nouveau</span>
+                                {% endif %}
+                                <strong style="font-size: 14px;">{{ notification.titre }}</strong>
+                                <span class="badge badge-info" style="margin-left: 10px; font-size: 11px;">
+                                    {{ notification.get_type_display }}
+                                </span>
+                            </div>
+                            
+                            <p style="margin: 0 0 10px 0; color: #666; font-size: 13px;">
+                                {{ notification.contenu|linebreaksbr }}
+                            </p>
+                            
+                            <div style="display: flex; gap: 15px; font-size: 12px; color: #888;">
+                                <span>
+                                    <i class="far fa-clock" style="margin-right: 5px;"></i>
+                                    {{ notification.date_creation|date:"d/m/Y H:i" }}
+                                </span>
+                                
+                                {% if notification.utilisateur %}
+                                <span>
+                                    <i class="fas fa-user" style="margin-right: 5px;"></i>
+                                    {{ notification.utilisateur.nom_complet }}
+                                </span>
+                                {% endif %}
+                                
+                                {% if notification.projet %}
+                                <span>
+                                    <i class="fas fa-building" style="margin-right: 5px;"></i>
+                                    {{ notification.projet.titre|truncatewords:3 }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 5px;">
+                            {% if not notification.lue %}
+                            <form method="post" action="{% url 'notifications:mark_read' notification.id %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" title="Marquer comme lu" 
+                                        style="background: #5cb85c; color: white; border: none; width: 30px; height: 30px; border-radius: 4px; cursor: pointer;">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            
+                            {% if notification.projet %}
+                            <a href="{% url 'projects:detail' notification.projet.id %}" 
+                               title="Voir le projet"
+                               style="background: #417690; color: white; border: none; width: 30px; height: 30px; border-radius: 4px; display: flex; align-items: center; justify-content: center; text-decoration: none;">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div style="margin-top: 20px;">
+                    <ul class="pagination">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                &laquo;
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    {{ num }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                &raquo;
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+            {% else %}
+                <div style="text-align: center; padding: 40px 20px;">
+                    <i class="fas fa-bell-slash" style="font-size: 48px; color: #ccc; margin-bottom: 20px;"></i>
+                    <h4 style="color: #666; margin: 0 0 10px 0;">Aucune notification</h4>
+                    <p style="color: #888; margin: 0;">
+                        {% if current_filters.type or current_filters.read_status or current_filters.date_filter %}
+                        Aucune notification ne correspond à vos critères de filtrage.
+                        {% else %}
+                        Aucune notification n'a été créée pour le moment.
+                        {% endif %}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Statistiques par type -->
+    {% if type_stats %}
+    <div class="module" style="margin-top: 20px;">
+        <h2>Répartition par type de notification</h2>
+        <div style="padding: 15px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                {% for stat in type_stats %}
+                <div style="background: white; border: 1px solid #e0e0e0; border-radius: 4px; padding: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong style="display: block; font-size: 13px;">{{ stat.type }}</strong>
+                            <small style="color: #666; font-size: 12px;">{{ stat.count }} total</small>
+                        </div>
+                        {% if stat.unread > 0 %}
+                        <span class="badge badge-warning" style="font-size: 11px;">
+                            {{ stat.unread }} non lues
+                        </span>
+                        {% else %}
+                        <span class="badge badge-success" style="font-size: 11px;">
+                            Toutes lues
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

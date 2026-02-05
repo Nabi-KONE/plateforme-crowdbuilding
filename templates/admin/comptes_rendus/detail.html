@@ -1,0 +1,858 @@
+<!-- templates/admin/comptes_rendus/detail.html -->
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Validation du Compte Rendu - Admin{% endblock %}
+
+{% block page_title %}Validation du Compte Rendu{% endblock %}
+{% block page_subtitle %}Examinez et validez ce compte rendu avant publication{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Styles spécifiques au détail */
+    .validation-header {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .header-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 30px;
+    }
+    
+    .header-left .badge {
+        font-size: 12px;
+    }
+    
+    .header-right {
+        background: #F8FAFC;
+        border-radius: 8px;
+        padding: 20px;
+    }
+    
+    .info-item {
+        margin-bottom: 15px;
+    }
+    
+    .info-label {
+        font-size: 12px;
+        color: var(--text-gray);
+        margin-bottom: 4px;
+    }
+    
+    .info-value {
+        font-weight: 600;
+        color: var(--text-dark);
+        font-size: 14px;
+    }
+    
+    /* Section contenu */
+    .section-card {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #F1F5F9;
+        color: var(--text-dark);
+    }
+    
+    /* Galerie d'images */
+    .image-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .image-card {
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #E2E8F0;
+        transition: all 0.3s ease;
+    }
+    
+    .image-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .image-card img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+    }
+    
+    .image-info {
+        padding: 10px;
+        background: white;
+    }
+    
+    .image-legende {
+        font-size: 13px;
+        color: var(--text-dark);
+        margin-bottom: 5px;
+    }
+    
+    .image-meta {
+        font-size: 11px;
+        color: var(--text-gray);
+    }
+    
+    /* Actions de validation */
+    .validation-actions {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-top: 30px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border-top: 4px solid var(--primary-blue);
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .btn-valider {
+        background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        border: none;
+        color: white;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    
+    .btn-rejeter {
+        background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+        border: none;
+        color: white;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    
+    .btn-modifier {
+        background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+        border: none;
+        color: white;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    
+    /* Section contexte */
+    .contexte-section {
+        background: #F0F9FF;
+        border-left: 4px solid var(--primary-blue);
+    }
+    
+    .contexte-item {
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+    }
+    
+    .contexte-item:last-child {
+        border-bottom: none;
+    }
+    
+    /* Contenu du compte rendu */
+    .contenu-rendu {
+        line-height: 1.6;
+        color: #374151;
+        font-size: 14px;
+        white-space: pre-wrap;
+    }
+    
+    .contenu-rendu h3 {
+        color: var(--text-dark);
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-size: 16px;
+    }
+    
+    .contenu-rendu p {
+        margin-bottom: 15px;
+    }
+    
+    /* Modal pour rejet */
+    .modal-rejet textarea {
+        min-height: 120px;
+    }
+</style>
+{% endblock %}
+
+{% block admin_main_content %}
+    <!-- En-tête du compte rendu -->
+    <div class="validation-header">
+        <div class="header-grid">
+            <div class="header-left">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <h3 class="mb-0">{{ compte_rendu.titre }}</h3>
+                    {% if compte_rendu.statut == 'EN_ATTENTE_VALIDATION' %}
+                        <span class="badge bg-warning">
+                            <i class="fas fa-clock me-1"></i> En attente
+                        </span>
+                    {% elif compte_rendu.statut == 'VALIDE' %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-check-circle me-1"></i> Validé
+                        </span>
+                    {% elif compte_rendu.statut == 'REJETE' %}
+                        <span class="badge bg-danger">
+                            <i class="fas fa-times-circle me-1"></i> Rejeté
+                        </span>
+                    {% endif %}
+                </div>
+                
+                <div class="row g-3 mt-3">
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <div class="info-label">Projet</div>
+                            <div class="info-value">
+                                {{ compte_rendu.projet.titre }}
+                                <span class="badge bg-light text-dark ms-2">
+                                    {{ compte_rendu.projet.reference }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">Promoteur</div>
+                            <div class="info-value">
+                                {{ compte_rendu.projet.promoteur.nom_complet }}
+                                <span class="text-muted small ms-2">
+                                    {{ compte_rendu.projet.promoteur.email }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <div class="info-label">Date de soumission</div>
+                            <div class="info-value">
+                                {{ compte_rendu.date_creation|date:"d/m/Y à H:i" }}
+                                <span class="text-muted small ms-2">
+                                    ({{ compte_rendu.date_creation|timesince }})
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">Avancement proposé</div>
+                            <div class="info-value">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="progress" style="width: 100px; height: 10px;">
+                                        <div class="progress-bar 
+                                            {% if compte_rendu.avancement < 25 %}bg-danger
+                                            {% elif compte_rendu.avancement < 50 %}bg-warning
+                                            {% elif compte_rendu.avancement < 75 %}bg-info
+                                            {% else %}bg-success{% endif %}" 
+                                            style="width: {{ compte_rendu.avancement }}%">
+                                        </div>
+                                    </div>
+                                    <span class="fw-bold">{{ compte_rendu.avancement|floatformat:0 }}%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if compte_rendu.etape %}
+                <div class="alert alert-light mt-3">
+                    <i class="fas fa-project-diagram me-2"></i>
+                    <strong>Étape concernée :</strong> {{ compte_rendu.etape.titre }}
+                    {% if compte_rendu.etape.description %}
+                        <div class="small text-muted mt-1">{{ compte_rendu.etape.description|truncatechars:100 }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="header-right">
+                <h6 class="mb-3 text-primary">
+                    <i class="fas fa-info-circle me-2"></i>Contexte du projet
+                </h6>
+                
+                <div class="contexte-section">
+                    <div class="contexte-item">
+                        <div class="info-label">Avancement global</div>
+                        <div class="info-value">
+                            {{ avancement_global|floatformat:0 }}%
+                            <span class="small text-muted">
+                              {{ etapes_terminees }}/{{ total_etapes }} étapes)
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="contexte-item">
+                        <div class="info-label">Dernier compte rendu validé</div>
+                        <div class="info-value">
+                            {% if comptes_rendus_precedents.first %}
+                                {{ comptes_rendus_precedents.first.date_creation|date:"d/m/Y" }}
+                                <span class="small text-muted d-block">
+                                    {{ comptes_rendus_precedents.first.titre|truncatechars:30 }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">Aucun compte rendu précédent</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="contexte-item">
+                        <div class="info-label">Total de comptes rendus</div>
+                        <div class="info-value">
+                           {{ total_comptes_rendus }}
+                            <span class="small text-muted">
+                                ({{ comptes_rendus_valides }} validés)
+                            </span>
+                        </div>
+                    </div>
+                    
+                    {% if etape_precedente %}
+                    <div class="contexte-item">
+                        <div class="info-label">Étape précédente validée</div>
+                        <div class="info-value">
+                            {{ etape_precedente.titre }}
+                            <span class="small text-muted d-block">
+                                Terminée le {{ etape_precedente.date_realisation|date:"d/m/Y"|default:"Date non spécifiée" }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu du compte rendu -->
+    <div class="section-card">
+        <h3 class="section-title">
+            <i class="fas fa-file-alt me-2"></i>Contenu détaillé
+        </h3>
+        
+        <div class="contenu-rendu">
+            {{ compte_rendu.contenu|linebreaks }}
+        </div>
+        
+        <div class="mt-4 pt-3 border-top">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="text-muted small">
+                        <i class="fas fa-ruler-combined me-1"></i>
+                        Longueur : {{ compte_rendu.contenu|length }} caractères
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="text-muted small">
+                        <i class="fas fa-clock me-1"></i>
+                        Temps de lecture estimé : {{ temps_lecture }} minutes
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Galerie d'images -->
+    <div class="section-card">
+        <h3 class="section-title">
+            <i class="fas fa-images me-2"></i>Documentation visuelle
+            <span class="badge bg-primary ms-2">{{ images.count }}</span>
+        </h3>
+        
+        {% if images %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Ces images seront visibles par les investisseurs une fois le compte rendu validé.
+                <strong>Vérifiez leur pertinence et qualité.</strong>
+            </div>
+            
+            <div class="image-gallery">
+                {% for image in images %}
+                <div class="image-card">
+                    <a href="{{ image.image.url }}" data-lightbox="gallery" 
+                       data-title="{% if image.legende %}{{ image.legende }}{% else %}Image {{ forloop.counter }}{% endif %}">
+                        <img src="{{ image.image.url }}" 
+                             alt="{% if image.legende %}{{ image.legende }}{% else %}Image du compte rendu{% endif %}">
+                    </a>
+                    <div class="image-info">
+                        <div class="image-legende">
+                            {% if image.legende %}
+                                {{ image.legende|truncatechars:40 }}
+                            {% else %}
+                                <span class="text-muted">Sans légende</span>
+                            {% endif %}
+                        </div>
+                        <div class="image-meta">
+                            <i class="fas fa-file-image me-1"></i>
+                            {{ image.extension|upper }} • {{ image.taille_formattee }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="mt-3 text-end">
+                <a href="#" class="btn btn-outline-primary btn-sm" onclick="downloadAllImages()">
+                    <i class="fas fa-download me-1"></i>Télécharger toutes les images
+                </a>
+            </div>
+        {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Aucune image n'a été fournie avec ce compte rendu.
+                <strong>Il est recommandé de demander des modifications.</strong>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Historique des comptes rendus précédents -->
+    {% if comptes_rendus_precedents %}
+    <div class="section-card">
+        <h3 class="section-title">
+            <i class="fas fa-history me-2"></i>Historique des comptes rendus
+        </h3>
+        
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Titre</th>
+                        <th>Avancement</th>
+                        <th>Statut</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cr in comptes_rendus_precedents %}
+                    <tr>
+                        <td>{{ cr.date_creation|date:"d/m/Y" }}</td>
+                        <td>{{ cr.titre|truncatechars:40 }}</td>
+                        <td>
+                            <span class="badge bg-light text-dark">
+                                {{ cr.avancement|floatformat:0 }}%
+                            </span>
+                        </td>
+                        <td>
+                            {% if cr.statut == 'VALIDE' %}
+                                <span class="badge bg-success">Validé</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ cr.get_statut_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'admin_perso:admin_detail_compte_rendu' cr.id %}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="text-center mt-3">
+            <a href="{% url 'admin_perso:comptes_rendus_projet' compte_rendu.projet.id %}" 
+               class="btn btn-outline-primary">
+                <i class="fas fa-list me-1"></i>Voir tous les comptes rendus du projet
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions de validation -->
+    {% if peut_valider or peut_rejeter or peut_demander_modification %}
+    <div class="validation-actions">
+        <h4 class="mb-4">
+            <i class="fas fa-gavel me-2"></i>Validation administrative
+        </h4>
+        
+        <div class="alert alert-light mb-4">
+            <div class="d-flex">
+                <i class="fas fa-shield-alt me-3 text-primary fs-4"></i>
+                <div>
+                    <h6 class="alert-heading mb-2">Rappel des responsabilités</h6>
+                    <p class="mb-0 small">
+                        En validant ce compte rendu, vous garantissez aux investisseurs que les informations 
+                        sont exactes et que les preuves visuelles correspondent à l'avancement déclaré.
+                        <strong>Votre décision engage la crédibilité de la plateforme.</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="action-buttons justify-content-center">
+            {% if peut_valider %}
+            <button type="button" class="btn btn-valider"
+                data-url="{% url 'admin_perso:valider_compte_rendu' compte_rendu.id %}"
+                onclick="validerCompteRendu(this)">
+                <i class="fas fa-check-circle me-2"></i>Valider et publier
+            </button>
+            {% endif %}
+            
+            {% if peut_rejeter %}
+            <button type="button" class="btn btn-rejeter" 
+                    data-bs-toggle="modal" data-bs-target="#modalRejet">
+                <i class="fas fa-times-circle me-2"></i>Rejeter
+            </button>
+            {% endif %}
+            
+            {% if peut_demander_modification %}
+            <button type="button" class="btn btn-modifier" 
+                    data-bs-toggle="modal" data-bs-target="#modalModification">
+                <i class="fas fa-edit me-2"></i>Demander modifications
+            </button>
+            {% endif %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{% url 'admin_perso:liste_comptes_rendus' %}" class="text-muted small">
+                <i class="fas fa-arrow-left me-1"></i>Retour à la liste des comptes rendus
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Si déjà validé -->
+    {% if compte_rendu.statut == 'VALIDE' %}
+    <div class="section-card border-success">
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+                <i class="fas fa-check-circle text-success fs-1 me-3"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h4 class="text-success mb-2">Compte rendu déjà validé</h4>
+                <p class="mb-1">
+                    Ce compte rendu a été validé par 
+                    <strong>{{ compte_rendu.administrateur_validateur.nom_complet }}</strong> 
+                    le {{ compte_rendu.date_validation|date:"d/m/Y à H:i" }}
+                </p>
+                <p class="mb-0 small text-muted">
+                    Il est visible par les investisseurs depuis le {{ compte_rendu.date_publication|date:"d/m/Y" }}
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Si rejeté -->
+    {% if compte_rendu.statut == 'REJETE' %}
+    <div class="section-card border-danger">
+        <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+                <i class="fas fa-times-circle text-danger fs-1 me-3"></i>
+            </div>
+            <div class="flex-grow-1">
+                <h4 class="text-danger mb-2">Compte rendu rejeté</h4>
+                <p class="mb-1">
+                    Ce compte rendu a été rejeté par 
+                    <strong>{{ compte_rendu.administrateur_validateur.nom_complet }}</strong> 
+                    le {{ compte_rendu.date_validation|date:"d/m/Y à H:i" }}
+                </p>
+                <div class="alert alert-danger mt-2">
+                    <strong>Motif du rejet :</strong><br>
+                    {{ compte_rendu.motif_rejet|linebreaks }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- Modal pour rejet -->
+<div class="modal fade" id="modalRejet" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-times-circle me-2"></i>Rejeter ce compte rendu
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning mb-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Attention :</strong> Le promoteur recevra votre motif de rejet.
+                    Le compte rendu ne sera pas publié.
+                </div>
+                
+                <form id="formRejet">
+                    <div class="mb-3">
+                        <label for="motifRejet" class="form-label">Motif de rejet *</label>
+                        <textarea class="form-control" id="motifRejet" rows="4" 
+                                  placeholder="Expliquez précisément pourquoi ce compte rendu est rejeté (minimum 10 caractères)..."
+                                  required></textarea>
+                        <div class="form-text">
+                            Soyez clair et constructif. Ce message sera envoyé au promoteur.
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Annuler
+                </button>
+                <button type="button" class="btn btn-danger" onclick="confirmerRejet()">
+                    <i class="fas fa-times-circle me-2"></i>Confirmer le rejet
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour demande de modification -->
+<div class="modal fade" id="modalModification" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Demander des modifications
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Le promoteur pourra modifier son compte rendu en fonction de vos commentaires.
+                    Il devra le resoumettre pour validation.
+                </div>
+                
+                <form id="formModification">
+                    <div class="mb-3">
+                        <label for="commentairesModification" class="form-label">Commentaires pour modification *</label>
+                        <textarea class="form-control" id="commentairesModification" rows="4"
+                                  placeholder="Indiquez précisément ce qui doit être modifié (minimum 20 caractères)..."
+                                  required></textarea>
+                        <div class="form-text">
+                            Exemples : "Ajoutez des photos de l'intérieur", "Précisez l'avancement de l'étape 3", etc.
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Annuler
+                </button>
+                <button type="button" class="btn btn-warning" onclick="confirmerModification()">
+                    <i class="fas fa-paper-plane me-2"></i>Envoyer la demande
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Fonction pour valider le compte rendu
+function validerCompteRendu(btn) {
+    const url = btn.dataset.url;
+
+    if (!confirm('✅ Valider ce compte rendu ?')) return;
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message);
+            setTimeout(() => {
+                window.location.href = data.redirect_url;
+            }, 1200);
+        } else {
+            showNotification('danger', data.message);
+        }
+    });
+}
+
+// Fonction pour confirmer le rejet
+function confirmerRejet() {
+    const motif = document.getElementById('motifRejet').value.trim();
+    
+    if (!motif) {
+        showNotification('error', 'Veuillez saisir un motif de rejet.');
+        return;
+    }
+    
+    if (motif.length < 10) {
+        showNotification('error', 'Le motif doit contenir au moins 10 caractères.');
+        return;
+    }
+    
+    if (confirm(`Êtes-vous sûr de vouloir rejeter ce compte rendu ?\n\nMotif : "${motif}"`)) {
+        const crId = {{ compte_rendu.id }};
+        
+        fetch("{% url 'admin_perso:rejeter_compte_rendu' compte_rendu.id %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ motif }),
+            credentials: 'same-origin'
+        })
+
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Fermer le modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalRejet'));
+                modal.hide();
+                
+                showNotification('warning', data.message);
+                setTimeout(() => {
+                    window.location.href = data.redirect_url || '{% url 'admin_perso:liste_comptes_rendus' %}';
+                }, 1500);
+            } else {
+                showNotification('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('error', 'Une erreur est survenue lors du rejet.');
+        });
+    }
+}
+
+// Fonction pour confirmer la demande de modification
+function confirmerModification() {
+    const commentaires = document.getElementById('commentairesModification').value.trim();
+    
+    if (!commentaires) {
+        showNotification('error', 'Veuillez saisir des commentaires.');
+        return;
+    }
+    
+    if (commentaires.length < 20) {
+        showNotification('error', 'Les commentaires doivent contenir au moins 20 caractères.');
+        return;
+    }
+    
+    if (confirm(`Envoyer cette demande de modifications au promoteur ?\n\nCommentaires : "${commentaires}"`)) {
+        const crId = {{ compte_rendu.id }};
+        
+        fetch("{% url 'admin_perso:demander_modification_cr' compte_rendu.id %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ commentaires }),
+            credentials: 'same-origin'
+        })
+
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Fermer le modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalModification'));
+                modal.hide();
+                
+                showNotification('info', data.message);
+                setTimeout(() => {
+                    window.location.href = data.redirect_url || '{% url 'admin_perso:liste_comptes_rendus' %}';
+                }, 1500);
+            } else {
+                showNotification('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('error', 'Une erreur est survenue lors de la demande de modifications.');
+        });
+    }
+}
+
+// Fonction pour télécharger toutes les images
+function downloadAllImages() {
+    showNotification('info', 'Préparation du téléchargement des images...');
+    // Vous pouvez implémenter une fonction pour télécharger toutes les images en ZIP
+    alert('Fonctionnalité de téléchargement en cours de développement.');
+}
+
+// Fonction utilitaire pour afficher des notifications
+function showNotification(type, message) {
+    // Créer une alerte Bootstrap
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Supprimer automatiquement après 5 secondes
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+
+// Initialisation des modales
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser Lightbox pour la galerie d'images
+    if (typeof lightbox !== 'undefined') {
+        lightbox.option({
+            'resizeDuration': 200,
+            'wrapAround': true,
+            'albumLabel': "Image %1 sur %2"
+        });
+    }
+    
+    // Focus sur le textarea quand le modal s'ouvre
+    const modalRejet = document.getElementById('modalRejet');
+    if (modalRejet) {
+        modalRejet.addEventListener('shown.bs.modal', function () {
+            document.getElementById('motifRejet').focus();
+        });
+    }
+    
+    const modalModification = document.getElementById('modalModification');
+    if (modalModification) {
+        modalModification.addEventListener('shown.bs.modal', function () {
+            document.getElementById('commentairesModification').focus();
+        });
+    }
+    
+    // Gérer les formulaires dans les modales
+    const formRejet = document.getElementById('formRejet');
+    if (formRejet) {
+        formRejet.addEventListener('submit', function(e) {
+            e.preventDefault();
+            confirmerRejet();
+        });
+    }
+    
+    const formModification = document.getElementById('formModification');
+    if (formModification) {
+        formModification.addEventListener('submit', function(e) {
+            e.preventDefault();
+            confirmerModification();
+        });
+    }
+});
+</script>
+
+<!-- Lightbox pour les images -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+{% endblock %}

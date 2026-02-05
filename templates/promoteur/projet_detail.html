@@ -1,0 +1,1138 @@
+{% extends 'promoteur/base_promoteur.html' %}
+{% load static %}
+{% load humanize %}
+{% load project_filters %}
+
+{% block title %}{{ projet.titre }} - Promoteur{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- En-tête avec bouton retour, statut et nom du projet -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{% url 'projects:promoteur_projets' %}" class="btn btn-outline-secondary">
+                        <i class="ri-arrow-left-line me-1"></i>Retour
+                    </a>
+                    <span class="badge bg-{{ projet.get_statut_color }} fs-6 px-3 py-2">
+                        {{ projet.get_statut_display }}
+                    </span>
+                </div>
+                <div>
+                    <span class="text-muted me-3">Réf: {{ projet.reference }}</span>
+                    {% if projet.statut == 'BROUILLON' %}
+                    <a href="{% url 'projects:promoteur_confirmation_projet' projet.id %}" 
+                       class="btn btn-success btn-sm">
+                        <i class="ri-send-plane-line me-1"></i>Soumettre pour validation
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Nom du projet -->
+            <h1 class="h2 fw-bold mb-4 text-dark">{{ projet.titre }}</h1>
+
+            <!-- Image de garde -->
+            {% if projet.image_garde %}
+            <div class="card border-0 shadow-lg mb-4 overflow-hidden">
+                <img src="{{ projet.image_garde.url }}" class="card-img-top" alt="{{ projet.titre }}" 
+                     style="height: 400px; object-fit: cover; border-radius: 12px;">
+            </div>
+            {% endif %}
+
+            <!-- PREMIÈRE CARTE : STATISTIQUES FINANCIÈRES ESSENTIELLES -->
+            <div class="row g-3 mb-4">
+                <!-- Montant collecté -->
+                <div class="col-md-3 col-6">
+                    <div class="card border-0 shadow-sm h-100 bg-light">
+                        <div class="card-body text-center py-4">
+                            <h3 class="fw-semibold text-dark mb-1 fs-5">{{ projet.montant_collecte|floatformat:0|intcomma }} FCFA</h3>
+                            <small class="text-muted">Collecté</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Montant objectif -->
+                <div class="col-md-3 col-6">
+                    <div class="card border-0 shadow-sm h-100 bg-light">
+                        <div class="card-body text-center py-4">
+                            <h3 class="fw-semibold text-dark mb-1 fs-5">{{ projet.montant_total|floatformat:0|intcomma }} FCFA</h3>
+                            <small class="text-muted">Objectif</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Parts vendues (0 si aucune) -->
+                <div class="col-md-3 col-6">
+                    <div class="card border-0 shadow-sm h-100 bg-light">
+                        <div class="card-body text-center py-4">
+                            <h3 class="fw-semibold text-dark mb-1 fs-5">
+                                {% if projet.parts_vendues %}
+                                    {{ projet.parts_vendues|intcomma }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </h3>
+                            <small class="text-muted">Parts vendues</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Investisseurs -->
+                <div class="col-md-3 col-6">
+                    <div class="card border-0 shadow-sm h-100 bg-light">
+                        <div class="card-body text-center py-4">
+                            <h3 class="fw-semibold text-dark mb-1 fs-5">
+                                {% if investisseurs_count %}
+                                    {{ investisseurs_count|intcomma }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </h3>
+                            <small class="text-muted">Investisseurs</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- BARRE DE PROGRESSION SIMPLIFIÉE -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold mb-0">Avancement du financement</h6>
+                        <span class="text-muted small">
+                            {{ projet.taux_financement|floatformat:1 }}%
+                        </span>
+                    </div>
+                    
+                    <!-- Barre de progression principale -->
+                    <div class="progress mb-3" style="height: 20px; border-radius: 10px;">
+                        <div class="progress-bar bg-success" 
+                             id="progressBarMain"
+                             role="progressbar" 
+                             style="width: {{ projet.taux_financement }}%"
+                             aria-valuenow="{{ projet.taux_financement }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            <span class="fw-bold">{{ projet.taux_financement|floatformat:1 }}%</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Légende simple -->
+                    <div class="d-flex justify-content-between text-muted small mt-2">
+                        <span>0%</span>
+                        <span class="fw-bold">100%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation par onglets -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-transparent">
+                <div class="card-body py-2">
+                    <ul class="nav nav-pills nav-fill" id="myTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active py-2" id="vue-ensemble-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#vue-ensemble" type="button" role="tab">
+                                <i class="ri-dashboard-line me-2"></i>Vue d'ensemble
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-2" id="investisseurs-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#investisseurs" type="button" role="tab">
+                                <i class="ri-user-star-line me-2"></i>Investisseurs
+                                {% if investisseurs_count > 0 %}
+                                <span class="badge bg-primary ms-1">{{ investisseurs_count }}</span>
+                                {% endif %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-2" id="financement-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#financement" type="button" role="tab">
+                                <i class="ri-money-dollar-circle-line me-2"></i>Financement
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-2" id="comptes-rendus-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#comptes-rendus" type="button" role="tab">
+                                <i class="ri-file-text-line me-2"></i>Comptes rendus
+                                {% if comptes_rendus.count > 0 %}
+                                <span class="badge bg-primary ms-1">{{ comptes_rendus.count }}</span>
+                                {% endif %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-2" id="etapes-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#etapes" type="button" role="tab">
+                                <i class="ri-list-check me-2"></i>Étapes
+                                {% if etapes.count > 0 %}
+                                <span class="badge bg-success ms-1">{{ etapes.count }}</span>
+                                {% endif %}
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link py-2" id="documents-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#documents" type="button" role="tab">
+                                <i class="ri-folder-line me-2"></i>Documents
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu des onglets -->
+    <div class="tab-content" id="myTabContent">
+        <!-- Onglet Vue d'ensemble -->
+        <div class="tab-pane fade show active" id="vue-ensemble" role="tabpanel">
+            <div class="row">
+                <!-- Description du projet -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card border-0 shadow-sm bg-white bg-opacity-90 h-100">
+                        <div class="card-header bg-transparent border-0 py-3">
+                            <h5 class="card-title mb-0 fw-semibold">Description du projet</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-4 text-dark">{{ projet.description }}</p>
+                            
+                            <!-- STRUCTURE FINANCIÈRE DÉTAILLÉE -->
+                            <div class="row mt-4 pt-3 border-top">
+                                <div class="col-md-6">
+                                    <h6 class="fw-bold mb-3">Structure financière</h6>
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td class="text-muted">Coût total du projet :</td>
+                                            <td class="fw-bold">{{ projet.montant_total|floatformat:0|intcomma }} FCFA</td>
+                                        </tr>
+                                       <tr>
+                                            <td class="text-muted">Nombre total de parts :</td>
+                                            <td class="fw-bold">{{ projet.nombre_total_parts|default:"Non défini"|intcomma }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Nombre minimum de parts a acheté :</td>
+                                            <td class="fw-bold">{{ projet.nombre_min_parts|default:"1"|intcomma }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Prix unitaire (part) :</td>
+                                            <td class="fw-bold">
+                                                {% with prix=projet.prix_unitaire|default:projet.valeur_part|default:0 %}
+                                                    {{ prix|floatformat:0|intcomma }} FCFA
+                                                {% endwith %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Seuil de déclenchement :</td>
+                                            <td class="fw-bold">{{ projet.seuil_declenchement|default:"100" }}%</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="fw-bold mb-3">Informations temporelles</h6>
+                                    <table class="table table-sm table-borderless">
+                                        <tr>
+                                            <td class="text-muted">Date de début prévue :</td>
+                                            <td class="fw-bold">{{ projet.date_debut|date:"d/m/Y" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Durée estimée :</td>
+                                            <td class="fw-bold">{{ projet.duree }} mois</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Date de fin prévue :</td>
+                                            <td class="fw-bold">
+                                                {% if projet.date_fin %}
+                                                    {{ projet.date_fin|date:"d/m/Y" }}
+                                                {% else %}
+                                                    Non calculée
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Durée de collecte :</td>
+                                            <td class="fw-bold">{{ projet.duree_campagne }} mois</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informations et actions -->
+                <div class="col-lg-4">
+                    <!-- Informations détaillées -->
+                    <div class="card border-0 shadow-sm bg-white bg-opacity-90 mb-4">
+                        <div class="card-header bg-transparent border-0 py-3">
+                            <h5 class="card-title mb-0 fw-semibold">Informations</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td class="text-muted" width="45%">Catégorie</td>
+                                    <td class="fw-bold">{{ projet.get_categorie_display }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Localisation</td>
+                                    <td class="fw-bold">{{ projet.localisation }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Ville/Région</td>
+                                    <td class="fw-bold">{{ projet.ville }}, {{ projet.region }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Date création</td>
+                                    <td class="fw-bold">{{ projet.date_creation|date:"d/m/Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Date validation</td>
+                                    <td class="fw-bold">
+                                        {% if projet.date_validation %}
+                                            {{ projet.date_validation|date:"d/m/Y" }}
+                                        {% else %}
+                                            <span class="text-warning">En attente</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-muted">Statut</td>
+                                    <td class="fw-bold">
+                                        <span class="badge bg-{{ projet.get_statut_color }}">
+                                            {{ projet.get_statut_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Actions rapides MODIFIÉES -->
+                    <div class="card border-0 shadow-sm bg-white bg-opacity-90">
+                        <div class="card-header bg-transparent border-0 py-3">
+                            <h5 class="card-title mb-0 fw-semibold">Actions rapides</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="list-group list-group-flush">
+                                {% if projet.statut == 'BROUILLON' %}
+                                <a href="{% url 'projects:promoteur_confirmation_projet' projet.id %}" 
+                                   class="list-group-item list-group-item-action border-0 bg-transparent">
+                                    <i class="ri-send-plane-line me-2 text-success"></i>
+                                    <span class="text-success">Soumettre pour validation</span>
+                                </a>
+                                {% endif %}
+                                
+                                {% if projet.statut in 'BROUILLON,A_COMPLETER,EN_ATTENTE_VALIDATION' %}
+                                <a href="{% url 'projects:promoteur_nouveau_projet' %}?projet_id={{ projet.id }}" 
+                                   class="list-group-item list-group-item-action border-0 bg-transparent">
+                                    <i class="ri-edit-line me-2 text-primary"></i>
+                                    Modifier le projet
+                                </a>
+                                {% endif %}
+                                
+                                {% if projet.peut_definir_etapes %}
+                                <a href="{% url 'projects:promoteur_etapes_projet' projet.id %}" 
+                                    class="list-group-item list-group-item-action border-0 bg-transparent">
+                                        <i class="ri-list-check me-2 text-primary"></i>
+                                        Gérer les étapes
+                                </a>
+                                {% endif %}
+                                
+                                {% if projet.peut_ajouter_compte_rendu %}
+                               <a href="{% url 'projects:creer_compte_rendu_projet' projet.id %}" 
+                                class="list-group-item list-group-item-action border-0 bg-transparent">
+                                    <i class="ri-file-text-line me-2 text-info"></i>
+                                    Ajouter un compte rendu
+                                </a>
+                                {% endif %}
+                                
+                                <!-- REMOVED: Partager le projet -->
+                                <!-- REMOVED: Télécharger le rapport -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Investisseurs -->
+        <div class="tab-pane fade" id="investisseurs" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm bg-white bg-opacity-90">
+                        <div class="card-header bg-transparent border-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0 fw-semibold">
+                                    <i class="ri-user-star-line me-2"></i>Investisseurs
+                                </h5>
+                                <div class="badge bg-primary">
+                                    {{ investisseurs_count|default:0 }} investisseur{{ investisseurs_count|default:0|pluralize }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if investissements %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Investisseur</th>
+                                            <th class="text-end">Montant investi</th>
+                                            <th class="text-end">Nombre de parts</th>
+                                            <th class="text-end">Valeur des parts</th>
+                                            <th>Date</th>
+                                            <th>Statut</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for investissement in investissements %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm me-3">
+                                                        <div class="avatar-title bg-primary-subtle text-primary rounded-circle">
+                                                            {{ investissement.investisseur.nom|first|upper }}{{ investissement.investisseur.prenom|first|upper }}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold">{{ investissement.investisseur.get_full_name }}</div>
+                                                        <small class="text-muted">{{ investissement.investisseur.email }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-end fw-bold">{{ investissement.montant|floatformat:0|intcomma }} FCFA</td>
+                                            <td class="text-end">
+                                                {% if projet.valeur_part %}
+                                                    {{ investissement.montant|divisibleby:projet.valeur_part|floatformat:0 }}
+                                                {% else %}
+                                                    N/D
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end">
+                                                {% if projet.valeur_part %}
+                                                    {{ projet.valeur_part|floatformat:0|intcomma }} FCFA
+                                                {% else %}
+                                                    N/D
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ investissement.date_investissement|date:"d/m/Y" }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ investissement.get_statut_color }}">
+                                                    {{ investissement.get_statut_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="fw-bold">
+                                            <td>Total</td>
+                                            <td class="text-end">{{ total_investi|floatformat:0|intcomma }} FCFA</td>
+                                            <td class="text-end">
+                                                {% if projet.valeur_part %}
+                                                    {{ total_investi|divisibleby:projet.valeur_part|floatformat:0|intcomma }}
+                                                {% else %}
+                                                    N/D
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end"></td>
+                                            <td></td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            
+                            <!-- Résumé des investissements -->
+                            <div class="row mt-4">
+                                <div class="col-md-4">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body text-center">
+                                            <h3 class="fw-bold text-primary">{{ investisseurs_count|default:0 }}</h3>
+                                            <small class="text-muted">Total investisseurs</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body text-center">
+                                            <h3 class="fw-bold text-success">{{ total_investi|floatformat:0|intcomma }} FCFA</h3>
+                                            <small class="text-muted">Total investi</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body text-center">
+                                            <h3 class="fw-bold text-warning">
+                                                {% if projet.parts_restantes %}
+                                                    {{ projet.parts_restantes|intcomma }}
+                                                {% else %}
+                                                    0
+                                                {% endif %}
+                                            </h3>
+                                            <small class="text-muted">Parts restantes</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <div class="mb-4">
+                                    <i class="ri-user-star-line ri-4x text-muted opacity-25"></i>
+                                </div>
+                                <h6 class="fw-bold text-muted mb-3">Aucun investisseur</h6>
+                                <p class="text-muted mb-4">
+                                    Aucun investisseur n'a encore investi dans ce projet.
+                                </p>
+                                {% if projet.statut in 'EN_CAMPAGNE,FINANCE' %}
+                                <div class="alert alert-info">
+                                    <i class="ri-information-line me-2"></i>
+                                    Ce projet est ouvert aux investissements.
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Financement -->
+        <div class="tab-pane fade" id="financement" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm bg-white bg-opacity-90">
+                        <div class="card-header bg-transparent border-0 py-3">
+                            <h5 class="card-title mb-0 fw-semibold">Détails du financement</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Structure financière complète -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card border-0 bg-light mb-4">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold mb-3">Informations financières</h6>
+                                            <table class="table table-sm">
+                                                <tr>
+                                                    <td class="text-muted">Montant total :</td>
+                                                    <td class="fw-bold text-end">{{ projet.montant_total|floatformat:0|intcomma }} FCFA</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Prix unitaire :</td>
+                                                    <td class="fw-bold text-end">
+                                                        {% if projet.prix_unitaire %}
+                                                            {{ projet.prix_unitaire|floatformat:0|intcomma }} FCFA
+                                                        {% elif projet.valeur_part %}
+                                                            {{ projet.valeur_part|floatformat:0|intcomma }} FCFA
+                                                        {% else %}
+                                                            Non défini
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Nombre total de parts :</td>
+                                                    <td class="fw-bold text-end">{{ projet.nombre_total_parts|default:"N/D"|intcomma }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Seuil de déclenchement :</td>
+                                                    <td class="fw-bold text-end">{{ projet.seuil_declenchement|default:"100" }}%</td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card border-0 bg-light mb-4">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold mb-3">État du financement</h6>
+                                            <table class="table table-sm">
+                                                <tr>
+                                                    <td class="text-muted">Montant collecté :</td>
+                                                    <td class="fw-bold text-end">{{ projet.montant_collecte|floatformat:0|intcomma }} FCFA</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Pourcentage collecté :</td>
+                                                    <td class="fw-bold text-end">{{ projet.taux_financement|floatformat:1 }}%</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Montant restant :</td>
+                                                    <td class="fw-bold text-end">{{ projet.montant_restant|floatformat:0|intcomma }} FCFA</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Atteint du seuil :</td>
+                                                    <td class="fw-bold text-end">
+                                                        {% if projet.taux_financement >= projet.seuil_declenchement %}
+                                                            <span class="text-success">✅ Oui</span>
+                                                        {% else %}
+                                                            <span class="text-danger">❌ Non</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted">Financement complet :</td>
+                                                    <td class="fw-bold text-end">
+                                                        {% if projet.est_finance_complet %}
+                                                            <span class="text-success">✅ Oui</span>
+                                                        {% else %}
+                                                            <span class="text-warning">⏳ Non</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Résumé des parts -->
+                            <div class="alert alert-info">
+                                <div class="row">
+                                    <div class="col-md-4 text-center">
+                                        <div class="fw-bold">Total des parts :</div>
+                                        <h4 class="text-primary mb-0">
+                                            {% if projet.nombre_total_parts %}
+                                                {{ projet.nombre_total_parts|intcomma }}
+                                            {% else %}
+                                                0
+                                            {% endif %}
+                                        </h4>
+                                        <small class="text-muted">Parts disponibles au total</small>
+                                    </div>
+                                    <div class="col-md-4 text-center">
+                                        <div class="fw-bold">Parts vendues :</div>
+                                        <h4 class="text-success mb-0">
+                                            {% if projet.parts_vendues %}
+                                                {{ projet.parts_vendues|intcomma }}
+                                            {% else %}
+                                                0
+                                            {% endif %}
+                                        </h4>
+                                        <small class="text-muted">Parts déjà acquises</small>
+                                    </div>
+                                    <div class="col-md-4 text-center">
+                                        <div class="fw-bold">Parts restantes :</div>
+                                        <h4 class="text-warning mb-0">
+                                            {% if projet.parts_restantes %}
+                                                {{ projet.parts_restantes|intcomma }}
+                                            {% elif projet.nombre_total_parts %}
+                                                {{ projet.nombre_total_parts|intcomma }}
+                                            {% else %}
+                                                0
+                                            {% endif %}
+                                        </h4>
+                                        <small class="text-muted">Parts encore disponibles</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Comptes rendus -->
+        <div class="tab-pane fade" id="comptes-rendus" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm bg-white bg-opacity-90">
+                        <div class="card-header bg-transparent border-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0 fw-semibold">
+                                    <i class="ri-file-text-line me-2"></i>Comptes rendus
+                                </h5>
+                                {% if projet.statut == 'EN_COURS_EXECUTION' or projet.statut == 'EN_CAMPAGNE' %}
+                                <a href="{% url 'projects:creer_compte_rendu_projet' projet.id %}" class="btn btn-primary">
+                                    <i class="ri-add-line me-2"></i>Nouveau compte rendu
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if comptes_rendus %}
+                            <!-- Liste des comptes rendus -->
+                            <div class="row">
+                                {% for compte_rendu in comptes_rendus %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card border-0 shadow-sm h-100" 
+                                        style="border-left: 4px solid {% if compte_rendu.avancement >= 80 %}#10b981{% elif compte_rendu.avancement >= 50 %}#3b82f6{% else %}#f59e0b{% endif %};">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                <h6 class="fw-bold text-dark mb-0">{{ compte_rendu.titre }}</h6>
+                                                <span class="badge" 
+                                                    style="background: {% if compte_rendu.avancement >= 80 %}#10b981{% elif compte_rendu.avancement >= 50 %}#3b82f6{% else %}#f59e0b{% endif %}; 
+                                                            color: white;">
+                                                    {{ compte_rendu.avancement }}% d'avancement
+                                                </span>
+                                            </div>
+                                            
+                                            <p class="text-muted small mb-3">
+                                                <i class="ri-calendar-line me-1"></i>
+                                                {{ compte_rendu.date_publication|date:"d/m/Y" }}
+                                            </p>
+                                            
+                                            <p class="mb-3">{{ compte_rendu.contenu|truncatechars:150 }}</p>
+                                            
+                                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                                <small class="text-muted">
+                                                    <i class="ri-user-line me-1"></i>
+                                                    Publié par vous
+                                                </small>
+                                                <a href="{% url 'projects:promoteur_compte_rendu' %}" 
+                                                class="btn btn-outline-primary btn-sm">
+                                                    <i class="ri-eye-line me-1"></i>Voir détails
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <!-- État vide -->
+                            <div class="text-center py-5">
+                                <div class="mb-4">
+                                    <i class="ri-file-text-line ri-4x text-muted opacity-25"></i>
+                                </div>
+                                <h6 class="fw-bold text-muted mb-3">Aucun compte rendu</h6>
+                                <p class="text-muted mb-4">
+                                    Publiez votre premier compte rendu pour informer les investisseurs 
+                                    de l'avancement du projet.
+                                </p>
+                                {% if projet.statut == 'EN_COURS_EXECUTION' or projet.statut == 'EN_CAMPAGNE' %}
+                                <a href="{% url 'projects:creer_compte_rendu_projet' projet.id %}" class="btn btn-primary">
+                                    <i class="ri-add-line me-2"></i>Créer un compte rendu pour ce projet
+                                </a>
+                                {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="ri-information-line me-2"></i>
+                                    Les comptes rendus sont disponibles uniquement pour les projets 
+                                    en cours d'exécution ou en campagne.
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglet Étapes -->
+        <div class="tab-pane fade" id="etapes" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm bg-white bg-opacity-90">
+                        <div class="card-header bg-transparent border-0 py-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title mb-0 fw-semibold">
+                                    <i class="ri-list-check me-2"></i>Étapes de réalisation
+                                </h5>
+                                {% if projet.peut_definir_etapes %}
+                                <a href="{% url 'projects:promoteur_etapes_projet' projet.id %}" class="btn btn-primary">
+                                    <i class="ri-add-line me-2"></i>Gérer les étapes
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if etapes %}
+                            <!-- Chronologie des étapes -->
+                            <div class="timeline">
+                                {% for etape in etapes %}
+                                <div class="timeline-item {% if etape.termine %}termine{% endif %}">
+                                    <div class="timeline-marker">
+                                        <span class="timeline-number">{{ etape.ordre }}</span>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="card border-0 shadow-sm">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                                    <h6 class="fw-bold text-dark mb-0">{{ etape.titre }}</h6>
+                                                    <div>
+                                                        {% if etape.termine %}
+                                                        <span class="badge bg-success">
+                                                            <i class="ri-check-line me-1"></i>Terminé
+                                                        </span>
+                                                        {% else %}
+                                                        <span class="badge bg-warning">
+                                                            <i class="ri-time-line me-1"></i>À venir
+                                                        </span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                                
+                                                <p class="text-muted mb-3">{{ etape.description }}</p>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        {% if etape.date_debut %}
+                                                        <small class="text-muted d-block mb-1">
+                                                            <i class="ri-calendar-line me-1"></i>Date début
+                                                        </small>
+                                                        <span class="fw-bold">
+                                                            {{ etape.date_debut|date:"d/m/Y" }}
+                                                        </span>
+                                                        {% endif %}
+                                                    </div>
+                                                    {% if etape.duree_estimee %}
+                                                    <div class="col-md-6">
+                                                        <small class="text-muted d-block mb-1">
+                                                            <i class="ri-timer-line me-1"></i>Durée
+                                                        </small>
+                                                        <span class="fw-bold">{{ etape.duree_estimee }} mois</span>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <div class="d-flex justify-content-end gap-2 mt-3">
+                                                    <a href="{% url 'projects:promoteur_etapes_projet' projet.id %}" 
+                                                    class="btn btn-outline-secondary btn-sm">
+                                                        <i class="ri-edit-line me-1"></i>Modifier
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            
+                            <!-- Dans la section Résumé des étapes, remplacer par : -->
+                            <div class="row mt-4">
+                                <div class="col-md-4">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body text-center">
+                                            <h3 class="fw-bold text-primary">{{ etapes|length }}</h3>
+                                            <small class="text-muted">Total étapes</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body text-center">
+                                            <h3 class="fw-bold text-success">
+                                                {{ etapes_terminees_count }}/{{ etapes|length }}
+                                            </h3>
+                                            <small class="text-muted">Étapes terminées</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body text-center">
+                                            <h3 class="fw-bold text-warning">{{ projet.duree }} mois</h3>
+                                            <small class="text-muted">Durée totale</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <!-- État vide -->
+                            <div class="text-center py-5">
+                                <div class="mb-4">
+                                    <i class="ri-list-check ri-4x text-muted opacity-25"></i>
+                                </div>
+                                <h6 class="fw-bold text-muted mb-3">Aucune étape définie</h6>
+                                <p class="text-muted mb-4">
+                                    Définissez les étapes de réalisation de votre projet 
+                                    pour suivre précisément son avancement.
+                                </p>
+                                {% if projet.peut_definir_etapes %}
+                                <a href="{% url 'projects:promoteur_etapes_projet' projet.id %}" class="btn btn-primary">
+                                    <i class="ri-add-line me-2"></i>Créer la première étape
+                                </a>
+                                {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="ri-information-line me-2"></i>
+                                    Vous ne pouvez définir les étapes que pour les projets validés.
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Onglet Documents -->
+        <div class="tab-pane fade" id="documents" role="tabpanel">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm bg-white bg-opacity-90">
+                        <div class="card-header bg-transparent border-0 py-3">
+                            <h5 class="card-title mb-0 fw-semibold">Documents du projet</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Document foncier -->
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-primary h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-primary">
+                                                <i class="ri-file-text-line me-2"></i>Document foncier
+                                            </h6>
+                                            <p class="card-text small text-muted">
+                                                Titre foncier ou attestation de propriété
+                                            </p>
+                                            {% if projet.documents_obligatoires.all %}
+                                                {% for doc in projet.documents_obligatoires.all %}
+                                                    {% if doc.type_document == 'PERMIS_CONSTRUIRE' or 'foncier' in doc.nom|lower %}
+                                                    <a href="{{ doc.fichier.url }}" target="_blank" 
+                                                       class="btn btn-outline-primary btn-sm w-100">
+                                                        <i class="ri-download-line me-2"></i>Télécharger
+                                                    </a>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                            <span class="badge bg-warning">Non fourni</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Document technique -->
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-primary h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-primary">
+                                                <i class="ri-file-settings-line me-2"></i>Document technique
+                                            </h6>
+                                            <p class="card-text small text-muted">
+                                                Permis de construire
+                                            </p>
+                                            {% if projet.documents_obligatoires.all %}
+                                                {% for doc in projet.documents_obligatoires.all %}
+                                                    {% if doc.type_document == 'TECHNIQUE' %}
+                                                    <a href="{{ doc.fichier.url }}" target="_blank" 
+                                                       class="btn btn-outline-primary btn-sm w-100">
+                                                        <i class="ri-download-line me-2"></i>Télécharger
+                                                    </a>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                            <span class="badge bg-warning">Non fourni</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Document financier -->
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-primary h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-primary">
+                                                <i class="ri-file-chart-line me-2"></i>Document financier
+                                            </h6>
+                                            <p class="card-text small text-muted">
+                                                Budget global détaillé
+                                            </p>
+                                            {% if projet.documents_obligatoires.all %}
+                                                {% for doc in projet.documents_obligatoires.all %}
+                                                    {% if doc.type_document == 'BUSINESS_PLAN' or 'financier' in doc.nom|lower %}
+                                                    <a href="{{ doc.fichier.url }}" target="_blank" 
+                                                       class="btn btn-outline-primary btn-sm w-100">
+                                                        <i class="ri-download-line me-2"></i>Télécharger
+                                                    </a>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% else %}
+                                            <span class="badge bg-warning">Non fourni</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Image de garde -->
+                            {% if projet.image_garde %}
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card border-info">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-info">
+                                                <i class="ri-image-line me-2"></i>Image de garde
+                                            </h6>
+                                            <div class="mt-3 text-center">
+                                                <img src="{{ projet.image_garde.url }}" 
+                                                     class="img-thumbnail" 
+                                                     style="max-height: 200px; max-width: 100%; object-fit: cover;"
+                                                     alt="Image de garde">
+                                            </div>
+                                            <div class="text-center mt-3">
+                                                <a href="{{ projet.image_garde.url }}" 
+                                                   download="{{ projet.titre|slugify }}.jpg"
+                                                   class="btn btn-outline-info btn-sm">
+                                                    <i class="ri-download-line me-2"></i>Télécharger l'image
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Activation des onglets Bootstrap
+    const triggerTabList = [].slice.call(document.querySelectorAll('#myTab button'))
+    triggerTabList.forEach(function (triggerEl) {
+        const tabTrigger = new bootstrap.Tab(triggerEl)
+        triggerEl.addEventListener('click', function (event) {
+            event.preventDefault()
+            tabTrigger.show()
+        })
+    });
+    
+    // Animation de la barre de progression
+    const progressBar = document.getElementById('progressBarMain');
+    const tauxFinancement = {{ projet.taux_financement }};
+    const seuil = {{ projet.seuil_declenchement|default:100 }};
+    
+    // Mettre à jour les couleurs en fonction du seuil
+    if (tauxFinancement >= seuil) {
+        progressBar.classList.remove('bg-warning');
+        progressBar.classList.add('bg-success');
+    } else {
+        progressBar.classList.remove('bg-success');
+        progressBar.classList.add('bg-warning');
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Styles améliorés pour la barre de progression */
+.progress {
+    overflow: visible;
+    position: relative;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.5s ease-in-out, background-color 0.3s ease;
+    position: relative;
+    overflow: visible;
+}
+
+.progress-bar span {
+    position: absolute;
+    right: 10px;
+    color: white;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Timeline améliorée */
+.timeline {
+    position: relative;
+    padding-left: 60px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 30px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #3b82f6, #10b981);
+    border-radius: 3px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -60px;
+    top: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    border: 3px solid #3b82f6;
+    box-shadow: 0 0 0 3px white;
+    z-index: 2;
+}
+
+.timeline-marker .timeline-number {
+    font-size: 18px;
+    color: #3b82f6;
+}
+
+.timeline-item.termine .timeline-marker {
+    border-color: #10b981;
+    background: #10b981;
+}
+
+.timeline-item.termine .timeline-marker .timeline-number {
+    color: white;
+}
+
+.timeline-content {
+    padding-left: 20px;
+}
+
+/* Badges */
+.badge {
+    font-size: 0.85em;
+    padding: 0.4em 0.8em;
+}
+
+.badge-secondary { background-color: #6c757d; }
+.badge-warning { background-color: #ffc107; color: #000; }
+.badge-success { background-color: #198754; }
+.badge-info { background-color: #0dcaf0; color: #000; }
+.badge-primary { background-color: #0d6efd; }
+.badge-danger { background-color: #dc3545; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .timeline {
+        padding-left: 40px;
+    }
+    
+    .timeline::before {
+        left: 20px;
+    }
+    
+    .timeline-marker {
+        left: -40px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .timeline-marker .timeline-number {
+        font-size: 14px;
+    }
+}
+</style>
+{% endblock %}

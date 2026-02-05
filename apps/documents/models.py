@@ -15,6 +15,7 @@ class TypeDocument(models.TextChoices):
     JUSTIFICATIF_IDENTITE = 'JUSTIFICATIF_IDENTITE', 'Justificatif d\'identité'
     JUSTIFICATIF_REVENU = 'JUSTIFICATIF_REVENU', 'Justificatif de revenu'
     JUSTIFICATIF_FONDS = 'JUSTIFICATIF_FONDS', 'Justificatif d\'origine des fonds'
+    STATUTS_ENTREPRISE = 'STATUTS_ENTREPRISE', 'Statuts d\'entreprise'  # AJOUTÉ
     DOCUMENT_PROJET = 'DOCUMENT_PROJET', 'Document de projet'
     PLAN_FINANCIER = 'PLAN_FINANCIER', 'Plan financier'
     PIECE_IDENTITE = 'PIECE_IDENTITE', 'Pièce d\'identité'

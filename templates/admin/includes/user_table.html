@@ -1,0 +1,187 @@
+<div class="card">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-list me-2"></i>Liste des utilisateurs
+        </h5>
+        <div class="text-muted small">
+            <i class="fas fa-info-circle me-1"></i>
+            Cliquez sur les actions pour gérer les comptes
+        </div>
+    </div>
+    
+    <div class="card-body p-0">
+        {% if utilisateurs %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Utilisateur</th>
+                        <th>Rôle</th>
+                        <th>Statut</th>
+                        <th>Date d'inscription</th>
+                        <th class="text-center">Actes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for utilisateur in utilisateurs %}
+                    <tr class="user-row" data-user-id="{{ utilisateur.id }}">
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-small me-3">
+                                    {{ utilisateur.prenom|first }}{{ utilisateur.nom|first }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">{{ utilisateur.prenom }} {{ utilisateur.nom }}</div>
+                                    <div class="user-email">{{ utilisateur.email }}</div>
+                                    <div class="user-phone">
+                                        <i class="fas fa-phone me-1"></i>
+                                        {{ utilisateur.telephone|default:"Non renseigné" }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <td>
+                            {% with role=utilisateur.get_role_actif %}
+                                {% if role %}
+                                    {% if role.type == "INVESTISSEUR" %}
+                                        <span class="badge badge-role badge-investisseur">
+                                            <i class="fas fa-chart-line me-1"></i>
+                                            {{ role.get_type_display }}
+                                        </span>
+                                    {% elif role.type == "PROMOTEUR" %}
+                                        <span class="badge badge-role badge-promoteur">
+                                            <i class="fas fa-hard-hat me-1"></i>
+                                            {{ role.get_type_display }}
+                                        </span>
+                                    {% elif role.type == "ADMINISTRATEUR" %}
+                                        <span class="badge badge-role badge-administrateur">
+                                            <i class="fas fa-crown me-1"></i>
+                                            {{ role.get_type_display }}
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge badge-secondary">Aucun rôle</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        
+                        <td>
+                            {% with role=utilisateur.get_role_actif %}
+                                {% if role %}
+                                    {% if role.statut == "VALIDE" %}
+                                        <span class="badge badge-statut badge-valide">
+                                            <i class="fas fa-check me-1"></i>
+                                            Validé
+                                        </span>
+                                        <div class="text-success small mt-1">
+                                            Validé le {{ role.date_creation|date:"d/m/Y" }}
+                                        </div>
+                                    {% elif role.statut == "EN_ATTENTE_VALIDATION" %}
+                                        <span class="badge badge-statut badge-en-attente">
+                                            <i class="fas fa-clock me-1"></i>
+                                            En attente
+                                        </span>
+                                        <div class="text-warning small mt-1">
+                                            Documents à vérifier
+                                        </div>
+                                    {% elif role.statut == "REFUSE" %}
+                                        <span class="badge badge-statut badge-refuse">
+                                            <i class="fas fa-times me-1"></i>
+                                            Refusé
+                                        </span>
+                                        <div class="text-danger small mt-1">
+                                            Documents non conformes
+                                        </div>
+                                    {% elif role.statut == "SUSPENDU" %}
+                                        <span class="badge badge-statut badge-suspendu">
+                                            <i class="fas fa-pause me-1"></i>
+                                            Suspendu
+                                        </span>
+                                        <div class="text-muted small mt-1">
+                                            Compte temporairement désactivé
+                                        </div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge badge-secondary">Indéfini</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        
+                        <td>
+                            <div class="fw-bold">{{ utilisateur.date_inscription|date:"d/m/Y" }}</div>
+                            <div class="text-muted small">
+                                {{ utilisateur.date_inscription|timesince }}
+                            </div>
+                        </td>
+                        
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center">
+                                <!-- Action Valider -->
+                                {% with role=utilisateur.get_role_actif %}
+                                    {% if role and role.statut == "EN_ATTENTE_VALIDATION" %}
+                                        <button class="btn btn-success btn-sm action-btn" 
+                                                data-action="valider" 
+                                                data-user-id="{{ utilisateur.id }}"
+                                                title="Valider le compte">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    {% endif %}
+                                {% endwith %}
+                                
+                                <!-- Action Refuser -->
+                                {% with role=utilisateur.get_role_actif %}
+                                    {% if role and role.statut == "EN_ATTENTE_VALIDATION" %}
+                                        <button class="btn btn-danger btn-sm action-btn" 
+                                                data-action="refuser" 
+                                                data-user-id="{{ utilisateur.id }}"
+                                                data-user-name="{{ utilisateur.prenom }} {{ utilisateur.nom }}"
+                                                title="Refuser le compte">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    {% endif %}
+                                {% endwith %}
+                                
+                                <!-- Action Suspendre -->
+                                {% with role=utilisateur.get_role_actif %}
+                                    {% if role and role.statut == "VALIDE" %}
+                                        <button class="btn btn-warning btn-sm action-btn" 
+                                                data-action="suspendre" 
+                                                data-user-id="{{ utilisateur.id }}"
+                                                data-user-name="{{ utilisateur.prenom }} {{ utilisateur.nom }}"
+                                                title="Suspendre le compte">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                    {% endif %}
+                                {% endwith %}
+                                
+                                <!-- Action Voir détails -->
+                                <a href="{% url 'admin_perso:details_utilisateur' utilisateur.id %}" 
+                                   class="btn btn-info btn-sm action-btn"
+                                   title="Voir les détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <!-- Aucun utilisateur trouvé -->
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">Aucun utilisateur trouvé</h4>
+            <p class="text-muted">
+m                {% if search_query or statut_filter or role_filter %}
+                    Aucun utilisateur ne correspond à vos critères de recherche.
+                    <a href="{% url 'admin_perso:gestion_utilisateurs' %}" class="btn btn-link p-0">Afficher tous les utilisateurs</a>
+                {% else %}
+                    Aucun utilisateur n'est inscrit sur la plateforme pour le moment.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,704 @@
+<!-- templates/admin/admin_gestion_investissements.html -->
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Gestion des Investissements - Admin CrowdBuilding{% endblock %}
+
+{% block page_title %}Gestion des Investissements{% endblock %}
+{% block page_subtitle %}Visualisez et gérez tous les investissements de la plateforme{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== STYLES SIMPLIFIÉS ===== */
+    
+    /* Cartes de statistiques */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    @media (max-width: 1200px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 576px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        border: 1px solid #e9ecef;
+        transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    .stat-icon.total { background: #e3f2fd; color: #1976d2; }
+    .stat-icon.month { background: #e8f5e9; color: #2e7d32; }
+    .stat-icon.pending { background: #fff3e0; color: #f57c00; }
+    .stat-icon.average { background: #f3e5f5; color: #7b1fa2; }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 8px 0;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    /* Filtres simplifiés */
+    .filters-bar {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #e9ecef;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .filter-select, .filter-input {
+        padding: 10px 12px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        background: white;
+        min-width: 180px;
+        font-size: 14px;
+    }
+
+    .filter-input {
+        flex: 1;
+        max-width: 300px;
+    }
+
+    .btn-filter {
+        background: #1976d2;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .btn-filter:hover {
+        background: #1565c0;
+    }
+
+    /* Tableau */
+    .investments-table-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        border: 1px solid #e9ecef;
+        margin-bottom: 20px;
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .table-header h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table th {
+        background: #f8f9fa;
+        padding: 12px 15px;
+        text-align: left;
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+        font-size: 14px;
+    }
+
+    .table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: middle;
+        font-size: 14px;
+    }
+
+    .table tbody tr:hover {
+        background: #f8fafc;
+    }
+
+    /* Badges de statut */
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 12px;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .status-confirmed { background: #d4edda; color: #155724; }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-cancelled { background: #f8d7da; color: #721c24; }
+    .status-refunded { background: #d1ecf1; color: #0c5460; }
+
+    /* Actions */
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+    }
+
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 12px;
+    }
+
+    .btn-view { background: #e3f2fd; color: #1976d2; }
+    .btn-validate { background: #e8f5e9; color: #2e7d32; }
+    .btn-reject { background: #ffebee; color: #c62828; }
+
+    .btn-action:hover {
+        transform: scale(1.05);
+    }
+
+    /* Détails rapides */
+    .quick-details {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        border: 1px solid #e9ecef;
+    }
+
+    .details-header {
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .details-header h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .details-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .detail-item {
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+
+    .detail-label {
+        font-size: 12px;
+        color: #6c757d;
+        margin-bottom: 4px;
+    }
+
+    .detail-value {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    /* Graphique */
+    .chart-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        border: 1px solid #e9ecef;
+        height: 300px;
+    }
+
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .chart-header h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    /* Avatar */
+    .avatar-small {
+        width: 30px;
+        height: 30px;
+        background: #1976d2;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.3s ease forwards;
+    }
+</style>
+{% endblock %}
+
+{% block admin_main_content %}
+<!-- Cartes de statistiques -->
+<div class="stats-grid fade-in">
+    <div class="stat-card">
+        <div class="stat-icon total">
+            <i class="fas fa-money-bill-wave"></i>
+        </div>
+        <div class="stat-value">{{ total_investissements|intcomma }} FCFA</div>
+        <div class="stat-label">Total investi</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon month">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-value">{{ investissements_mois|intcomma }} FCFA</div>
+        <div class="stat-label">Ce mois</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon pending">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-value">{{ investissements_en_attente_paiement }}</div>
+        <div class="stat-label">En attente de paiement </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon average">
+            <i class="fas fa-chart-bar"></i>
+        </div>
+        <div class="stat-value">{{ moyenne_investissement|intcomma }} FCFA</div>
+        <div class="stat-label">Moyenne/investissement</div>
+    </div>
+</div>
+
+<!-- Filtres simplifiés -->
+<div class="filters-bar fade-in">
+    <form method="get" action="" id="filterForm">
+        <div class="filter-group">
+           <select class="filter-select" name="status">
+                <option value="">Tous les statuts</option>
+
+                <option value="EN_ATTENTE_PAIEMENT"
+                    {% if request.GET.status == "EN_ATTENTE_PAIEMENT" %}selected{% endif %}>
+                    En attente de paiement
+                </option>
+
+                <option value="PAIEMENT_RECU"
+                    {% if request.GET.status == "PAIEMENT_RECU" %}selected{% endif %}>
+                    Paiement reçu
+                </option>
+
+                <option value="CONFIRME"
+                    {% if request.GET.status == "CONFIRME" %}selected{% endif %}>
+                    Confirmé
+                </option>
+
+                <option value="REMBOURSE"
+                    {% if request.GET.status == "REMBOURSE" %}selected{% endif %}>
+                    Remboursé
+                </option>
+
+                <option value="REJETE"
+                    {% if request.GET.status == "REJETE" %}selected{% endif %}>
+                    Rejeté
+                </option>
+            </select>
+            
+            <select class="filter-select" name="projet">
+                <option value="">Tous les projets</option>
+                {% for projet in projets %}
+                <option value="{{ projet.id }}" {% if request.GET.projet|add:0 == projet.id %}selected{% endif %}>
+                    {{ projet.titre|truncatechars:30 }}
+                </option>
+                {% endfor %}
+            </select>
+            
+            <input type="date" class="filter-input" name="date_from" 
+                value="{{ current_date_from }}" 
+                placeholder="Date début">
+                        
+           <input type="text" class="filter-input" name="search" 
+                value="{{ current_search }}" 
+                placeholder="Rechercher investisseur...">
+                        
+        </div>
+    </form>
+</div>
+
+<!-- Tableau des investissements -->
+<div class="investments-table-container fade-in">
+    <div class="table-header">
+        <h3>Liste des investissements ({{ investissements.paginator.count }})</h3>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table" id="investmentsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Investisseur</th>
+                    <th>Projet</th>
+                    <th>Montant</th>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in investissements %}
+                <tr>
+                    <td><strong>{{ inv.reference }}</strong></td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-small me-2">
+                                {{ inv.investisseur.prenom|first|upper }}
+                            </div>
+                            <span>{{ inv.investisseur.nom_complet|truncatechars:20 }}</span>
+                        </div>
+                    </td>
+                    <td>{{ inv.projet.titre|truncatechars:30 }}</td>
+                    <td><strong>{{ inv.montant|intcomma }} FCFA</strong></td>
+                    <td>{{ inv.date_investissement|date:"d/m/Y" }}</td>
+                    <td>
+                       <span class="status-badge
+                            {% if inv.statut == 'CONFIRME' %}status-confirmed
+                            {% elif inv.statut == 'PAIEMENT_RECU' %}status-pending
+                            {% elif inv.statut == 'EN_ATTENTE_PAIEMENT' %}status-pending
+                            {% elif inv.statut == 'REMBOURSE' %}status-refunded
+                            {% else %}status-cancelled{% endif %}">
+                            {{ inv.get_statut_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-action btn-view" onclick="viewInvestment('{{ inv.id }}')" title="Voir détails">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            {% if inv.statut == 'PAIEMENT_RECU' %}
+                            <button class="btn-action btn-validate" onclick="validerInvestissement('{{ inv.id }}')" title="Valider">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn-action btn-reject" onclick="rejeterInvestissement('{{ inv.id }}')" title="Rejeter">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4">
+                        <i class="fas fa-coins text-muted mb-2" style="font-size: 32px;"></i>
+                        <p class="text-muted">Aucun investissement trouvé</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if investissements.has_other_pages %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if investissements.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ investissements.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    &laquo;
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for num in investissements.paginator.page_range %}
+                {% if investissements.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% elif num > investissements.number|add:'-3' and num < investissements.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if investissements.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ investissements.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    &raquo;
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Détails et graphique -->
+<div class="row fade-in">
+    <!-- Détails rapides -->
+    <div class="col-md-4 mb-4">
+        <div class="quick-details">
+            <div class="details-header">
+                <h3>Statistiques rapides</h3>
+            </div>
+            
+            <div class="details-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Projets financés</div>
+                    <div class="detail-value">{{ total_projets }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Investisseurs actifs</div>
+                    <div class="detail-value">{{ investisseurs_actifs }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Taux de complétion</div>
+                    <div class="detail-value">{{ taux_completion }}%</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Investissement max</div>
+                    <div class="detail-value">{{ investissement_max|intcomma }} FCFA</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Graphique -->
+    <div class="col-md-8 mb-4">
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3>Évolution des investissements</h3>
+            </div>
+            <canvas id="investmentChart" height="220"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const URL_VIEW_INVEST = "{% url 'admin_perso:gestion_investissements' %}";
+    const URL_VALIDATE_INVEST = "{% url 'admin_perso:valider_investissement' 0 %}";
+    const URL_REJECT_INVEST = "{% url 'admin_perso:rejeter_investissement' 0 %}";
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser le graphique
+        initInvestmentChart();
+        
+        // Activer la soumission du formulaire avec Entrée
+        document.querySelectorAll('.filter-input').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('filterForm').submit();
+                }
+            });
+        });
+    });
+
+
+
+    function initInvestmentChart() {
+
+        const ctx = document.getElementById('investmentChart');
+        if (!ctx) return;
+
+        const labels = {{ chart_labels|safe }};
+        const investissements = {{ chart_invest|safe }};
+        const remboursements = {{ chart_refund|safe }};
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Investissements confirmés (FCFA)',
+                        data: investissements,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Remboursements (FCFA)',
+                        data: remboursements,
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: ctx =>
+                                ctx.parsed.y.toLocaleString() + ' FCFA'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value =>
+                                value.toLocaleString() + ' FCFA'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+
+    function viewInvestment(id) {
+        // Rediriger vers la page de détails de l'investissement
+        alert("Page détail en cours de développement");
+    }
+    
+    function validerInvestissement(id) {
+        if (!confirm('Confirmer la validation de cet investissement ?')) return;
+
+        fetch(URL_VALIDATE_INVEST.replace('/0/', `/${id}/`), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(() => alert('Erreur réseau'));
+    }
+
+    
+    function rejeterInvestissement(id) {
+        const raison = prompt('Raison du rejet :');
+        if (!raison) return;
+
+        fetch(URL_REJECT_INVEST.replace('/0/', `/${id}/`), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `raison=${encodeURIComponent(raison)}`
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(() => alert('Erreur réseau'));
+    }
+
+    
+    // Fonction utilitaire pour récupérer le token CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

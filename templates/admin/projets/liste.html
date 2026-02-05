@@ -1,0 +1,1125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion des Projets - Administration CrowdBuilding</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        /* ===== STATUTS PROJETS (COULEURS VISIBLES) ===== */
+
+        .status-en-attente-validation {
+            background-color: #fde68a;   /* jaune */
+            color: #92400e;
+        }
+
+        .status-valide {
+            background-color: #bbf7d0;   /* vert clair */
+            color: #065f46;
+        }
+
+        .status-en-campagne {
+            background-color: #bfdbfe;   /* bleu */
+            color: #1e3a8a;
+        }
+
+        .status-finance {
+            background-color: #ddd6fe;   /* violet */
+            color: #5b21b6;
+        }
+
+        .status-termine {
+            background-color: #a7f3d0;   /* vert */
+            color: #065f46;
+        }
+
+        .status-refuse {
+            background-color: #fecaca;   /* rouge */
+            color: #7f1d1d;
+        }
+
+        .status-suspendu {
+            background-color: #e5e7eb;   /* gris */
+            color: #374151;
+            border: 1px solid #9ca3af;
+        }
+
+        .status-en-cours-execution {
+            background-color: #fed7aa;   /* orange */
+            color: #9a3412;
+        }
+
+        /* Cacher la navbar publique */
+        .navbar {
+            display: none !important;
+        }
+
+        /* Variables CSS */
+        :root {
+            --primary-blue: #2563eb;
+            --light-blue: #e6f0ff;
+            --sidebar-bg: #f9fafb;
+            --text-dark: #111827;
+            --text-gray: #6b7280;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        /* ===== STRUCTURE ADMIN FIXE ===== */
+        
+        /* Sidebar fixe */
+        .admin-sidebar {
+            height: 100vh;
+            width: 280px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: var(--sidebar-bg);
+            padding: 20px 0;
+            color: var(--text-dark);
+            border-right: 1px solid #e5e7eb;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 0 25px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-family: 'Brush Script MT', cursive;
+            font-size: 24px;
+            color: var(--text-dark);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--primary-blue);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            margin: 5px 15px;
+        }
+
+        .sidebar-menu a {
+            color: var(--text-gray);
+            padding: 12px 15px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: var(--light-blue);
+            color: var(--primary-blue);
+        }
+
+        .sidebar-menu i {
+            width: 20px;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+
+        .menu-section {
+            margin: 20px 0 10px 0;
+            padding: 0 25px;
+        }
+
+        .menu-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-badge {
+            margin-left: auto;
+            font-size: 11px;
+            padding: 2px 6px;
+        }
+
+        /* Header fixe */
+        .admin-header {
+            position: fixed;
+            top: 0;
+            left: 280px;
+            right: 0;
+            height: 100px;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 0 30px;
+        }
+
+        .header-title h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .header-title p {
+            color: var(--text-gray);
+            margin: 5px 0 0 0;
+        }
+
+        /* Profil admin déroulant */
+        .admin-profile-dropdown {
+            position: relative;
+        }
+
+        .admin-profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .admin-profile-btn:hover {
+            background: var(--light-blue);
+        }
+
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            background: var(--primary-blue);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .admin-info {
+            text-align: left;
+        }
+
+        .admin-info h4 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .admin-info p {
+            margin: 0;
+            color: var(--text-gray);
+            font-size: 12px;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            min-width: 200px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            color: var(--text-dark);
+            text-decoration: none;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            transition: background 0.3s ease;
+        }
+
+        .dropdown-item:hover {
+            background: var(--light-blue);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 4px 0;
+        }
+
+        /* ===== CONTENU PRINCIPAL ===== */
+        .admin-main-content {
+            margin-left: 280px;
+            margin-top: 100px;
+            padding: 30px;
+            background-color: #f8fafc;
+            min-height: calc(100vh - 100px);
+        }
+
+        /* ===== STYLES SPÉCIFIQUES GESTION PROJETS ===== */
+        
+        /* Cartes de statistiques */
+        .card-stat {
+            border-left: 4px solid;
+            transition: transform 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: 100%;
+        }
+
+        .card-stat:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .avatar-initials {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        /* Couleurs des cartes */
+        .stat-total { border-left-color: #2563eb; }
+        .stat-attente { border-left-color: #f59e0b; }
+        .stat-campagne { border-left-color: #3b82f6; }
+        .stat-finances { border-left-color: #10b981; }
+        .stat-refuses { border-left-color: #ef4444; }
+
+        .stat-icon-total { background: #e0f2fe; color: #2563eb; }
+        .stat-icon-attente { background: #fef3c7; color: #f59e0b; }
+        .stat-icon-campagne { background: #dbeafe; color: #3b82f6; }
+        .stat-icon-finances { background: #dcfce7; color: #10b981; }
+        .stat-icon-refuses { background: #fee2e2; color: #ef4444; }
+
+        /* Barre de recherche et filtres */
+        .search-filters-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+
+        .search-box {
+            max-width: 300px;
+        }
+
+        .filter-select {
+            min-width: 150px;
+        }
+
+        .results-count {
+            color: var(--text-gray);
+            font-weight: 500;
+        }
+
+        /* Tableau des projets */
+        .projects-table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .table th {
+            background-color: #f8fafc;
+            border-bottom: 2px solid #e5e7eb;
+            font-weight: 600;
+            color: var(--text-dark);
+            padding: 15px 12px;
+        }
+
+        .table td {
+            padding: 15px 12px;
+            vertical-align: middle;
+        }
+
+        /* Ligne de projet */
+        .project-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .project-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .project-details h6 {
+            margin: 0 0 4px 0;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .project-details p {
+            margin: 0;
+            color: var(--text-gray);
+            font-size: 0.875rem;
+        }
+
+        .promoteur-name {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        /* Badges */
+        .badge-category {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 0.4em 0.8em;
+            font-size: 0.75em;
+            font-weight: 600;
+            border-radius: 6px;
+        }
+
+        .badge-status {
+            padding: 0.4em 0.8em;
+            font-size: 0.75em;
+            font-weight: 600;
+            border-radius: 6px;
+        }
+
+        .status-en-attente { background-color: #fef3c7; color: #d97706; }
+        .status-en-campagne { background-color: #dbeafe; color: #1e40af; }
+        .status-valide { background-color: #dcfce7; color: #065f46; }
+        .status-finance { background-color: #f3e8ff; color: #7c3aed; }
+        .status-refuse { background-color: #fee2e2; color: #dc2626; }
+        .status-termine { background-color: #d1fae5; color: #065f46; }
+        .status-en-cours-execution { background-color: #fef3c7; color: #d97706; }
+
+        /* Financement */
+        .funding-amount {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .funding-progress {
+            background-color: #e5e7eb;
+            border-radius: 10px;
+            height: 6px;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+
+        .funding-progress-bar {
+            height: 100%;
+            background-color: #10b981;
+            border-radius: 10px;
+        }
+
+        .funding-percentage {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        /* Actions */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            border: none;
+            background: none;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .btn-view { background: #e0f2fe; color: #0369a1; }
+        .btn-edit { background: #fef3c7; color: #d97706; }
+        .btn-delete { background: #fee2e2; color: #dc2626; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            
+            .admin-header {
+                left: 0;
+                position: relative;
+            }
+            
+            .admin-main-content {
+                margin-left: 0;
+                margin-top: 0;
+                padding: 20px;
+            }
+            
+            .search-box {
+                max-width: 100%;
+                margin-bottom: 15px;
+            }
+            
+            .project-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .action-buttons {
+                justify-content: center;
+            }
+        }
+        /* AJOUTER DANS LA SECTION STYLE */
+        .table-compact td, .table-compact th {
+            padding: 10px 8px;
+            font-size: 0.875rem;
+        }
+
+        .project-image-small {
+            width: 45px;
+            height: 45px;
+        }
+
+        .funding-info-compact {
+            font-size: 0.8rem;
+        }
+
+        .action-buttons-compact .action-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 0.8rem;
+        }
+
+        /* ===== FORCE COULEURS STATUTS (ANTI BLANC) ===== */
+
+        .badge-status {
+            display: inline-block;
+            padding: 0.45em 0.9em;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 6px;
+            color: #111827 !important;
+        }
+
+        /* EN CAMPAGNE */
+        .status-en-campagne {
+            background-color: #3b82f6 !important; /* BLEU */
+            color: #ffffff !important;
+        }
+
+        /* EN ATTENTE */
+        .status-en-attente-validation {
+            background-color: #f59e0b !important; /* JAUNE */
+            color: #78350f !important;
+        }
+
+        /* VALIDÉ */
+        .status-valide {
+            background-color: #22c55e !important; /* VERT */
+            color: #ffffff !important;
+        }
+
+        /* FINANCÉ */
+        .status-finance {
+            background-color: #8b5cf6 !important; /* VIOLET */
+            color: #ffffff !important;
+        }
+
+        /* REFUSÉ */
+        .status-refuse {
+            background-color: #ef4444 !important; /* ROUGE */
+            color: #ffffff !important;
+        }
+
+        /* SUSPENDU */
+        .status-suspendu {
+            background-color: #9ca3af !important; /* GRIS */
+            color: #111827 !important;
+        }
+
+        /* TERMINÉ */
+        .status-termine {
+            background-color: #16a34a !important; /* VERT FONCÉ */
+            color: #ffffff !important;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Sidebar fixe -->
+    <div class="admin-sidebar">
+        <div class="sidebar-header">
+            <a href="{% url 'core:dashboard' %}" class="logo">  
+                Administration <span>CrowdBuilding</span>
+            </a>
+        </div>
+
+        <ul class="sidebar-menu">
+            <!-- Section Tableau de bord -->
+            <div class="menu-section">
+                <div class="menu-section-title">TABLEAU DE BORD</div>
+            </div>
+            <li>
+                <a href="{% url 'core:dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Tableau de bord
+                </a>
+            </li>
+
+            <!-- Section Administration -->
+            <div class="menu-section">
+                <div class="menu-section-title">ADMINISTRATION</div>
+            </div>
+            <li>
+                <a href="{% url 'admin_perso:gestion_utilisateurs' %}">
+                    <i class="fas fa-users"></i>
+                    Utilisateurs
+                </a>
+            </li>
+            <li>
+                <a href="#" class="active">
+                    <i class="fas fa-project-diagram"></i>
+                    Gestion des projets
+                    {% if stats.en_attente > 0 %}  <!-- ✅ CORRIGE ICI -->
+                    <span class="badge bg-warning sidebar-badge">{{ stats.en_attente }}</span>  <!-- ✅ Affiche seulement les projets EN ATTENTE -->
+                    {% endif %}
+                </a>
+            </li>
+
+            <!-- Section Site -->
+            <div class="menu-section">
+                <div class="menu-section-title">SITE</div>
+            </div>
+            <li>
+                <a href="{% url 'core:home' %}" target="_blank">
+                    <i class="fas fa-home"></i>
+                    Accueil public
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'projects:list' %}" target="_blank">
+                    <i class="fas fa-building"></i>
+                    Projets public
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Header fixe -->
+    <div class="admin-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>Gestion des projets</h1>
+                <p>Validez, gérez et suivez tous les projets de la plateforme</p>
+            </div>
+            
+            <div class="admin-profile-dropdown">
+                <button class="admin-profile-btn" id="adminProfileBtn">
+                    <div class="admin-avatar">
+                        {{ user.get_initials }}
+                    </div>
+                    <div class="admin-info">
+                        <h4>{{ user.nom_complet }}</h4>
+                        <p>Administrateur</p>
+                    </div>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                
+                <div class="dropdown-menu" id="adminDropdown">
+                    <a href="{% url 'admin_perso:profile' %}" class="dropdown-item">
+                        <i class="fas fa-user"></i>Profil
+                    </a>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-cog"></i>Paramètres
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <form method="post" action="{% url 'admin_perso:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item">
+                            <i class="fas fa-sign-out-alt"></i>Déconnexion
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="admin-main-content">
+        <!-- Cartes de statistiques -->
+        <div class="row mb-5">
+            <!-- Carte Total Projets -->
+            <div class="col-xl-2 col-md-4 col-6 mb-4">
+                <div class="card card-stat border-left-primary h-100 stat-total">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    📊 Total Projets
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="avatar-initials stat-icon-total">
+                                    <i class="fas fa-layer-group"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carte En Attente -->
+            <div class="col-xl-2 col-md-4 col-6 mb-4">
+                <div class="card card-stat border-left-warning h-100 stat-attente">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    ⏳ En Attente
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.en_attente }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="avatar-initials stat-icon-attente">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carte En Campagne -->
+            <div class="col-xl-2 col-md-4 col-6 mb-4">
+                <div class="card card-stat border-left-info h-100 stat-campagne">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    📢 En Campagne
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.en_campagne }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="avatar-initials stat-icon-campagne">
+                                    <i class="fas fa-bullhorn"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carte Financés -->
+            <div class="col-xl-2 col-md-4 col-6 mb-4">
+                <div class="card card-stat border-left-success h-100 stat-finances">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    ✅ Financés
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.finances }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="avatar-initials stat-icon-finances">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carte Refusés -->
+            <div class="col-xl-2 col-md-4 col-6 mb-4">
+                <div class="card card-stat border-left-danger h-100 stat-refuses">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                    ❌ Refusés
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.refuses }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="avatar-initials stat-icon-refuses">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barre de recherche et filtres -->
+        <div class="search-filters-container">
+            <div class="row align-items-center">
+                <!-- Barre de recherche -->
+                <div class="col-md-4 mb-2 mb-md-0">
+                    <div class="input-group search-box">
+                        <input type="text" class="form-control" placeholder="Rechercher un projet..." 
+                               id="searchInput" value="{{ search_query }}"
+                               aria-label="Rechercher un projet">
+                        <button class="btn btn-outline-primary" type="button" id="searchButton">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filtre Statut -->
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <select class="form-select filter-select" id="statutFilter">
+                        <option value="">Tous les statuts</option>
+                        <option value="EN_ATTENTE_VALIDATION" {% if statut_filter == "EN_ATTENTE_VALIDATION" %}selected{% endif %}>
+                            En attente
+                        </option>
+                        <option value="VALIDE" {% if statut_filter == "VALIDE" %}selected{% endif %}>
+                            Validé
+                        </option>
+                        <option value="EN_CAMPAGNE" {% if statut_filter == "EN_CAMPAGNE" %}selected{% endif %}>
+                            En campagne
+                        </option>
+                        <option value="FINANCE" {% if statut_filter == "FINANCE" %}selected{% endif %}>
+                            Financé
+                        </option>
+                        <option value="REFUSE" {% if statut_filter == "REFUSE" %}selected{% endif %}>
+                            Refusé
+                        </option>
+                    </select>
+                </div>
+                
+                <!-- Filtre Catégorie -->
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <select class="form-select filter-select" id="categorieFilter">
+                        <option value="">Toutes les catégories</option>
+                        <option value="RESIDENTIEL" {% if categorie_filter == "RESIDENTIEL" %}selected{% endif %}>
+                            Résidentiel
+                        </option>
+                        <option value="COMMERCIAL" {% if categorie_filter == "COMMERCIAL" %}selected{% endif %}>
+                            Commercial
+                        </option>
+                        <option value="BUREAUX" {% if categorie_filter == "BUREAUX" %}selected{% endif %}>
+                            Bureaux
+                        </option>
+                        <option value="INDUSTRIEL" {% if categorie_filter == "INDUSTRIEL" %}selected{% endif %}>
+                            Industriel
+                        </option>
+                        <option value="MIXTE" {% if categorie_filter == "MIXTE" %}selected{% endif %}>
+                            Mixte
+                        </option>
+                    </select>
+                </div>
+                
+                <!-- Compteur de résultats -->
+                <div class="col-md-2 text-end">
+                    <span class="text-muted small" id="resultCount">
+                        {{ projets|length }} projet{{ projets|length|pluralize:"s" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+       <!-- REMPLACER LE TABLEAU ACTUEL -->
+        <div class="projects-table-container">
+            <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+                <table class="table table-hover mb-0 table-compact">
+                    <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+                        <tr>
+                            <th width="25%">Projet</th>
+                            <th width="12%">Catégorie</th>
+                            <th width="12%">Statut</th>
+                            <th width="20%">Financement</th>
+                            <th width="16%">Dates</th>
+                            <th width="15%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for projet in projets %}
+                        <tr>
+                            <td>
+                                <div class="project-info">
+                                    {% if projet.image_principale %}
+                                    <img src="{{ projet.image_principale.url }}" alt="{{ projet.titre }}" class="project-image-small">
+                                    {% else %}
+                                    <div class="project-image-small bg-light d-flex align-items-center justify-content-center">
+                                        <i class="fas fa-building text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div class="project-details">
+                                        <h6 class="mb-1" style="font-size: 0.9rem;">{{ projet.titre|truncatewords:3 }}</h6>
+                                        <small class="text-muted promoteur-name">
+                                            <i class="fas fa-user me-1"></i>{{ projet.promoteur.nom_complet }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-category" style="font-size: 0.75rem;">
+                                    {{ projet.get_categorie_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-status status-{{ projet.statut|lower|slugify }}" style="font-size: 0.75rem;">
+                                    {{ projet.get_statut_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="funding-info-compact">
+                                    <div class="fw-bold">{{ projet.taux_financement|default:0|floatformat:1 }}%</div>
+                                    <div class="funding-progress mt-1">
+                                        <div class="funding-progress-bar" style="width: {{ projet.taux_financement|default:0 }}%"></div>
+                                    </div>
+                                    <small>{{ projet.montant_collecte|floatformat:0 }}/{{ projet.montant_total|floatformat:0 }} FCFA</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div style="font-size: 0.8rem;">
+                                    <div>{{ projet.date_creation|date:"d/m/Y" }}</div>
+                                    {% if projet.date_validation %}
+                                    <small class="text-muted">Validé: {{ projet.date_validation|date:"d/m/Y" }}</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                          <td>
+                            <div class="action-buttons action-buttons-compact" data-project-id="{{ projet.id }}">
+                                <!-- Bouton Voir -->
+                                <button class="action-btn btn-view" title="Voir" onclick="window.location.href='{% url 'projects:detail' projet.id %}'" target="_blank">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                
+                                <!-- Boutons de validation (seulement pour projets en attente) -->
+                                {% if projet.statut == "EN_ATTENTE_VALIDATION" %}
+                                    <button class="action-btn btn-success" 
+                                            data-action="valider_projet"
+                                            data-project-id="{{ projet.id }}"
+                                            data-project-name="{{ projet.titre }}"
+                                            title="Valider le projet">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    
+                                    <button class="action-btn btn-danger" 
+                                            data-action="refuser_projet"
+                                            data-project-id="{{ projet.id }}"
+                                            data-project-name="{{ projet.titre }}"
+                                            title="Refuser le projet">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                {% endif %}
+
+                                {% if projet.statut == "SUSPENDU" %}
+                                <button class="action-btn btn-warning"
+                                        data-action="reactiver"
+                                        data-project-id="{{ projet.id }}"
+                                        title="Réactiver le projet">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                {% endif %}
+
+                                {% if projet.statut != "SUSPENDU" %}
+                                <button class="action-btn btn-danger"
+                                        data-action="suspendre"
+                                        data-project-id="{{ projet.id }}"
+                                        title="Suspendre le projet">
+                                    <i class="fas fa-pause"></i>
+                                </button>
+                                {% endif %}
+             
+                                <!-- Bouton Partager (pour projets validés) -->
+                                {% if projet.statut == "VALIDE" %}
+                                    <button class="action-btn btn-info" 
+                                            data-action="partager_projet"
+                                            data-project-id="{{ projet.id }}"
+                                            data-project-name="{{ projet.titre }}"
+                                            title="Publier le projet sur le site">
+                                        <i class="fas fa-globe"></i>
+                                    </button>
+                                {% elif projet.statut == "EN_CAMPAGNE" %}
+                                    <span class="badge bg-success ms-1">🌍 En ligne</span>
+                                {% endif %}
+                                
+                                <!-- Bouton Modifier (toujours visible) -->
+                                <button class="action-btn btn-edit" title="Modifier" onclick="window.location.href='{% url 'admin:projects_projet_change' projet.id %}'">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="fas fa-inbox fa-2x text-muted mb-3"></i>
+                                <p class="text-muted">Aucun projet trouvé</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Scripts spécifiques aux projets -->
+    <script src="{% static 'js/admin_projects.js' %}"></script>
+    <script>
+        // Gestion du menu déroulant du profil admin
+        document.addEventListener('DOMContentLoaded', function() {
+            const profileBtn = document.getElementById('adminProfileBtn');
+            const dropdown = document.getElementById('adminDropdown');
+
+            profileBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdown.classList.toggle('show');
+            });
+
+            document.addEventListener('click', function() {
+                dropdown.classList.remove('show');
+            });
+
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            // Gestion de la recherche et des filtres
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const statutFilter = document.getElementById('statutFilter');
+            const categorieFilter = document.getElementById('categorieFilter');
+
+            function applyFilters() {
+                const search = searchInput.value.trim();
+                const statut = statutFilter.value;
+                const categorie = categorieFilter.value;
+                
+                let url = '?';
+                if (search) url += `search=${encodeURIComponent(search)}&`;
+                if (statut) url += `statut=${statut}&`;
+                if (categorie) url += `categorie=${categorie}`;
+                
+                // Retirer le dernier '&' si présent
+                if (url.endsWith('&')) url = url.slice(0, -1);
+                
+                window.location.href = url;
+            }
+
+            searchButton.addEventListener('click', applyFilters);
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') applyFilters();
+            });
+            statutFilter.addEventListener('change', applyFilters);
+            categorieFilter.addEventListener('change', applyFilters);
+
+            // Animation des cartes au chargement
+            const cards = document.querySelectorAll('.card-stat');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+
+        // Fonction de confirmation de suppression
+        function confirmDelete(projetId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ? Cette action est irréversible.')) {
+                // Implémentez ici la logique de suppression
+                console.log('Suppression du projet:', projetId);
+                // Exemple: window.location.href = `/admin/projects/projet/${projetId}/delete/`;
+            }
+        }
+    </script>
+    <!-- Modal de refus de projet -->
+    <div class="modal fade" id="refuseProjetModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Refuser le projet
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="refuseProjetForm">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Vous êtes sur le point de refuser le projet <strong id="refuseProjetName"></strong>.
+                        </div>
+                        <div class="mb-3">
+                            <label for="motifRefusProjet" class="form-label fw-bold">
+                                Motif du refus <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="motifRefusProjet" name="motif" rows="4" 
+                                    placeholder="Veuillez indiquer la raison du refus (ex: documents incomplets, informations manquantes, budget non réaliste...)" 
+                                    required></textarea>
+                            <div class="form-text">
+                                Ce motif sera communiqué au promoteur.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-ban me-1"></i>Confirmer le refus
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

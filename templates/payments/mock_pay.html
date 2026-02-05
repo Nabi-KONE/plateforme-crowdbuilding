@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Paiement simulé via Mock API</title>
+    <script>
+        async function payerMockAPI() {
+            const btn = document.getElementById('btnMockAPI');
+            btn.disabled = true;
+            btn.textContent = "⌛ Paiement en cours...";
+
+            const payload = {
+                investment_id: {{ transaction.investissement.id }},
+                nombre_parts: {{ transaction.investissement.nombre_parts|default:1 }},
+                montant: {{ transaction.montant }}
+            };
+
+            const csrftoken = '{{ csrf_token }}';
+
+            try {
+                const res = await fetch("{% url 'payments:mock_api_payment' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert("Erreur : " + data.message);
+                    btn.disabled = false;
+                    btn.textContent = "💳 Simuler paiement";
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Erreur lors du paiement.");
+                btn.disabled = false;
+                btn.textContent = "💳 Simuler paiement";
+            }
+        }
+    </script>
+</head>
+<body>
+
+<h2>Paiement simulé via Mock API</h2>
+
+<p><strong>Projet :</strong> {{ transaction.investissement.projet.titre }}</p>
+<p><strong>Montant :</strong> {{ transaction.montant }} FCFA</p>
+<p><strong>Référence :</strong> {{ transaction.reference }}</p>
+
+<button id="btnMockAPI" onclick="payerMockAPI()">
+    💳 Simuler paiement
+</button>
+
+</body>
+</html>

@@ -1,169 +1,1490 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
-{% block title %}{{ project.titre }} - crowdBuilding{% endblock %}
+{% block title %}{{ project.titre }} - Administration CrowdBuilding{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row">
-        <!-- Contenu principal -->
-        <div class="col-lg-8">
-            <!-- En-tête du projet -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <span class="badge bg-primary mb-2">{{ project.reference }}</span>
-                            <h1 class="h3 fw-bold">{{ project.titre }}</h1>
-                            <p class="text-muted mb-0">
-                                <i class="fas fa-map-marker-alt me-1"></i>{{ project.localisation }}, {{ project.ville }}
-                            </p>
+<style>
+    /* DESIGN MODERNE ADMIN - ALIGNÉ À GAUCHE */
+    .admin-main-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0 15px;
+    }
+    
+    .admin-layout {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 25px;
+        align-items: start;
+        width: 100%;
+    }
+    
+    .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+        width: 100%;
+    }
+    
+    .sidebar-content {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+    }
+    
+    /* Hero Section améliorée */
+    .hero-section {
+        position: relative;
+        height: 400px;
+        overflow: hidden;
+        border-radius: 0 0 20px 20px;
+        margin-bottom: 30px;
+    }
+    
+    .hero-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .hero-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to bottom, 
+            rgba(0,0,0,0.1) 0%, 
+            rgba(0,0,0,0.4) 70%,
+            rgba(0,0,0,0.7) 100%);
+    }
+    
+    .hero-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 30px 0;
+    }
+    
+    .badge-container {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .badge-elegant {
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        border: 2px solid rgba(255,255,255,0.3);
+        backdrop-filter: blur(10px);
+        color: white;
+    }
+    
+    /* Stats avec design moderne */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin: 30px 0;
+        width: 100%;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid #eaeaea;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin: 0 auto 12px;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #2d3748;
+        margin-bottom: 5px;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Sections modernes */
+    .section-elegant {
+        background: white;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        border: 1px solid #eaeaea;
+        width: 100%;
+    }
+    
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #f5f5f5;
+    }
+    
+    .section-icon {
+        width: 45px;
+        height: 45px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0;
+    }
+    
+    /* Barre de progression améliorée */
+    .progress-wrapper {
+        position: relative;
+        margin: 25px 0;
+    }
+    
+    .progress-bar-seuil {
+        height: 14px;
+        background: #e2e8f0;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .progress-fill-seuil {
+        height: 100%;
+        border-radius: 8px;
+        position: relative;
+        transition: width 1s ease-in-out;
+        width: {{ project.taux_financement }}% !important;
+    }
+    
+    {% if project.taux_financement >= project.seuil_declenchement %}
+    .progress-fill-seuil {
+        background: linear-gradient(90deg, #10b981, #059669); /* Vert quand seuil atteint */
+    }
+    {% else %}
+    .progress-fill-seuil {
+        background: linear-gradient(90deg, #3b82f6, #2563eb); /* Bleu quand pas encore atteint */
+    }
+    {% endif %}
+    
+    .seuil-marker {
+        position: absolute;
+        top: -5px;
+        width: 3px;
+        height: 24px;
+        background: #ef4444;
+        z-index: 2;
+    }
+    
+    .seuil-label {
+        position: absolute;
+        top: -30px;
+        transform: translateX(-50%);
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #ef4444;
+        background: white;
+        padding: 3px 8px;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
+        white-space: nowrap;
+    }
+    
+    /* Cartes d'investissement cohérentes */
+    .investment-cards {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin: 20px 0;
+    }
+    
+    .investment-card {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        border: 2px solid #e2e8f0;
+    }
+    
+    .investment-label {
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .investment-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    
+    /* Documents - Design amélioré */
+    .documents-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+    }
+    
+    .document-card {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .document-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .document-icon {
+        width: 45px;
+        height: 45px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .document-info {
+        flex: 1;
+    }
+    
+    .document-name {
+        font-weight: 700;
+        color: #1e293b;
+        font-size: 0.95rem;
+        margin-bottom: 4px;
+    }
+    
+    .document-type {
+        color: #64748b;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .document-status {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-top: 6px;
+    }
+    
+    .status-valide { background: #d1fae5; color: #065f46; }
+    .status-attente { background: #fef3c7; color: #92400e; }
+    .status-rejete { background: #fee2e2; color: #991b1b; }
+    
+    .document-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+    }
+    
+    .btn-action {
+        padding: 6px 10px;
+        border-radius: 6px;
+        border: none;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+    }
+    
+    .btn-view { background: #dbeafe; color: #1e40af; }
+    .btn-download { background: #d1fae5; color: #065f46; }
+    .btn-validate { background: #bbf7d0; color: #166534; }
+    .btn-reject { background: #fecaca; color: #991b1b; }
+    .btn-reactivate-projet {
+    background: linear-gradient(135deg, #22c55e, #16a34a);}
+
+    /* Boutons d'action admin améliorés */
+    .admin-actions-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .btn-admin {
+        padding: 14px;
+        border-radius: 10px;
+        border: none;
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        color: white;
+    }
+    
+    .btn-admin:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .btn-validate-projet { 
+        background: linear-gradient(135deg, #10b981, #059669);
+    }
+    
+    .btn-reject-projet { 
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    
+    .btn-suspend-projet { 
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+    
+    /* Promoteur card améliorée */
+    .promoteur-card {
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+        border-radius: 14px;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .promoteur-avatar {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0 auto 15px;
+        box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .promoteur-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 5px;
+    }
+    
+    /* Comptes rendus améliorés */
+    .compte-rendu-card {
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+    }
+    
+    .compte-rendu-date {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-bottom: 8px;
+    }
+    
+    .compte-rendu-avancement {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #dbeafe;
+        color: #1e40af;
+        margin-bottom: 8px;
+    }
+    
+    /* Bouton retour élégant */
+    .btn-retour-elegant {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: white;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+    
+    /* RESPONSIVE COMPLET - AMÉLIORÉ */
+    @media (max-width: 1200px) {
+        .admin-layout {
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+    
+    @media (max-width: 1024px) {
+        .admin-layout {
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+        
+        .documents-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+    }
+    
+    @media (max-width: 900px) {
+        .admin-layout {
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+        
+        .sidebar-content {
+            position: static;
+            width: 100%;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .hero-section {
+            height: 350px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .admin-main-container {
+            padding: 0 15px;
+        }
+        
+        .hero-section {
+            height: 300px;
+        }
+        
+        .hero-content h1 {
+            font-size: 1.5rem !important;
+        }
+        
+        .investment-cards {
+            grid-template-columns: 1fr;
+        }
+        
+        .documents-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .section-elegant {
+            padding: 18px;
+        }
+        
+        .stat-card {
+            padding: 15px;
+        }
+        
+        .stat-value {
+            font-size: 1.3rem;
+        }
+        
+        .stat-icon {
+            width: 45px;
+            height: 45px;
+            font-size: 1.1rem;
+        }
+        
+        .promoteur-avatar {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+        
+        .btn-admin {
+            padding: 12px;
+            font-size: 0.8rem;
+        }
+    }
+    
+    @media (max-width: 600px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        
+        .hero-section {
+            height: 250px;
+        }
+        
+        .hero-content {
+            padding: 20px 0;
+        }
+        
+        .hero-content h1 {
+            font-size: 1.3rem !important;
+        }
+        
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+        }
+        
+        .badge-elegant {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+        }
+        
+        .btn-retour-elegant {
+            padding: 8px 12px;
+            font-size: 0.8rem;
+        }
+        
+        .document-actions {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-action {
+            padding: 8px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .admin-main-container {
+            padding: 0 10px;
+        }
+        
+        .hero-section {
+            height: 220px;
+        }
+        
+        .hero-content h1 {
+            font-size: 1.2rem !important;
+        }
+        
+        .section-elegant {
+            padding: 15px;
+        }
+        
+        .stat-card {
+            padding: 12px;
+        }
+        
+        .stat-value {
+            font-size: 1.2rem;
+        }
+        
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+        
+        .investment-card {
+            padding: 12px;
+        }
+        
+        .investment-value {
+            font-size: 1rem;
+        }
+        
+        .promoteur-avatar {
+            width: 50px;
+            height: 50px;
+            font-size: 1.3rem;
+        }
+        
+        .promoteur-name {
+            font-size: 1rem;
+        }
+        
+        .btn-admin {
+            padding: 10px;
+            font-size: 0.75rem;
+        }
+    }
+    
+    @media (max-width: 360px) {
+        .admin-main-container {
+            padding: 0 8px;
+        }
+        
+        .hero-section {
+            height: 200px;
+        }
+        
+        .hero-content h1 {
+            font-size: 1.1rem !important;
+        }
+        
+        .section-elegant {
+            padding: 12px;
+        }
+        
+        .stat-card {
+            padding: 10px;
+        }
+        
+        .stat-value {
+            font-size: 1.1rem;
+        }
+        
+        .btn-retour-elegant {
+            padding: 6px 10px;
+            font-size: 0.75rem;
+        }
+    }
+</style>
+
+<!-- Hero Section améliorée -->
+<div class="hero-section">
+    {% if project.image_garde %}
+    <img src="{{ project.image_garde.url }}" alt="{{ project.titre }}" class="hero-image">
+    {% else %}
+    <div class="hero-image" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+    {% endif %}
+    
+    <div class="hero-overlay"></div>
+    
+    <div class="hero-content">
+        <div class="container">
+            <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+                <a href="{% url 'admin_perso:gestion_projets' %}" class="btn-retour-elegant">
+                    <i class="fas fa-arrow-left"></i>
+                    Retour
+                </a>
+                <span class="badge-elegant" style="background: rgba(255, 255, 255, 0.2);">
+                    {{ project.get_statut_display }}
+                </span>
+            </div>
+            
+            <h1 class="h2 fw-bold text-white mb-2">{{ project.titre }}</h1>
+            <div class="text-white-80 small">
+                <i class="fas fa-user-tie me-1"></i>{{ project.promoteur.nom_complet }}
+                <span class="mx-2">•</span>
+                <i class="fas fa-hashtag me-1"></i>{{ project.reference }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="admin-main-container">
+    <!-- Statistiques -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="stat-value">{{ project.montant_total|intcomma }} FCFA</div>
+            <div class="stat-label">Coût total</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-value">{{ project.montant_collecte|default:0|intcomma }} FCFA</div>
+            <div class="stat-label">Collecté</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-value">
+                {% if nombre_investisseurs %}
+                    {{ nombre_investisseurs|intcomma }}
+                {% else %}
+                    0
+                {% endif %}
+            </div>
+            <div class="stat-label">Investisseurs</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <div class="stat-value">
+                {% if project.parts_vendues %}
+                    {{ project.parts_vendues|intcomma }}
+                {% else %}
+                    0
+                {% endif %}
+            </div>
+            <div class="stat-label">Parts vendues</div>
+        </div>
+    </div>
+
+    <div class="admin-layout">
+        <!-- Colonne principale -->
+        <div class="main-content">
+            <!-- Section Financement -->
+            <div class="section-elegant">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="section-title">Financement du projet</h3>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0">Progression du financement</h6>
+                    <div class="text-end">
+                        <div class="h4 fw-bold {% if project.taux_financement >= project.seuil_declenchement %}text-success{% else %}text-primary{% endif %}">
+                            {{ project.taux_financement|floatformat:1 }}%
                         </div>
-                        <span class="badge bg-{% if project.statut == 'VALIDE' %}success{% elif project.statut == 'EN_COURS_FINANCEMENT' %}info{% else %}secondary{% endif %} fs-6">
-                            {{ project.get_statut_display }}
-                        </span>
+                        <div class="text-muted small">{{ project.montant_collecte|intcomma }} FCFA levés</div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Description -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-info-circle me-2"></i>Description du projet
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p class="card-text">{{ project.description|linebreaks }}</p>
-                </div>
-            </div>
-
-            <!-- Informations du promoteur -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-user me-2"></i>Promoteur
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
-                            <i class="fas fa-user fa-lg"></i>
+                
+                <!-- Barre de progression avec seuil -->
+                <div class="progress-wrapper">
+                    <div class="progress-bar-seuil">
+                        <div class="progress-fill-seuil"></div>
+                        
+                        <!-- Indicateur de seuil -->
+                        {% if project.seuil_declenchement %}
+                        <div class="seuil-marker" style="left: {{ project.seuil_declenchement }}%">
+                            <div class="seuil-label">Seuil {{ project.seuil_declenchement }}%</div>
                         </div>
-                        <div>
-                            <h6 class="fw-bold mb-1">{{ project.promoteur.nom_complet }}</h6>
-                            <p class="text-muted mb-0">{{ project.promoteur.profession }}</p>
-                            {% if project.promoteur.entreprise %}
-                            <small class="text-muted">{{ project.promoteur.entreprise }}</small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-2 small">
+                        <span class="text-muted">0%</span>
+                        <span class="text-muted">100%</span>
+                    </div>
+                    
+                    <!-- État du seuil -->
+                    <div class="text-center mt-3">
+                        {% if project.taux_financement >= project.seuil_declenchement %}
+                        <span class="badge bg-success py-2 px-3">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Seuil atteint - Projet peut démarrer !
+                        </span>
+                        {% else %}
+                        <span class="badge bg-warning py-2 px-3">
+                            <i class="fas fa-clock me-2"></i>
+                            Seuil : {{ project.seuil_declenchement }}% requis
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Informations de structure -->
+                <div class="investment-cards">
+                    <div class="investment-card">
+                        <div class="investment-label">Prix unitaire</div>
+                        <div class="investment-value">
+                            {% with prix=project.prix_unitaire|default:project.valeur_part|default:0 %}
+                                {{ prix|floatformat:0|intcomma }} FCFA
+                            {% endwith %}
+                        </div>
+                    </div>
+                    
+                    <div class="investment-card">
+                        <div class="investment-label">Total parts</div>
+                        <div class="investment-value">{{ project.nombre_total_parts|default:0|intcomma }}</div>
+                    </div>
+                    
+                    <div class="investment-card">
+                        <div class="investment-label">Parts vendues</div>
+                        <div class="investment-value">
+                            {% if project.parts_vendues %}
+                                {{ project.parts_vendues|intcomma }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="investment-card">
+                        <div class="investment-label">Parts restantes</div>
+                        <div class="investment-value">
+                            {% if project.parts_restantes %}
+                                {{ project.parts_restantes|intcomma }}
+                            {% else %}
+                                {{ project.nombre_total_parts|default:0|intcomma }}
                             {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Section Documents Obligatoires -->
+            <div class="section-elegant">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+                    <h3 class="section-title">Documents obligatoires soumis</h3>
+                </div>
+                
+                {% if project.documents_obligatoires.all %}
+                <div class="documents-grid">
+                    {% for doc in project.documents_obligatoires.all %}
+                    <div class="document-card">
+                        <div class="document-header">
+                            <div class="document-icon">
+                                {% with fichier_url=doc.fichier.url|lower %}
+                                    {% if ".pdf" in fichier_url %}
+                                        <i class="fas fa-file-pdf"></i>
+                                    {% elif ".jpg" in fichier_url or ".jpeg" in fichier_url or ".png" in fichier_url or ".gif" in fichier_url %}
+                                        <i class="fas fa-file-image"></i>
+                                    {% elif ".doc" in fichier_url or ".docx" in fichier_url %}
+                                        <i class="fas fa-file-word"></i>
+                                    {% elif ".xls" in fichier_url or ".xlsx" in fichier_url %}
+                                        <i class="fas fa-file-excel"></i>
+                                    {% else %}
+                                        <i class="fas fa-file-alt"></i>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                            <div class="document-info">
+                                <div class="document-name">{{ doc.nom }}</div>
+                                <div class="document-type small">{{ doc.get_type_document_display }}</div>
+                                <div class="document-status 
+                                    {% if doc.est_valide %}status-valide
+                                    {% elif doc.est_rejete %}status-rejete
+                                    {% else %}status-attente{% endif %}">
+                                    {% if doc.est_valide %}Validé
+                                    {% elif doc.est_rejete %}Rejeté
+                                    {% else %}En attente{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if doc.description %}
+                        <p class="text-muted small mb-2">{{ doc.description|truncatechars:80 }}</p>
+                        {% endif %}
+                        
+                        {% if doc.est_rejete and doc.motif_rejet %}
+                        <div class="alert alert-danger py-2 px-3 mb-2 small">
+                            <strong>Motif:</strong> {{ doc.motif_rejet }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="document-actions">
+                            {% with fichier_url=doc.fichier.url|lower %}
+                                {% if ".pdf" in fichier_url or ".jpg" in fichier_url or ".jpeg" in fichier_url or ".png" in fichier_url %}
+                                    <a href="{{ doc.fichier.url }}" target="_blank" class="btn-action btn-view">
+                                        <i class="fas fa-eye"></i> Voir
+                                    </a>
+                                {% else %}
+                                    <a href="{{ doc.fichier.url }}" download class="btn-action btn-download">
+                                        <i class="fas fa-download"></i> Télécharger
+                                    </a>
+                                {% endif %}
+                            {% endwith %}
+                            {% if not doc.est_valide %}
+                            <form method="post" action="{% url 'projects:valider_document_obligatoire' doc.id %}" style="display: inline; width: 100%;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-action btn-validate">
+                                    <i class="fas fa-check"></i> Valider
+                                </button>
+                            </form>
+                            {% endif %}
+                            {% if not doc.est_rejete %}
+                            <button class="btn-action btn-reject" onclick="rejectDocumentObligatoire({{ doc.id }})">
+                                <i class="fas fa-times"></i> Rejeter
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-file-alt fa-2x text-muted mb-3"></i>
+                    <p class="text-muted small">Aucun document obligatoire soumis</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Section Description -->
+            <div class="section-elegant">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-align-left"></i>
+                    </div>
+                    <h3 class="section-title">Description du projet</h3>
+                </div>
+                <div class="prose">
+                    {{ project.description|linebreaks }}
+                </div>
+            </div>
+
+            <!-- Section Étapes -->
+            {% if project.etapes.exists %}
+            <div class="section-elegant">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-list-ol"></i>
+                    </div>
+                    <h3 class="section-title">Étapes de réalisation</h3>
+                </div>
+                <div>
+                    {% for etape in project.etapes.all %}
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="me-3">
+                            <div class="rounded-circle {% if etape.terminee %}bg-success{% else %}bg-primary{% endif %} text-white d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px; font-size: 1rem;">
+                                {{ etape.ordre }}
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 border rounded p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="fw-bold mb-0 small">{{ etape.titre }}</h6>
+                                <span class="badge {% if etape.terminee %}bg-success{% else %}bg-warning{% endif %} py-1 px-2 small">
+                                    {% if etape.terminee %}Terminée{% else %}À venir{% endif %}
+                                </span>
+                            </div>
+                            <p class="text-muted small mb-2">{{ etape.description }}</p>
+                            {% if etape.date_prevue %}
+                            <div class="d-flex align-items-center small">
+                                <i class="fas fa-calendar-alt text-muted me-1"></i>
+                                <span class="text-muted">Date prévue: {{ etape.date_prevue|date:"d/m/Y" }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Section Comptes Rendus -->
+            <div class="section-elegant">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h3 class="section-title">Comptes rendus du projet</h3>
+                </div>
+                
+                {% if comptes_rendus %}
+                <div class="comptes-rendus-list">
+                    {% for cr in comptes_rendus %}
+                    <div class="compte-rendu-card">
+                        <div class="compte-rendu-date">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            {{ cr.date_publication|date:"d/m/Y à H:i" }}
+                        </div>
+                        <div class="compte-rendu-avancement">
+                            Avancement: {{ cr.avancement }}%
+                        </div>
+                        <h6 class="fw-bold mb-2">{{ cr.titre }}</h6>
+                        <p class="text-muted small">{{ cr.contenu|linebreaks|truncatechars:200 }}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <small class="text-muted small">
+                                Publié par: {{ cr.projet.promoteur.nom_complet }}
+                            </small>
+                            <a href="{% url 'admin_perso:admin_detail_compte_rendu' cr.id %}" class="btn btn-sm btn-outline-primary py-1 px-2 small">
+                                <i class="fas fa-eye me-1"></i> Détails
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-file-alt fa-2x text-muted mb-3"></i>
+                    <p class="text-muted small">Aucun compte rendu disponible</p>
+                </div>
+                {% endif %}
+                
+                {% if project.statut == 'EN_COURS_EXECUTION' or project.statut == 'TERMINE' %}
+                <div class="text-center mt-3">
+                    <a href="{% url 'admin_perso:liste_comptes_rendus' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-list me-2"></i>Voir tous les comptes rendus
+                    </a>
+                </div>
+                {% endif %}
+            </div>
         </div>
 
         <!-- Sidebar -->
-        <div class="col-lg-4">
-            <!-- Résumé financier -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-pie me-2"></i>Résumé financier
-                    </h5>
+        <div class="sidebar-content">
+            <!-- Actions Administrateur -->
+            <div class="section-elegant">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h3 class="section-title">Actions administratives</h3>
                 </div>
-                <div class="card-body">
-                    <!-- Barre de progression -->
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <span>Financement</span>
-                            <span class="fw-bold">{{ project.taux_financement|floatformat:1 }}%</span>
-                        </div>
-                        <div class="progress" style="height: 10px;">
-                            <div class="progress-bar" role="progressbar" style="width: {{ project.taux_financement }}%"></div>
-                        </div>
-                    </div>
+                <div class="admin-actions-grid">
+                    {% if project.statut == 'EN_ATTENTE_VALIDATION' %}
+                       <button class="btn-admin btn-validate-projet"
+                                onclick="validerProjet({{ project.id }})">
+                            <i class="fas fa-check-circle"></i> Valider
+                        </button>
 
-                    <!-- Statistiques -->
-                    <div class="row text-center mb-3">
-                        <div class="col-6">
-                            <div class="fw-bold text-primary">{{ project.montant_total|floatformat:0 }}</div>
-                            <small class="text-muted">Montant total (FCFA)</small>
-                        </div>
-                        <div class="col-6">
-                            <div class="fw-bold text-success">{{ project.montant_collecte|floatformat:0 }}</div>
-                            <small class="text-muted">Collecté (FCFA)</small>
-                        </div>
-                    </div>
+                        <button class="btn-admin btn-reject-projet"
+                            data-refuser-url="{% url 'admin_perso:refuser_projet' project.id %}"
+                            onclick="rejectProject(this)">
+                            <i class="fas fa-times-circle"></i> Refuser
+                       </button>
+                    {% elif project.statut == 'VALIDE' %}
+                        <form method="post" action="{% url 'projects:lancer_campagne' project.id %}" style="display: inline; width: 100%;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-admin btn-validate-projet" 
+                                    onclick="return confirm('Lancer la campagne de financement ?')">
+                                <i class="fas fa-play-circle"></i> Lancer la campagne
+                            </button>
+                        </form>
+                    {% elif project.statut == 'SUSPENDU' %}
+                        <!-- ▶️ RÉACTIVER -->
+                        <button type="button"
+                                class="btn-admin btn-validate-projet"
+                                onclick="suspendreProjet({{ project.id }})">
+                            <i class="fas fa-play-circle"></i> Réactiver le projet
+                        </button>
 
-                    <div class="row text-center mb-3">
-                        <div class="col-6">
-                            <div class="fw-bold text-warning">{{ project.taux_rendement }}%</div>
-                            <small class="text-muted">Rendement</small>
-                        </div>
-                        <div class="col-6">
-                            <div class="fw-bold text-info">{{ project.duree }}</div>
-                            <small class="text-muted">Durée (mois)</small>
-                        </div>
-                    </div>
+                    {% elif project.statut == 'EN_CAMPAGNE' %}
+                        <!-- ⏸️ SUSPENDRE -->
+                        <button type="button"
+                                class="btn-admin btn-suspend-projet"
+                                onclick="suspendreProjet({{ project.id }})">
+                            <i class="fas fa-pause-circle"></i> Suspendre le projet
+                        </button>
 
-                    <!-- Bouton d'investissement -->
-                    {% if user.is_authenticated and user.est_investisseur and project.est_financeable %}
-                    <div class="d-grid">
-                        <a href="{% url 'investments:create' project.id %}" class="btn btn-success btn-lg">
-                            <i class="fas fa-coins me-2"></i>Investir maintenant
-                        </a>
-                    </div>
-                    {% elif not user.is_authenticated %}
-                    <div class="d-grid">
-                        <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-user-plus me-2"></i>S'inscrire pour investir
-                        </a>
-                    </div>
+                    {% elif project.statut == 'FINANCE' %}
+                       <button type="button"
+                                class="btn-admin btn-validate-projet"
+                                onclick="demarrerExecution({{ project.id }})">
+                            <i class="fas fa-play-circle"></i> Démarrer exécution
+                        </button>
+                    {% endif %}
+                  
+                    {% if project.statut == 'SUSPENDU' %}
+                        <button class="btn-admin btn-disabled"
+                                onclick="showToast('❌ Projet suspendu. Réactivez-le d’abord.', 'warning')"
+                                disabled>
+                            <i class="fas fa-flag-checkered"></i> Terminer le projet
+                        </button>
+                    {% else %}
+                        <button class="btn-admin btn-finish-projet"
+                                onclick="terminerProjet({{ project.id }})">
+                            <i class="fas fa-flag-checkered"></i> Terminer le projet
+                        </button>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Informations temporelles -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-calendar me-2"></i>Calendrier
-                    </h5>
+            <!-- Informations Promoteur -->
+            <div class="promoteur-card">
+                <div class="promoteur-avatar">
+                    {{ project.promoteur.prenom|first|upper }}{{ project.promoteur.nom|first|upper }}
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <small class="text-muted">Date de début</small>
-                        <div class="fw-bold">{{ project.date_debut|date:"d/m/Y" }}</div>
+                <h4 class="promoteur-name">{{ project.promoteur.nom_complet }}</h4>
+                <div class="small text-muted mb-3">{{ project.promoteur.email }}</div>
+                
+                <div class="row text-center mt-3">
+                    <div class="col-6">
+                        <div class="h5 fw-bold text-primary">{{ total_projets_promoteur }}</div>
+                        <div class="small text-gray-600">Projets</div>
                     </div>
-                    <div class="mb-3">
-                        <small class="text-muted">Date de fin</small>
-                        <div class="fw-bold">{{ project.date_fin|date:"d/m/Y" }}</div>
+                    <div class="col-6">
+                        <div class="h5 fw-bold text-success">{{ projets_termines_promoteur }}</div>
+                        <div class="small text-gray-600">Terminés</div>
                     </div>
-                    <div class="mb-3">
-                        <small class="text-muted">Date de création</small>
-                        <div class="fw-bold">{{ project.date_creation|date:"d/m/Y" }}</div>
-                    </div>
+                </div>
+                
+               <div class="text-center mt-3">
+                  <a href="{% url 'admin_perso:details_utilisateur' project.promoteur.id %}?next={{ request.get_full_path }}">
+                    Voir promoteur
+                </a>
+
+
                 </div>
             </div>
 
-            <!-- Actions -->
-            <div class="card">
-                <div class="card-body">
-                    <h6 class="fw-bold mb-3">Actions</h6>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-share me-2"></i>Partager
-                        </button>
-                        <button class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-heart me-2"></i>Ajouter aux favoris
-                        </button>
-                        <button class="btn btn-outline-info btn-sm">
-                            <i class="fas fa-question-circle me-2"></i>Poser une question
-                        </button>
+            <!-- Calendrier -->
+            <div class="section-elegant">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-calendar-alt"></i>
                     </div>
+                    <h3 class="section-title">Calendrier</h3>
+                </div>
+                <div class="d-flex flex-column gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-paper-plane text-primary fa-sm"></i>
+                        <div>
+                            <div class="small text-muted">Soumission</div>
+                            <div class="fw-bold small">{{ project.date_creation|date:"d/m/Y" }}</div>
+                        </div>
+                    </div>
+                    {% if project.date_validation %}
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-check-circle text-success fa-sm"></i>
+                        <div>
+                            <div class="small text-muted">Validation</div>
+                            <div class="fw-bold small">{{ project.date_validation|date:"d/m/Y" }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-play-circle text-info fa-sm"></i>
+                        <div>
+                            <div class="small text-muted">Début prévu</div>
+                            <div class="fw-bold small">{{ project.date_debut|date:"d/m/Y" }}</div>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-flag-checkered text-warning fa-sm"></i>
+                        <div>
+                            <div class="small text-muted">Fin prévue</div>
+                            <div class="fw-bold small">{{ project.date_fin|date:"d/m/Y" }}</div>
+                        </div>
+                    </div>
+                    {% if project.date_debut_execution %}
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-hammer text-primary fa-sm"></i>
+                        <div>
+                            <div class="small text-muted">Début réel</div>
+                            <div class="fw-bold small">{{ project.date_debut_execution|date:"d/m/Y" }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Informations d'investissement -->
+            <div class="section-elegant">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="section-title">Investisseurs</h3>
+                </div>
+                <div class="text-center">
+                    <div class="h3 fw-bold text-primary mb-2">{{ nombre_investisseurs }}</div>
+                    <div class="text-muted small">Investisseurs participants</div>
+                    {% if nombre_investisseurs > 0 %}
+                    <a href="{% url 'admin_perso:liste_investisseurs' project.id %}" class="btn btn-sm btn-outline-primary mt-3">
+                        <i class="fas fa-list me-1"></i>Voir la liste
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal pour refuser le projet -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="rejectForm" method="post">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Refuser le projet</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="motif_refus" class="form-label">Motif de refus *</label>
+                        <textarea class="form-control" id="motif_refus" name="motif_refus" rows="4" required placeholder="Veuillez indiquer le motif de refus..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Confirmer le refus</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour refuser un document -->
+<div class="modal fade" id="rejectDocumentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+           <form id="rejectDocumentForm" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="document_id" id="document_id">
+                
+                <div class="mb-3">
+                    <label class="form-label">Motif du refus</label>
+                    <textarea name="motif" class="form-control" required></textarea>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-danger">
+                        Refuser le document
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div id="toast-container"
+    style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+</div>
+
+
+<script>
+
+function validerProjet(projectId) {
+    fetch(`/admin-perso/projets/${projectId}/valider/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCookie('csrftoken'),
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, "success");
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            showToast(data.message, "error");
+        }
+    })
+    .catch(() => {
+        showToast("Erreur serveur", "error");
+    });
+}
+// Fonctions pour refuser le projet
+function rejectProject(button) {
+    const url = button.dataset.refuserUrl;
+    const rejectForm = document.getElementById('rejectForm');
+    rejectForm.action = url;
+
+    const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+    modal.show();
+}
+
+// Fonctions pour refuser un document
+function rejectDocumentObligatoire(documentId) {
+    const form = document.getElementById('rejectDocumentForm');
+    document.getElementById('document_id').value = documentId;
+
+    // ✅ URL EXACTE SELON TON urls.py
+    form.action = `/admin-perso/documents/${documentId}/refuser/`;
+
+    new bootstrap.Modal(
+        document.getElementById('rejectDocumentModal')
+    ).show();
+}
+
+
+
+function suspendreProjet(projectId) {
+    fetch(`/admin-perso/projets/${projectId}/suspendre/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, "warning");
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            showToast(data.message, "error");
+        }
+    })
+    .catch(() => showToast("Erreur serveur", "error"));
+}
+
+function terminerProjet(projectId) {
+    fetch(`/admin-perso/projets/${projectId}/terminer/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, "success");
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            showToast(data.message, "error");
+        }
+    });
+}
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation de la barre de progression
+    const progressBar = document.querySelector('.progress-fill-seuil');
+    if (progressBar) {
+        const finalWidth = progressBar.style.width;
+        progressBar.style.width = '0%';
+        
+        setTimeout(() => {
+            progressBar.style.width = finalWidth;
+        }, 500);
+    }
+    
+    // Gestion des formulaires
+    const rejectForm = document.getElementById('rejectForm');
+    if (rejectForm) {
+        rejectForm.addEventListener('submit', function(e) {
+            const motif = document.getElementById('motif_refus').value.trim();
+            if (!motif) {
+                e.preventDefault();
+                alert('Veuillez saisir un motif de refus');
+            }
+        });
+    }
+    
+    const rejectDocForm = document.getElementById('rejectDocumentForm');
+    if (rejectDocForm) {
+        rejectDocForm.addEventListener('submit', function(e) {
+            const motif = document.getElementById('motif_rejet_document').value.trim();
+            if (!motif) {
+                e.preventDefault();
+                alert('Veuillez saisir un motif de rejet');
+            }
+        });
+    }
+});
+
+function demarrerExecution(projectId) {
+    fetch(`/admin-perso/projets/${projectId}/demarrer-execution/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken"),
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, "success");
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            showToast(data.message, "error");
+        }
+    })
+    .catch(() => showToast("Erreur serveur", "error"));
+}
+
+function showToast(message, type="success") {
+    const toast = document.createElement("div");
+
+    const colors = {
+        success: "#16a34a",
+        error: "#dc2626",
+        warning: "#f59e0b",
+        info: "#2563eb"
+    };
+
+    toast.style.background = colors[type] || colors.success;
+    toast.style.color = "white";
+    toast.style.padding = "12px 18px";
+    toast.style.marginBottom = "10px";
+    toast.style.borderRadius = "8px";
+    toast.style.boxShadow = "0 6px 15px rgba(0,0,0,0.2)";
+    toast.style.fontWeight = "600";
+    toast.style.opacity = "0";
+    toast.style.transition = "opacity 0.4s ease";
+
+    toast.innerText = message;
+
+    document.getElementById("toast-container").appendChild(toast);
+
+    setTimeout(() => toast.style.opacity = "1", 50);
+
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 400);
+    }, 3000); // ⏱ disparaît seul
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
 {% endblock %}

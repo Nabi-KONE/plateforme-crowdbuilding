@@ -1,0 +1,649 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Mes Investissements - CrowdBuilding{% endblock %}
+
+{% block content %}
+<style>
+    /* STYLES MODERNES ET ÉLÉGANTS */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #11998e, #38ef7d);
+        --warning-gradient: linear-gradient(135deg, #f7971e, #ffd200);
+        --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        --card-shadow-hover: 0 15px 50px rgba(0, 0, 0, 0.12);
+        --border-radius: 20px;
+        --transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    }
+
+    /* Header élégant */
+    .page-header {
+        background: linear-gradient(135deg, #1a237e 0%, #311b92 100%);
+        border-radius: var(--border-radius);
+        padding: 40px;
+        margin-bottom: 40px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        border: none;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M49 67c8.484 0 15-6.516 15-15s-6.516-15-15-15-15 6.516-15 15 6.516 15 15 15zm96 50c8.484 0 15-6.516 15-15s-6.516-15-15-15-15 6.516-15 15 6.516 15 15 15zm-86-14c3.657 0 6-2.343 6-6s-2.343-6-6-6-6 2.343-6 6 2.343 6 6 6zm126 62c3.657 0 6-2.343 6-6s-2.343-6-6-6-6 2.343-6 6 2.343 6 6 6zM68 180c3.657 0 6-2.343 6-6s-2.343-6-6-6-6 2.343-6 6 2.343 6 6 6zm112-152c3.657 0 6-2.343 6-6s-2.343-6-6-6-6 2.343-6 6 2.343 6 6 6zM24 172c4.862 0 8-3.138 8-8s-3.138-8-8-8-8 3.138-8 8 3.138 8 8 8zm56-130c4.862 0 8-3.138 8-8s-3.138-8-8-8-8 3.138-8 8 3.138 8 8 8zm46-22c6.072 0 10-3.928 10-10s-3.928-10-10-10-10 3.928-10 10 3.928 10 10 10zm-12 120c4.862 0 8-3.138 8-8s-3.138-8-8-8-8 3.138-8 8 3.138 8 8 8zm58 44c6.072 0 10-3.928 10-10s-3.928-10-10-10-10 3.928-10 10 3.928 10 10 10zM64 126c6.072 0 10-3.928 10-10s-3.928-10-10-10-10 3.928-10 10 3.928 10 10 10zm114-26c6.072 0 10-3.928 10-10s-3.928-10-10-10-10 3.928-10 10 3.928 10 10 10zm-18-42c2.43 0 4-1.57 4-4s-1.57-4-4-4-4 1.57-4 4 1.57 4 4 4zM120 182c2.43 0 4-1.57 4-4s-1.57-4-4-4-4 1.57-4 4 1.57 4 4 4zM70 82c2.43 0 4-1.57 4-4s-1.57-4-4-4-4 1.57-4 4 1.57 4 4 4zM24 120c2.43 0 4-1.57 4-4s-1.57-4-4-4-4 1.57-4 4 1.57 4 4 4z' fill='%23ffffff' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.4;
+    }
+
+    .header-badge {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 50px;
+        padding: 8px 20px;
+        display: inline-block;
+        margin-bottom: 15px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Tableau moderne */
+    .investment-table {
+        background: white;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .table-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px 30px;
+        border-bottom: none;
+    }
+
+    .table-body {
+        padding: 0;
+    }
+
+    /* Style pour les en-têtes de ligne (titres des colonnes) */
+    .table-header-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+        align-items: center;
+        padding: 20px 30px;
+        background: linear-gradient(135deg, #f8f9ff 0%, #f1f3f9 100%);
+        border-bottom: 2px solid #e0e5ff;
+        font-weight: 600;
+        color: #1a237e;
+    }
+
+    .table-row {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+        align-items: center;
+        padding: 20px 30px;
+        border-bottom: 1px solid #f1f3f9;
+        transition: var(--transition);
+    }
+
+    .table-row:hover {
+        background-color: #f8f9ff;
+        transform: translateX(5px);
+    }
+
+    .table-row:last-child {
+        border-bottom: none;
+    }
+
+    /* Carte de projet */
+    .project-card {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .project-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 2px solid #fff;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: var(--transition);
+    }
+
+    .project-image:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .project-info {
+        flex: 1;
+    }
+
+    .project-title {
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 4px;
+        display: block;
+    }
+
+    .project-location {
+        font-size: 0.85rem;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    /* Badges de statut */
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .status-confirmed {
+        background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.05));
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+
+    .status-pending {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05));
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.2);
+    }
+
+    .status-cancelled {
+        background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05));
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    .status-rejected {
+        background: linear-gradient(135deg, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.05));
+        color: #6c757d;
+        border: 1px solid rgba(108, 117, 125, 0.2);
+    }
+
+    /* Badge de parts */
+    .parts-badge {
+        background: linear-gradient(135deg, rgba(138, 35, 135, 0.1), rgba(233, 64, 87, 0.1));
+        color: #8A2387;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: 1px solid rgba(138, 35, 135, 0.2);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Montant */
+    .amount-display {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #1a237e;
+    }
+
+    .currency {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-weight: normal;
+    }
+
+    /* Boutons d'action */
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .action-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        transition: var(--transition);
+        text-decoration: none;
+    }
+
+    .action-btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .action-btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .action-btn-secondary {
+        background: white;
+        border: 1px solid #e0e0e0;
+        color: #495057;
+    }
+
+    .action-btn-secondary:hover {
+        border-color: #667eea;
+        color: #667eea;
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    /* État vide */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: #6c757d;
+    }
+
+    .empty-icon {
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 30px;
+        font-size: 3rem;
+        color: #adb5bd;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Bouton explorer */
+    .explore-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 15px;
+        padding: 15px 30px;
+        font-weight: 600;
+        font-size: 1rem;
+        color: white;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: var(--transition);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+    }
+
+    .explore-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+
+    /* Compteur */
+    .investment-count {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 50px;
+        padding: 10px 20px;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .table-header-row,
+        .table-row {
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+        }
+        
+        .parts-column {
+            display: none;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .page-header {
+            padding: 30px 25px;
+        }
+        
+        .table-header-row {
+            display: none !important;
+        }
+        
+        .table-row {
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 25px;
+            position: relative;
+        }
+        
+        /* Ajout des labels pour mobile avec data-attributes */
+        .table-row > div {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            width: 100%;
+        }
+        
+        /* Projet card spécifique */
+        .table-row > div:first-child {
+            align-items: center;
+            text-align: center;
+        }
+        
+        .project-card {
+            flex-direction: column;
+            text-align: center;
+            gap: 10px;
+            width: 100%;
+        }
+        
+        .project-image {
+            width: 80px;
+            height: 80px;
+        }
+        
+        /* Labels pour mobile */
+        .table-row > div:not(:first-child)::before {
+            content: attr(data-label);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .action-buttons {
+            justify-content: center;
+            width: 100%;
+        }
+        
+        /* Cache le label pour la colonne Actions */
+        .table-row > div:last-child::before {
+            display: none;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            margin: -20px -20px 40px -20px;
+        }
+        
+        .table-header {
+            padding: 20px;
+        }
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInUp 0.5s ease forwards;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- EN-TÊTE PRINCIPAL -->
+    <div class="page-header animate-fade-in-up">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="header-badge">
+                    <i class="fas fa-chart-pie me-2"></i>CONSULTATION DÉTAILLÉE
+                </span>
+                <h1 class="display-5 fw-bold mb-3">📋 Mes Investissements</h1>
+                <p class="lead mb-0 opacity-90">Liste exhaustive de vos participations aux projets CrowdBuilding</p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-lg-0 mt-4">
+                <div class="d-flex flex-column align-items-lg-end gap-3">
+                    <span class="investment-count">
+                        <i class="fas fa-layer-group me-2"></i>
+                        {{ investissements.count }} investissement{{ investissements.count|pluralize }}
+                    </span>
+                    <a href="{% url 'projects:list' %}" class="explore-btn">
+                        <i class="fas fa-building me-2"></i>
+                        Découvrir de nouveaux projets
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLEAU DES INVESTISSEMENTS -->
+    <div class="investment-table animate-fade-in-up" style="animation-delay: 0.2s">
+        <!-- Header du tableau -->
+        <div class="table-header">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-check me-2"></i>Historique de vos participations
+                    </h5>
+                </div>
+                <div class="col-auto">
+                    <small class="opacity-75">Liste complète • Tri chronologique</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Corps du tableau -->
+        <div class="table-body">
+            {% if investissements %}
+                <!-- En-têtes des colonnes (visibles sur desktop) -->
+                <div class="table-header-row d-none d-lg-grid">
+                    <div class="fw-bold">Projet</div>
+                    <div class="fw-bold text-center parts-column">Parts détenues</div>
+                    <div class="fw-bold text-center">Montant investi</div>
+                    <div class="fw-bold text-center">Date</div>
+                    <div class="fw-bold text-center">Statut</div>
+                    <div class="fw-bold text-center">Actions</div>
+                </div>
+
+                <!-- Lignes des investissements -->
+                {% for investissement in investissements %}
+                <div class="table-row">
+                    <!-- Colonne Projet -->
+                    <div data-label="Projet">
+                        <div class="project-card">
+                            {% if investissement.projet.image_principale %}
+                            <img src="{{ investissement.projet.image_principale.url }}" 
+                                 class="project-image"
+                                 alt="{{ investissement.projet.titre }}"
+                                 loading="lazy">
+                            {% else %}
+                            <div class="project-image d-flex align-items-center justify-content-center"
+                                 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <i class="fas fa-building text-white fs-4"></i>
+                            </div>
+                            {% endif %}
+                            <div class="project-info">
+                                <a href="{% url 'projects:detail' investissement.projet.id %}" 
+                                   class="project-title text-decoration-none">
+                                    {{ investissement.projet.titre|truncatechars:40 }}
+                                </a>
+                                <div class="project-location">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    {{ investissement.projet.localisation|truncatechars:30 }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Colonne Parts (masquée sur mobile) -->
+                    <div class="text-center parts-column" data-label="Parts détenues">
+                        <span class="parts-badge">
+                            <i class="fas fa-chart-pie"></i>
+                            {{ investissement.nombre_parts }} part{{ investissement.nombre_parts|pluralize:"s" }}
+                        </span>
+                    </div>
+
+                    <!-- Colonne Montant -->
+                    <div class="text-center" data-label="Montant investi">
+                        <div class="amount-display">
+                            {{ investissement.montant|floatformat:0|intcomma }}
+                            <span class="currency">FCFA</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Colonne Date -->
+                    <div class="text-center" data-label="Date">
+                        <small class="text-muted">
+                            <i class="far fa-calendar-alt me-1"></i>
+                            {{ investissement.date_investissement|date:"d/m/Y" }}
+                        </small>
+                    </div>
+
+                    <!-- Colonne Statut -->
+                    <div class="text-center" data-label="Statut">
+                        {% if investissement.statut == 'VALIDE' %}
+                            <span class="status-badge status-confirmed">
+                                <i class="fas fa-check-circle"></i>
+                                Confirmé
+                            </span>
+                        {% elif investissement.statut == 'EN_ATTENTE' %}
+                            <span class="status-badge status-pending">
+                                <i class="fas fa-clock"></i>
+                                En attente
+                            </span>
+                        {% elif investissement.statut == 'REJETE' %}
+                            <span class="status-badge status-cancelled">
+                                <i class="fas fa-times-circle"></i>
+                                Rejeté
+                            </span>
+                        {% else %}
+                            <span class="status-badge status-rejected">
+                                <i class="fas fa-question-circle"></i>
+                                {{ investissement.statut }}
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Colonne Actions -->
+                    <div class="text-center" data-label="">
+                        <div class="action-buttons">
+                            <a href="{% url 'projects:detail' investissement.projet.id %}" 
+                               class="action-btn action-btn-primary"
+                               title="Voir le projet">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'investments:detail' investissement.id %}" 
+                               class="action-btn action-btn-secondary"
+                               title="Détails de l'investissement">
+                                <i class="fas fa-info-circle"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Pied de tableau -->
+                <div class="border-top py-4 px-4 text-center bg-light">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Affichage de {{ investissements.count }} investissement{{ investissements.count|pluralize }}
+                            </small>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'investments:dashboard_investisseur' %}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-dashboard me-1"></i>
+                                Retour au tableau de bord
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            {% else %}
+                <!-- État vide -->
+                <div class="empty-state">
+                    <div class="empty-icon mb-4">
+                        <i class="fas fa-inbox"></i>
+                    </div>
+                    <h4 class="fw-bold mb-3">Aucun investissement enregistré</h4>
+                    <p class="text-muted mb-4">
+                        Vous n'avez pas encore participé à des projets d'investissement.
+                        <br>
+                        Découvrez nos opportunités immobilières et devenez actionnaire dès aujourd'hui.
+                    </p>
+                    <a href="{% url 'projects:list' %}" class="explore-btn">
+                        <i class="fas fa-building me-2"></i>
+                        Explorer les projets disponibles
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript pour les interactions -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation au défilement
+    const observerOptions = {
+        threshold: 0.05,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-fade-in-up');
+            }
+        });
+    }, observerOptions);
+
+    // Observer les éléments
+    document.querySelectorAll('.investment-table').forEach(el => {
+        observer.observe(el);
+    });
+
+    // Effet de survol amélioré pour les lignes
+    const tableRows = document.querySelectorAll('.table-row');
+    tableRows.forEach(row => {
+        row.addEventListener('mouseenter', function() {
+            this.style.boxShadow = '0 10px 40px rgba(0, 0, 0, 0.05)';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.boxShadow = 'none';
+        });
+    });
+
+    // Animation des images au survol
+    const projectImages = document.querySelectorAll('.project-image');
+    projectImages.forEach(img => {
+        img.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.1)';
+        });
+        
+        img.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}

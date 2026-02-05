@@ -46,16 +46,22 @@ class UtilisateurAdmin(BaseUserAdmin):
     
     def get_role_actif(self, obj):
         """Afficher le rôle actif de l'utilisateur"""
-        role = obj.get_role_actif()
-        if role:
-            color = 'green' if role.statut == 'VALIDE' else 'orange'
-            return format_html(
-                '<span style="color: {};">{}</span>',
-                color,
-                f"{role.get_type_display()} ({role.get_statut_display()})"
-            )
-        return 'Aucun rôle'
+        try:
+            # CORRECTION : Utiliser directement la relation roles
+            role_actif = obj.roles.filter(role_actif=True).first()
+            if role_actif:
+                color = 'green' if role_actif.statut == 'VALIDE' else 'orange'
+                return format_html(
+                    '<span style="color: {};">{}</span>',
+                    color,
+                    f"{role_actif.get_type_display()} ({role_actif.get_statut_display()})"
+                )
+            return 'Aucun rôle'
+        except Exception as e:
+            return f"Erreur: {str(e)}"
+    
     get_role_actif.short_description = 'Rôle actif'
+    get_role_actif.admin_order_field = 'roles__type'
 
 
 @admin.register(Role)
@@ -86,7 +92,8 @@ class RoleAdmin(admin.ModelAdmin):
         """Action pour valider plusieurs rôles"""
         count = 0
         for role in queryset.filter(statut='EN_ATTENTE_VALIDATION'):
-            role.valider()
+            role.statut = 'VALIDE'
+            role.save()
             count += 1
         
         self.message_user(request, f'{count} rôle(s) validé(s) avec succès.')
@@ -96,7 +103,8 @@ class RoleAdmin(admin.ModelAdmin):
         """Action pour refuser plusieurs rôles"""
         count = 0
         for role in queryset.filter(statut='EN_ATTENTE_VALIDATION'):
-            role.refuser()
+            role.statut = 'REFUSE'
+            role.save()
             count += 1
         
         self.message_user(request, f'{count} rôle(s) refusé(s).')
@@ -106,7 +114,8 @@ class RoleAdmin(admin.ModelAdmin):
         """Action pour suspendre plusieurs rôles"""
         count = 0
         for role in queryset.filter(statut='VALIDE'):
-            role.suspendre()
+            role.statut = 'SUSPENDU'
+            role.save()
             count += 1
         
         self.message_user(request, f'{count} rôle(s) suspendu(s).')

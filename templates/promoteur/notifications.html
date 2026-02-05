@@ -1,0 +1,289 @@
+{% extends 'promoteur/base_promoteur.html' %}
+{% load static %}
+
+{% block title %}Notifications - Promoteur{% endblock %}
+
+{% block page_title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- En-tête -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-1">Notifications</h1>
+                    <p class="text-muted mb-0">Restez informé de l'activité de vos projets</p>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if unread_count > 0 %}
+                    <form method="POST" action="{% url 'notifications:mark_all_read' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-check-double me-2"></i>
+                            Tout marquer comme lu
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body py-3">
+                    <div class="d-flex align-items-center gap-4">
+                        <span class="fw-medium">Filtrer :</span>
+                        <div class="btn-group" role="group">
+                            <a href="?filter=toutes" class="btn btn-outline-primary active">Toutes</a>
+                            <a href="?filter=non_lues" class="btn btn-outline-primary">Non lues</a>
+                            <a href="?filter=projets" class="btn btn-outline-primary">Projets</a>
+                            <a href="?filter=investissements" class="btn btn-outline-primary">Investissements</a>
+                        </div>
+                        <span class="text-muted ms-auto">
+                            {{ total_count }} notification{{ total_count|pluralize }} trouvée{{ total_count|pluralize }}
+                            {% if unread_count > 0 %}
+                            · <span class="text-primary">{{ unread_count }} non lue{{ unread_count|pluralize }}</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des notifications -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-0">
+                    {% if notifications %}
+                        <div class="list-group list-group-flush">
+                            {% for notification in notifications %}
+                            <div class="list-group-item {% if not notification.lue %}bg-light{% endif %} py-4">
+                                <div class="d-flex align-items-start">
+                                    <!-- Icône selon le type -->
+                                    <div class="me-3 mt-1">
+                                        {% if notification.type == 'VALIDATION_PROJET' %}
+                                        <i class="fas fa-check-circle text-success fa-lg"></i>
+                                        {% elif notification.type == 'NOUVEL_INVESTISSEMENT' %}
+                                        <i class="fas fa-euro-sign text-success fa-lg"></i>
+                                        {% elif notification.type == 'PROJET_FINANCE' %}
+                                        <i class="fas fa-trophy text-warning fa-lg"></i>
+                                        {% elif notification.type == 'COMPTE_RENDU_PUBLIE' %}
+                                        <i class="fas fa-comment text-info fa-lg"></i>
+                                        {% else %}
+                                        <i class="fas fa-bell text-primary fa-lg"></i>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Contenu -->
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-start mb-1">
+                                            <h6 class="mb-0 fw-bold">{{ notification.titre }}</h6>
+                                            <small class="text-muted">{{ notification.date_creation|date:"d/m/Y" }}</small>
+                                        </div>
+                                        <p class="mb-2 text-muted">{{ notification.contenu|linebreaksbr }}</p>
+                                        {% if not notification.lue %}
+                                        <button 
+                                            class="btn btn-sm btn-outline-secondary"
+                                            onclick="markAsRead({{ notification.id }}, this)">
+                                            Marquer comme lu
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <!-- État vide -->
+                        <div class="text-center py-5">
+                            <i class="fas fa-bell fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Aucune notification</h5>
+                            <p class="text-muted">Vous serez notifié dès qu'il y aura du nouveau sur vos projets.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paramètres de notification -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cog me-2"></i>
+                        Paramètres de notification
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Notifications par email</h6>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    {{ form.email_projet_valide }}
+                                    <label class="form-check-label" for="{{ form.email_projet_valide.id_for_label }}">
+                                        Projet validé
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    {{ form.email_nouvel_investissement }}
+                                    <label class="form-check-label" for="{{ form.email_nouvel_investissement.id_for_label }}">
+                                        Nouvel investissement
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    {{ form.email_objectif_atteint }}
+                                    <label class="form-check-label" for="{{ form.email_objectif_atteint.id_for_label }}">
+                                        Objectif de financement atteint
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h6 class="mb-3">&nbsp;</h6>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    {{ form.email_nouveau_commentaire }}
+                                    <label class="form-check-label" for="{{ form.email_nouveau_commentaire.id_for_label }}">
+                                        Nouveau commentaire
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    {{ form.email_mise_a_jour }}
+                                    <label class="form-check-label" for="{{ form.email_mise_a_jour.id_for_label }}">
+                                        Mises à jour de la plateforme
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="mb-3">Résumés automatiques</h6>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    {{ form.resume_quotidien }}
+                                    <label class="form-check-label" for="{{ form.resume_quotidien.id_for_label }}">
+                                        Résumé quotidien
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check form-switch mb-3">
+                                    {{ form.resume_hebdomadaire }}
+                                    <label class="form-check-label" for="{{ form.resume_hebdomadaire.id_for_label }}">
+                                        Résumé hebdomadaire (recommandé)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                Enregistrer les paramètres
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Fonction pour marquer une notification comme lue
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                cookie = cookie.trim();
+                if (cookie.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function markAsRead(notificationId, button) {
+        fetch(`/notifications/mark-read/${notificationId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const notificationItem = button.closest('.list-group-item');
+                notificationItem.classList.remove('bg-light');
+                button.remove();
+                
+                showToast('success', 'Notification marquée comme lue.');
+            } else {
+                showToast('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('error', 'Erreur lors du marquage de la notification.');
+        });
+    }
+
+    // Fonction pour afficher les toasts
+    function showToast(type, message) {
+        const toastHtml = `
+            <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" 
+                 role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle me-2"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        
+        const toastContainer = document.getElementById('toast-container') || createToastContainer();
+        toastContainer.innerHTML += toastHtml;
+        
+        const toastElement = toastContainer.lastElementChild;
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+    }
+
+    function createToastContainer() {
+        const container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container position-fixed top-0 end-0 p-3';
+        container.style.zIndex = '9999';
+        document.body.appendChild(container);
+        return container;
+    }
+});
+</script>
+{% endblock %}

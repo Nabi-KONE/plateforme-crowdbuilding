@@ -1,0 +1,61 @@
+<div class="col-12">
+    <div class="card">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <!-- Barre de recherche -->
+                <div class="col-md-4 mb-2 mb-md-0">
+                    <div class="input-group search-box">
+                        <input type="text" class="form-control" placeholder="Rechercher un utilisateur..." 
+                               id="searchInput" value="{{ search_query }}"
+                               aria-label="Rechercher un utilisateur">
+                        <button class="btn btn-outline-primary" type="button" id="searchButton">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filtre Statut -->
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <select class="form-select filter-select" id="statutFilter">
+                        <option value="">Tous les statuts</option>
+                        <option value="EN_ATTENTE_VALIDATION" {% if statut_filter == "EN_ATTENTE_VALIDATION" %}selected{% endif %}>
+                            En attente
+                        </option>
+                        <option value="VALIDE" {% if statut_filter == "VALIDE" %}selected{% endif %}>
+                            Validé
+                        </option>
+                        <option value="REFUSE" {% if statut_filter == "REFUSE" %}selected{% endif %}>
+                            Refusé
+                        </option>
+                        <option value="SUSPENDU" {% if statut_filter == "SUSPENDU" %}selected{% endif %}>
+                            Suspendu
+                        </option>
+                    </select>
+                </div>
+                
+                <!-- Filtre Rôle -->
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <select class="form-select filter-select" id="roleFilter">
+                        <option value="">Tous les rôles</option>
+                        <option value="INVESTISSEUR" {% if role_filter == "INVESTISSEUR" %}selected{% endif %}>
+                            Investisseur
+                        </option>
+                        <option value="PROMOTEUR" {% if role_filter == "PROMOTEUR" %}selected{% endif %}>
+                            Promoteur
+                        </option>
+                        <option value="ADMINISTRATEUR" {% if role_filter == "ADMINISTRATEUR" %}selected{% endif %}>
+                            Administrateur
+                        </option>
+                    </select>
+                </div>
+                
+                <!-- Compteur de résultats -->
+                <div class="col-md-2 text-end">
+                    <span class="text-muted small" id="resultCount">
+                        {{ count_resultats }} utilisateur{{ count_resultats|pluralize:"s" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

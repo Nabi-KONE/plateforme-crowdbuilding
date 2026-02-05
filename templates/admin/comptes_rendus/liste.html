@@ -1,0 +1,619 @@
+<!-- templates/admin/comptes_rendus/liste.html -->
+{% extends 'admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Validation des Comptes Rendus - Admin{% endblock %}
+
+{% block page_title %}Validation des Comptes Rendus{% endblock %}
+{% block page_subtitle %}Vérifiez et validez les comptes rendus soumis par les promoteurs{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Styles spécifiques à la gestion des comptes rendus */
+    .statut-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .statut-attente {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+    
+    .statut-valide {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+    
+    .statut-rejete {
+        background: #FEE2E2;
+        color: #991B1B;
+    }
+    
+    .statut-modification {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+    
+    .filtres-avances {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .filtres-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .btn-filtre-avance {
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+    
+    .table-comptes-rendus {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .table th {
+        background: #F8FAFC;
+        font-weight: 600;
+        color: #475569;
+        border-bottom: 2px solid #E2E8F0;
+        padding: 15px;
+    }
+    
+    .table td {
+        padding: 15px;
+        vertical-align: middle;
+    }
+    
+    .projet-info {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .projet-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: #EFF6FF;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: var(--primary-blue);
+        flex-shrink: 0;
+    }
+    
+    .projet-details {
+        flex: 1;
+    }
+    
+    .projet-titre {
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 2px;
+        font-size: 14px;
+    }
+    
+    .projet-promoteur {
+        color: var(--text-gray);
+        font-size: 12px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-action-table {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #E2E8F0;
+        background: white;
+        color: var(--text-gray);
+        transition: all 0.2s ease;
+    }
+    
+    .btn-action-table:hover {
+        background: var(--light-blue);
+        color: var(--primary-blue);
+        border-color: var(--primary-blue);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+    }
+    
+    .empty-state-icon {
+        font-size: 48px;
+        color: #CBD5E1;
+        margin-bottom: 15px;
+    }
+    
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border-left: 4px solid;
+    }
+    
+    .stat-card.total {
+        border-left-color: #6366F1;
+    }
+    
+    .stat-card.attente {
+        border-left-color: #F59E0B;
+    }
+    
+    .stat-card.valide {
+        border-left-color: #10B981;
+    }
+    
+    .stat-card.rejete {
+        border-left-color: #EF4444;
+    }
+    
+    .stat-card .stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    
+    .stat-card .stat-label {
+        color: var(--text-gray);
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block admin_main_content %}
+    <!-- Cartes de statistiques -->
+    <div class="stats-cards">
+        <div class="stat-card total">
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-label">Total des comptes rendus</div>
+        </div>
+        <div class="stat-card attente">
+            <div class="stat-value">{{ stats.en_attente }}</div>
+            <div class="stat-label">En attente de validation</div>
+            {% if stats.attente_recent > 0 %}
+            <div class="small text-warning mt-1">
+                {{ stats.attente_recent }} soumis depuis moins de 3 jours
+            </div>
+            {% endif %}
+        </div>
+        <div class="stat-card valide">
+            <div class="stat-value">{{ stats.valides }}</div>
+            <div class="stat-label">Comptes rendus validés</div>
+        </div>
+        <div class="stat-card rejete">
+            <div class="stat-value">{{ stats.rejetes }}</div>
+            <div class="stat-label">Comptes rendus rejetés</div>
+        </div>
+    </div>
+
+    <!-- Filtres avancés -->
+    <div class="filtres-avances">
+        <div class="filtres-header">
+            <h5 class="mb-0">Filtres de recherche</h5>
+            <button class="btn btn-outline-secondary btn-sm btn-filtre-avance" type="button" 
+                    data-bs-toggle="collapse" data-bs-target="#filtresAvances">
+                Filtres avancés
+            </button>
+        </div>
+        
+        <!-- Filtres de base -->
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Statut</label>
+                <select name="statut" class="form-select">
+                    <option value="">Tous les statuts</option>
+                    {% for value, label in statuts_choices %}
+                    <option value="{{ value }}" {% if statut_filter == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label class="form-label">Projet</label>
+                <select name="projet" class="form-select">
+                    <option value="">Tous les projets</option>
+                    {% for projet in projets %}
+                    <option value="{{ projet.id }}" {% if projet_filter == projet.id|stringformat:"i" %}selected{% endif %}>
+                        {{ projet.titre|truncatechars:40 }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label class="form-label">Recherche</label>
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Titre, promoteur, contenu..." value="{{ search_query }}">
+            </div>
+            
+            <!-- Filtres avancés (collapse) -->
+            <div class="collapse" id="filtresAvances">
+                <div class="row g-3 mt-2 pt-3 border-top">
+                    <div class="col-md-3">
+                        <label class="form-label">Date de début</label>
+                        <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">Date de fin</label>
+                        <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">Tri par</label>
+                        <select name="sort" class="form-select">
+                            <option value="-date_creation">Date (récent)</option>
+                            <option value="date_creation">Date (ancien)</option>
+                            <option value="-avancement">Avancement (décroissant)</option>
+                            <option value="avancement">Avancement (croissant)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Boutons d'action -->
+            <div class="col-12">
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>Appliquer les filtres
+                    </button>
+                    
+                    <a href="{% url 'admin_perso:liste_comptes_rendus' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>Réinitialiser
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tableau des comptes rendus -->
+    <div class="table-comptes-rendus">
+        {% if page_obj %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Projet</th>
+                            <th>Étape</th>
+                            <th>Avancement</th>
+                            <th>Date soumission</th>
+                            <th>Statut</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cr in page_obj %}
+                        <tr>
+                            <td>
+                                <div class="projet-info">
+                                    <div class="projet-avatar">
+                                        {{ cr.projet.titre|first }}
+                                    </div>
+                                    <div class="projet-details">
+                                        <div class="projet-titre">
+                                            {{ cr.projet.titre|truncatechars:40 }}
+                                        </div>
+                                        <div class="projet-promoteur">
+                                            {{ cr.projet.promoteur.nom_complet }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if cr.etape %}
+                                    <span class="badge bg-light text-dark">
+                                        {{ cr.etape.titre|truncatechars:20 }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted small">Non spécifiée</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress" style="width: 80px; height: 8px;">
+                                        <div class="progress-bar 
+                                            {% if cr.avancement < 25 %}bg-danger
+                                            {% elif cr.avancement < 50 %}bg-warning
+                                            {% elif cr.avancement < 75 %}bg-info
+                                            {% else %}bg-success{% endif %}" 
+                                            style="width: {{ cr.avancement }}%">
+                                        </div>
+                                    </div>
+                                    <span class="fw-semibold">{{ cr.avancement|floatformat:0 }}%</span>
+                                </div>
+                            </td>
+                            <td>
+                                {{ cr.date_creation|date:"d/m/Y H:i" }}
+                                <div class="small text-muted">
+                                    {{ cr.date_creation|timesince }}
+                                </div>
+                            </td>
+                            <td>
+                                {% if cr.statut == 'EN_ATTENTE_VALIDATION' %}
+                                    <span class="statut-badge statut-attente">
+                                        <i class="fas fa-clock"></i> En attente
+                                    </span>
+                                {% elif cr.statut == 'VALIDE' %}
+                                    <span class="statut-badge statut-valide">
+                                        <i class="fas fa-check-circle"></i> Validé
+                                    </span>
+                                {% elif cr.statut == 'REJETE' %}
+                                    <span class="statut-badge statut-rejete">
+                                        <i class="fas fa-times-circle"></i> Rejeté
+                                    </span>
+                                {% elif cr.statut == 'A_MODIFIER' %}
+                                    <span class="statut-badge statut-modification">
+                                        <i class="fas fa-edit"></i> À modifier
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="action-buttons">
+                                    <a href="{% url 'admin_perso:admin_detail_compte_rendu' cr.id %}" 
+                                       class="btn-action-table" title="Consulter">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    {% if cr.statut == 'EN_ATTENTE_VALIDATION' %}
+                                    <button class="btn-action-table text-success"
+                                            title="Valider"
+                                            data-url="{% url 'admin_perso:valider_compte_rendu' cr.id %}"
+                                            onclick="validerCompteRendu(this)">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+
+                                    
+                                    <button class="btn-action-table text-danger"
+                                            title="Rejeter"
+                                            data-url="{% url 'admin_perso:rejeter_compte_rendu' cr.id %}"
+                                            onclick="rejeterCompteRendu(this)">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    {% endif %}
+                                    <a href="{% url 'admin_perso:comptes_rendus_projet' cr.projet.id %}" 
+                                       class="btn-action-table" title="Voir tous les CR du projet">
+                                        <i class="fas fa-list"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <div class="p-3 border-top">
+                <nav aria-label="Pagination">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+            
+        {% else %}
+            <!-- État vide -->
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h4 class="mb-3">Aucun compte rendu trouvé</h4>
+                <p class="text-muted mb-4">
+                    {% if statut_filter or projet_filter or search_query or date_from or date_to %}
+                        Aucun compte rendu ne correspond à vos critères de recherche.
+                    {% else %}
+                        Aucun compte rendu n'a été soumis pour validation.
+                    {% endif %}
+                </p>
+                <a href="{% url 'admin_perso:liste_comptes_rendus' %}" class="btn btn-primary">
+                    <i class="fas fa-refresh me-2"></i>Réinitialiser les filtres
+                </a>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Fonction pour valider un compte rendu
+function validerCompteRendu(btn) {
+    const url = btn.dataset.url;
+
+    if (!confirm('Valider ce compte rendu ?')) return;
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message);
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('danger', data.message);
+        }
+    });
+}
+
+// Fonction pour rejeter un compte rendu
+function rejeterCompteRendu(btn) {
+    const url = btn.dataset.url;
+
+    const motif = prompt(
+        "❌ MOTIF DE REJET (minimum 10 caractères)\n\n" +
+        "Ce message sera envoyé au promoteur :"
+    );
+
+    if (!motif) return;
+
+    if (motif.trim().length < 10) {
+        showNotification('danger', 'Le motif doit contenir au moins 10 caractères.');
+        return;
+    }
+
+    if (!confirm("Confirmer le rejet de ce compte rendu ?")) return;
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ motif }),
+        credentials: 'same-origin'
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('warning', data.message);
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            showNotification('danger', data.message);
+        }
+    })
+    .catch(() => {
+        showNotification('danger', 'Erreur lors du rejet.');
+    });
+}
+
+
+// Fonction pour demander des modifications
+function demanderModifications(crId) {
+    const commentaires = prompt('📝 Commentaires pour les modifications (minimum 20 caractères) :');
+    
+    if (!commentaires) {
+        return;
+    }
+    
+    if (commentaires.length < 20) {
+        alert('Les commentaires doivent contenir au moins 20 caractères.');
+        return demanderModifications(crId);
+    }
+    
+    if (confirm(`Demander des modifications avec ces commentaires ?\n\n"${commentaires}"`)) {
+        fetch(`/projects/admin/compte-rendu/${crId}/demander-modification/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ commentaires: commentaires }),
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('info', data.message);
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 1500);
+            } else {
+                showNotification('error', data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('error', 'Une erreur est survenue.');
+        });
+    }
+}
+
+// Fonction utilitaire pour afficher des notifications
+function showNotification(type, message) {
+    // Créer une alerte Bootstrap
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Supprimer automatiquement après 5 secondes
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+
+// Initialisation des tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    const tooltips = document.querySelectorAll('[title]');
+    tooltips.forEach(tooltip => {
+        new bootstrap.Tooltip(tooltip);
+    });
+});
+</script>
+{% endblock %}

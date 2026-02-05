@@ -489,3 +489,15 @@ footer a:hover {
         border: 1px solid var(--gray-300);
     }
 }
+
+/* Réduire la hauteur du footer */
+footer.bg-dark {
+    padding-top: 2rem !important;  /* py-5 = 3rem, py-4 = 1.5rem */
+    padding-bottom: 2rem !important;
+}
+
+/* Espacement interne réduit */
+footer .container {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+}

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>{% block title %}Espace Promoteur - CrowdBuilding{% endblock %}</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Remix Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #3B82F6;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --secondary: #6B7280;
+        }
+        
+        .promoteur-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .promoteur-sidebar {
+            width: 256px;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+        }
+        
+        .sidebar-logo {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+        
+        .nav-item {
+            margin: 0.25rem 1rem;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            color: #374151;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: #EFF6FF;
+            color: var(--primary);
+        }
+        
+        .nav-link i {
+            margin-right: 0.75rem;
+            font-size: 1.25rem;
+        }
+        
+        /* Main Content */
+        .promoteur-main {
+            flex: 1;
+            margin-left: 256px;
+            background: #F9FAFB;
+        }
+        
+        .promoteur-header {
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            height: 64px;
+            padding: 0 2rem;
+        }
+        
+        .promoteur-content {
+            padding: 2rem;
+        }
+        
+        /* Badges de statut */
+        .badge-en_attente_validation { background: var(--warning); }
+        .badge-en_campagne { background: var(--primary); }
+        .badge-finance { background: var(--success); }
+        .badge-en_cours_execution { background: var(--primary); }
+        .badge-termine { background: var(--success); }
+        .badge-brouillon { background: var(--secondary); }
+        .badge-refuse { background: var(--danger); }
+        .badge-valide { background: var(--success); }
+
+        /* User avatar dans sidebar */
+        .user-sidebar-info {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            background: #f8fafc;
+        }
+        
+        .user-avatar-sidebar {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 12px;
+        }
+        
+        .user-info-text {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1f2937;
+        }
+        
+        .user-role {
+            font-size: 12px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="promoteur-layout">
+        <!-- Sidebar -->
+        <aside class="promoteur-sidebar">
+            <div class="sidebar-logo">
+                <h4 class="fw-bold text-primary mb-0">
+                    <i class="ri-building-line me-2"></i>
+                    CrowdBuilding
+                </h4>
+                <small class="text-muted">Espace Promoteur</small>
+            </div>
+            
+            <!-- User info dans sidebar -->
+            <div class="user-sidebar-info d-flex align-items-center">
+                <div class="user-avatar-sidebar">
+                    {{ user.prenom.0|upper }}{{ user.nom.0|upper }}
+                </div>
+                <div class="user-info-text">
+                    <div class="user-name">{{ user.prenom }} {{ user.nom }}</div>
+                    <div class="user-role">Promoteur</div>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-item">
+                    <a href="{% url 'projects:promoteur_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'promoteur_dashboard' %}active{% endif %}">
+                        <i class="ri-dashboard-line"></i>
+                        Tableau de bord
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'projects:promoteur_projets' %}" class="nav-link {% if request.resolver_match.url_name == 'promoteur_projets' %}active{% endif %}">
+                        <i class="ri-building-line"></i>
+                        Mes projets
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'projects:promoteur_nouveau_projet' %}" class="nav-link {% if request.resolver_match.url_name == 'promoteur_nouveau_projet' %}active{% endif %}">
+                        <i class="ri-add-circle-line"></i>
+                        Nouveau projet
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'projects:promoteur_etapes' %}" class="nav-link {% if request.resolver_match.url_name == 'promoteur_etapes' %}active{% endif %}">
+                        <i class="ri-list-check"></i>
+                        Étapes
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'notifications:list' %}" class="nav-link">
+                        <i class="ri-notification-line"></i>
+                        Notifications
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="promoteur-main">
+            <!-- Header -->
+            <header class="promoteur-header d-flex align-items-center justify-content-between">
+                <h1 class="h4 mb-0 fw-bold">{% block page_title %}{% endblock %}</h1>
+                
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                            {{ user.prenom.0|upper }}{{ user.nom.0|upper }}
+                        </div>
+                        <div class="text-start">
+                            <div class="fw-bold small">{{ user.prenom }} {{ user.nom }}</div>
+                            <div class="text-muted xsmall">Promoteur</div>
+                        </div>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        {% if user.est_valide %}
+                        <li><a class="dropdown-item" href="{% url 'admin_perso:profile' %}">
+                            <i class="ri-user-line me-2"></i>Mon profil
+                        </a></li>
+
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        <li><a class="dropdown-item" href="{% url 'admin_perso:logout' %}">
+                            <i class="ri-logout-box-line me-2"></i>Déconnexion
+                        </a></li>
+                    </ul>
+                </div>
+            </header>
+            
+            <!-- Content -->
+            <div class="promoteur-content">
+                {% if messages %}
+                <div class="messages-container mb-4">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,301 @@
+    <!-- Message d'attente PERSONNALISÉ -->
+    <div class="col-12 mb-4">
+        <div class="alert alert-info" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-info-circle me-3 fa-2x"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">
+                        {% if role_actif.type == 'PROMOTEUR' %}
+                            Promoteur en attente de validation
+                        {% else %}
+                            Investisseur en attente de validation  
+                        {% endif %}
+                    </h5>
+                    <p class="mb-0">
+                        {% if role_actif.type == 'PROMOTEUR' %}
+                            💼 <strong>Votre profil promoteur est en cours de vérification.</strong><br>
+                            Une fois validé, vous pourrez créer et gérer vos projets immobiliers.
+                        {% else %}
+                            💰 <strong>Votre profil investisseur est en cours de vérification.</strong><br>
+                            Une fois validé, vous pourrez découvrir et investir dans des projets.
+                        {% endif %}
+                        <br><br>
+                        ⏳ <em>Délai de traitement : 24-48 heures maximum</em>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents requis -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-upload me-2"></i>Documents requis
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if documents_manquants %}
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">Documents manquants ou non validés</h6>
+                    <p class="mb-0">Veuillez uploader les documents suivants pour finaliser votre inscription :</p>
+                </div>
+                
+                <ul class="list-group list-group-flush">
+                    {% for type_doc in documents_manquants %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-file me-2 text-muted"></i>
+                            <span>{{ type_doc }}</span>
+                        </div>
+                        <span class="badge bg-warning">Manquant</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                
+                <div class="mt-3">
+                    <a href="{% url 'documents:upload' %}" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>Uploader des documents
+                    </a>
+                </div>
+                {% else %}
+                <div class="alert alert-success">
+                    <h6 class="alert-heading">Tous les documents requis sont présents</h6>
+                    <p class="mb-0">Vos documents sont en cours de validation par nos administrateurs.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents uploadés -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-check me-2"></i>Mes documents
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if documents_utilisateur %}
+                <div class="list-group list-group-flush">
+                    {% for document in documents_utilisateur %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-file me-2 text-muted"></i>
+                            <span>{{ document.nom }}</span>
+                            <br>
+                            <small class="text-muted">{{ document.get_type_display }}</small>
+                        </div>
+                        <span class="badge bg-{% if document.statut == 'VALIDE' %}success{% elif document.statut == 'REFUSE' %}danger{% else %}warning{% endif %}">
+                            {{ document.get_statut_display }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-file fa-2x mb-2"></i>
+                    <p>Aucun document uploadé</p>
+                    <a href="{% url 'documents:upload' %}" class="btn btn-sm btn-primary">Uploader des documents</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations utiles -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Que faire en attendant ?
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="text-center p-3 border rounded">
+                            <i class="fas fa-search fa-2x text-primary mb-3"></i>
+                            <h6 class="fw-bold">Explorer les projets</h6>
+                            <p class="text-muted small">Découvrez les projets immobiliers disponibles sur la plateforme</p>
+                            <a href="{% url 'projects:list' %}" class="btn btn-sm btn-outline-primary">Voir les projets</a>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="text-center p-3 border rounded">
+                            <i class="fas fa-book fa-2x text-success mb-3"></i>
+                            <h6 class="fw-bold">Lire la documentation</h6>
+                            <p class="text-muted small">Apprenez comment fonctionne le financement participatif</p>
+                            <a href="{% url 'core:help' %}" class="btn btn-sm btn-outline-success">Centre d'aide</a>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="text-center p-3 border rounded">
+                            <i class="fas fa-envelope fa-2x text-info mb-3"></i>
+                            <h6 class="fw-bold">Nous contacter</h6>
+                            <p class="text-muted small">Avez-vous des questions ? Notre équipe est là pour vous aider</p>
+                            <a href="{% url 'core:contact' %}" class="btn btn-sm btn-outline-info">Contact</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Section découverte des projets -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-binoculars me-2"></i>Découvrez les projets en cours
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    Explorez les projets disponibles. Une fois votre compte validé, vous pourrez 
+                    {% if role_actif.type == 'PROMOTEUR' %}
+                        créer vos propres projets.
+                    {% else %}
+                        investir dans ces projets.
+                    {% endif %}
+                </p>
+                <div class="row">
+                    {% for projet in projets_decouverte %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ projet.titre }}</h6>
+                                <p class="card-text small text-muted">
+                                    {{ projet.description|truncatewords:15 }}
+                                </p>
+                                <div class="progress mb-2" style="height: 5px;">
+                                    <div class="progress-bar" style="width: {{ projet.taux_financement }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ projet.taux_financement|floatformat:0 }}% financé</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center text-muted py-3">
+                        <i class="fas fa-home fa-2x mb-2"></i>
+                        <p>Aucun projet disponible pour le moment</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{% url 'projects:list' %}" class="btn btn-outline-primary">
+                        Voir tous les projets
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Timeline de validation -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock me-2"></i>Étapes de validation
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item completed">
+                        <div class="timeline-marker bg-success">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="fw-bold">Inscription terminée</h6>
+                            <p class="text-muted mb-0">Votre compte a été créé avec succès</p>
+                            <small class="text-muted">{{ user.date_inscription|date:"d/m/Y à H:i" }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item {% if documents_utilisateur %}completed{% else %}active{% endif %}">
+                        <div class="timeline-marker {% if documents_utilisateur %}bg-success{% else %}bg-primary{% endif %}">
+                            <i class="fas fa-{% if documents_utilisateur %}check{% else %}upload{% endif %}"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="fw-bold">Documents uploadés</h6>
+                            <p class="text-muted mb-0">
+                                {% if documents_utilisateur %}
+                                    Tous les documents requis ont été uploadés
+                                {% else %}
+                                    Upload des documents justificatifs requis
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-secondary">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="fw-bold">Validation administrative</h6>
+                            <p class="text-muted mb-0">Examen de votre dossier par nos administrateurs</p>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-secondary">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="fw-bold">Compte validé</h6>
+                            <p class="text-muted mb-0">Accès complet à toutes les fonctionnalités</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 30px;
+    width: 2px;
+    height: 100%;
+    background-color: #dee2e6;
+}
+
+.timeline-item.completed:not(:last-child)::before {
+    background-color: #28a745;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -32px;
+    top: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    color: white;
+}
+
+.timeline-content {
+    padding-left: 20px;
+}
+</style>

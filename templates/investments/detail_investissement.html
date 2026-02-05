@@ -1,0 +1,988 @@
+<!-- templates/investments/detail_investissement.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Détail de l'investissement #{{ investment.reference }} - CrowdBuilding{% endblock %}
+
+{% block content %}
+<style>
+    /* STYLES MODERNES ET PROFESSIONNELS - SUIVI PUREMENT IMMOBILIER */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #1a237e 0%, #311b92 100%);
+        --success-gradient: linear-gradient(135deg, #11998e, #38ef7d);
+        --warning-gradient: linear-gradient(135deg, #f7971e, #ffd200);
+        --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --progress-gradient: linear-gradient(135deg, #8A2387, #E94057, #F27121);
+        --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        --card-shadow-hover: 0 15px 50px rgba(0, 0, 0, 0.12);
+        --border-radius: 20px;
+        --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    }
+
+    /* Header élégant et sobre */
+    .detail-header {
+        background: linear-gradient(135deg, #1a237e 0%, #311b92 100%);
+        border-radius: var(--border-radius);
+        padding: 50px 40px;
+        margin-bottom: 40px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        border: none;
+    }
+
+    .detail-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M49 67c8.484 0 15-6.516 15-15s-6.516-15-15-15-15 6.516-15 15 6.516 15 15 15zm96 50c8.484 0 15-6.516 15-15s-6.516-15-15-15-15 6.516-15 15 6.516 15 15 15zm-86-14c3.657 0 6-2.343 6-6s-2.343-6-6-6-6 2.343-6 6 2.343 6 6 6zm126 62c3.657 0 6-2.343 6-6s-2.343-6-6-6-6 2.343-6 6 2.343 6 6 6zM68 180c3.657 0 6-2.343 6-6s-2.343-6-6-6-6 2.343-6 6 2.343 6 6 6zm112-152c3.657 0 6-2.343 6-6s-2.343-6-6-6-6 2.343-6 6 2.343 6 6 6zM24 172c4.862 0 8-3.138 8-8s-3.138-8-8-8-8 3.138-8 8 3.138 8 8 8zm56-130c4.862 0 8-3.138 8-8s-3.138-8-8-8-8 3.138-8 8 3.138 8 8 8zm46-22c6.072 0 10-3.928 10-10s-3.928-10-10-10-10 3.928-10 10 3.928 10 10 10zm-12 120c4.862 0 8-3.138 8-8s-3.138-8-8-8-8 3.138-8 8 3.138 8 8 8zm58 44c6.072 0 10-3.928 10-10s-3.928-10-10-10-10 3.928-10 10 3.928 10 10 10zM64 126c6.072 0 10-3.928 10-10s-3.928-10-10-10-10 3.928-10 10 3.928 10 10 10zm114-26c6.072 0 10-3.928 10-10s-3.928-10-10-10-10 3.928-10 10 3.928 10 10 10zm-18-42c2.43 0 4-1.57 4-4s-1.57-4-4-4-4 1.57-4 4 1.57 4 4 4zM120 182c2.43 0 4-1.57 4-4s-1.57-4-4-4-4 1.57-4 4 1.57 4 4 4zM70 82c2.43 0 4-1.57 4-4s-1.57-4-4-4-4 1.57-4 4 1.57 4 4 4zM24 120c2.43 0 4-1.57 4-4s-1.57-4-4-4-4 1.57-4 4 1.57 4 4 4z' fill='%23ffffff' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+        opacity: 0.4;
+    }
+
+    .header-badge {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 50px;
+        padding: 10px 25px;
+        display: inline-block;
+        margin-bottom: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    /* Cartes de section */
+    .section-card {
+        background: white;
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(0, 0, 0, 0.03);
+        transition: var(--transition);
+        box-shadow: var(--card-shadow);
+        margin-bottom: 30px;
+        overflow: hidden;
+    }
+
+    .section-card:hover {
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .section-card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px 30px;
+        position: relative;
+    }
+
+    .section-card-header.investment {
+        background: linear-gradient(135deg, #11998e, #38ef7d);
+    }
+
+    .section-card-header.project {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .section-card-header.timeline {
+        background: linear-gradient(135deg, #f7971e, #ffd200);
+    }
+
+    .section-card-header.reports {
+        background: linear-gradient(135deg, #8A2387, #E94057);
+    }
+
+    /* Carte résumé investissement */
+    .investment-summary-card {
+        background: white;
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(0, 0, 0, 0.03);
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: var(--card-shadow);
+    }
+
+    .investment-stat {
+        text-align: center;
+        padding: 20px;
+        border-radius: 15px;
+        background: #f8f9ff;
+        border: 1px solid #eef2ff;
+        transition: var(--transition);
+    }
+
+    .investment-stat:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.1);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #1a237e;
+        line-height: 1;
+        margin-bottom: 10px;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+
+    .stat-subtitle {
+        font-size: 0.85rem;
+        color: #adb5bd;
+    }
+    .status-warning {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    }
+
+
+    /* Timeline des étapes */
+    .timeline-container {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .timeline-container::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(to bottom, #667eea, #764ba2);
+        border-radius: 3px;
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 40px;
+        padding-left: 30px;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -36px;
+        top: 0;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: white;
+        border: 3px solid #667eea;
+        z-index: 2;
+    }
+
+    .timeline-item.completed::before {
+        background: #28a745;
+        border-color: #28a745;
+    }
+
+    .timeline-item.in-progress::before {
+        background: #ffc107;
+        border-color: #ffc107;
+        animation: pulse 2s infinite;
+    }
+
+    .timeline-item.pending::before {
+        background: #6c757d;
+        border-color: #6c757d;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+    }
+
+    .timeline-content {
+        background: #f8f9ff;
+        border-radius: 15px;
+        padding: 25px;
+        border: 1px solid #eef2ff;
+        transition: var(--transition);
+    }
+
+    .timeline-content:hover {
+        transform: translateX(5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Comptes rendus */
+    .report-card {
+        background: white;
+        border-radius: 15px;
+        border: 1px solid #eef2ff;
+        margin-bottom: 20px;
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .report-header {
+        background: #f8f9ff;
+        padding: 20px 25px;
+        border-bottom: 1px solid #eef2ff;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .report-header:hover {
+        background: #eef2ff;
+    }
+
+    .report-body {
+        padding: 25px;
+        display: none;
+    }
+
+    .report-body.show {
+        display: block;
+    }
+
+    .report-images {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .report-image {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #eef2ff;
+        transition: var(--transition);
+    }
+
+    .report-image:hover {
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .report-image img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        transition: var(--transition);
+    }
+
+    .report-image:hover img {
+        transform: scale(1.1);
+    }
+
+    /* Statut badges */
+    .status-badge {
+        padding: 8px 20px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .status-active {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+
+    .status-completed {
+        background: rgba(23, 162, 184, 0.1);
+        color: #17a2b8;
+        border: 1px solid rgba(23, 162, 184, 0.2);
+    }
+
+    .status-suspended {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    /* Progress bar */
+    .progress-container {
+        margin: 20px 0;
+    }
+
+    .progress-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .progress-bar-custom {
+        height: 10px;
+        background: #e9ecef;
+        border-radius: 5px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(135deg, #8A2387, #E94057);
+        border-radius: 5px;
+        position: relative;
+        transition: width 1.5s ease;
+    }
+
+    .progress-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .detail-header {
+            padding: 40px 25px;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            margin: -20px -20px 40px -20px;
+        }
+
+        .section-card-header {
+            padding: 20px 25px;
+        }
+
+        .investment-summary-card {
+            padding: 25px 20px;
+        }
+
+        .report-images {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in-up {
+        animation: fadeInUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    /* Avertissement transparent */
+    .transparency-notice {
+        background: linear-gradient(135deg, rgba(248, 249, 250, 0.9), rgba(233, 236, 239, 0.9));
+        border-left: 4px solid #1a237e;
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- EN-TÊTE PRINCIPAL -->
+    <div class="detail-header animate-fade-in-up">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="header-badge">
+                    <i class="fas fa-chart-line me-2"></i>SUIVI DÉTAILLÉ D'INVESTISSEMENT
+                </span>
+                <h1 class="display-5 fw-bold mb-3">
+                    Détails de votre investissement
+                </h1>
+                <p class="lead mb-0 opacity-90">
+                    Suivi transparent du projet <span class="fw-bold">{{ investment.projet.titre }}</span>
+                    <span class="d-block mt-2 small">
+                        <i class="fas fa-shield-alt me-1"></i>Informations validées par l'administrateur
+                    </span>
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="bg-white text-dark rounded-3 p-4 d-inline-block shadow-sm">
+                    <div class="small text-muted mb-1">Statut de l'investissement</div>
+                    {% if investment.statut == 'CONFIRME' %}
+                        <span class="status-badge status-active">
+                            <i class="fas fa-check-circle"></i>Participation confirmée
+                        </span>
+                    {% elif investment.statut == 'EN_ATTENTE_PAIEMENT' %}
+                        <span class="status-badge status-warning">
+                            <i class="fas fa-hourglass-half"></i>En attente de paiement
+                        </span>
+                    {% elif investment.projet.statut == 'TERMINE' %}
+                        <span class="status-badge status-completed">
+                            <i class="fas fa-flag-checkered"></i>Projet terminé
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTICE DE TRANSPARENCE -->
+    <div class="transparency-notice animate-fade-in-up" style="animation-delay: 0.1s">
+        <div class="d-flex align-items-start">
+            <i class="fas fa-info-circle text-primary me-3 mt-1 fs-4"></i>
+            <div>
+                <h6 class="fw-bold mb-2">Suivi immobilier - Pas de rendement</h6>
+                <p class="mb-0 small">
+                    Cette plateforme CrowdBuilding vous permet de suivre <strong>l'état réel de votre investissement immobilier</strong>.
+                    Aucun rendement n'est calculé ou promis. Vous suivez uniquement l'avancement du chantier et les preuves validées par notre équipe administrative.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- COLONNE GAUCHE -->
+        <div class="col-lg-8">
+            <!-- SECTION 1: RÉSUMÉ DE L'INVESTISSEMENT -->
+            <div class="section-card animate-fade-in-up" style="animation-delay: 0.2s">
+                <div class="section-card-header investment">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-circle me-3"></i>Votre investissement personnel
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="investment-stat">
+                                <div class="stat-value">{{ investment.montant|floatformat:0|intcomma }}</div>
+                                <div class="stat-label">Montant total investi</div>
+                                <div class="stat-subtitle">Engagement financier</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="investment-stat">
+                                <div class="stat-value">
+                                    {{ investment.nombre_parts }}
+                                </div>
+
+                                <div class="stat-label">Parts détenues</div>
+
+                                <div class="stat-subtitle">
+                                    {% with total_parts=investment.projet.nombre_total_parts %}
+                                        {% if total_parts %}
+                                            {% widthratio investment.nombre_parts total_parts 100 as percentage %}
+                                            {{ percentage|floatformat:1 }}% du projet
+                                        {% else %}
+                                            Participation
+                                        {% endif %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="investment-stat">
+                                <div class="stat-value">
+                                    {% if investment.projet.valeur_part %}
+                                        {{ investment.projet.valeur_part|floatformat:0|intcomma }}
+                                    {% else %}
+                                        10 000
+                                    {% endif %}
+                                </div>
+                                <div class="stat-label">Valeur unitaire d'une part</div>
+                                <div class="stat-subtitle">FCFA</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="investment-stat">
+                                <div class="stat-value">{{ investment.date_investissement|date:"d/m/Y" }}</div>
+                                <div class="stat-label">Date de confirmation</div>
+                                <div class="stat-subtitle">Investissement validé</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informations supplémentaires -->
+                    <div class="row mt-4 pt-4 border-top">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="small text-muted mb-1">Origine des fonds</div>
+                                <div class="fw-bold">{{ investment.get_origine_fonds_display }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="small text-muted mb-1">Mode de paiement</div>
+                                <div class="fw-bold">
+                                    {% if investment.transactions.first.mode_paiement %}
+                                        {{ investment.transactions.first.get_mode_paiement_display }}
+                                    {% else %}
+                                        Non spécifié
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: SUIVI D'AVANCEMENT -->
+            <div class="section-card animate-fade-in-up" style="animation-delay: 0.4s">
+                <div class="section-card-header timeline">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-road me-3"></i>Suivi d'avancement du projet
+                        </h4>
+                        <span class="badge bg-light text-dark">
+                            {% if avancement_global %}
+                                {{ avancement_global|floatformat:0 }}% complété
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Barre de progression globale -->
+                    {% if avancement_global %}
+                    <div class="progress-container">
+                        <div class="progress-label">
+                            <span>Avancement global</span>
+                            <span>{{ avancement_global|floatformat:0 }}%</span>
+                        </div>
+                        <div class="progress-bar-custom">
+                            <div class="progress-fill" style="width: {{ avancement_global }}%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Timeline des étapes -->
+                    {% if etapes %}
+                    <div class="timeline-container mt-5">
+                        {% for etape in etapes %}
+                        <div class="timeline-item {% if etape.terminee %}completed{% elif etape.en_cours %}in-progress{% else %}pending{% endif %}">
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h5 class="fw-bold mb-0">{{ etape.titre }}</h5>
+                                    <span class="badge 
+                                        {% if etape.terminee %}bg-success
+                                        {% elif etape.en_cours %}bg-warning
+                                        {% else %}bg-secondary{% endif %}">
+                                        {% if etape.terminee %}Terminée
+                                        {% elif etape.en_cours %}En cours
+                                        {% else %}À venir{% endif %}
+                                    </span>
+                                </div>
+                                
+                                {% if etape.description %}
+                                <p class="text-muted mb-3">{{ etape.description }}</p>
+                                {% endif %}
+                                
+                                <div class="row">
+                                    {% if etape.date_debut %}
+                                    <div class="col-md-6">
+                                        <div class="small text-muted">Date de début</div>
+                                        <div class="fw-bold">{{ etape.date_debut|date:"d/m/Y" }}</div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if etape.date_fin %}
+                                    <div class="col-md-6">
+                                        <div class="small text-muted">Date de fin</div>
+                                        <div class="fw-bold">{{ etape.date_fin|date:"d/m/Y" }}</div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if etape.avancement %}
+                                    <div class="col-12 mt-3">
+                                        <div class="progress" style="height: 6px;">
+                                            <div class="progress-bar 
+                                                {% if etape.avancement < 25 %}bg-danger
+                                                {% elif etape.avancement < 50 %}bg-warning
+                                                {% elif etape.avancement < 75 %}bg-info
+                                                {% else %}bg-success{% endif %}" 
+                                                style="width: {{ etape.avancement }}%">
+                                            </div>
+                                        </div>
+                                        <div class="small text-end mt-1">{{ etape.avancement|floatformat:0 }}%</div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <!-- Si pas d'étapes définies -->
+                    <div class="text-center py-4">
+                        <div class="display-1 text-muted mb-4">
+                            <i class="fas fa-road"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Suivi par comptes rendus</h5>
+                        <p class="text-muted mb-4">
+                            Aucune étape n'est définie pour ce projet.<br>
+                            L'avancement est suivi uniquement via les comptes rendus validés ci-dessous.
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- SECTION 4: COMPTES RENDUS VALIDÉS -->
+            <div class="section-card animate-fade-in-up" style="animation-delay: 0.5s">
+                <div class="section-card-header reports">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-file-alt me-3"></i>Comptes rendus validés
+                        </h4>
+                        <span class="badge bg-light text-dark">
+                            {{ comptes_rendus_valides.count }} rapport{{ comptes_rendus_valides.count|pluralize }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    {% if comptes_rendus_valides %}
+                        <div class="alert alert-info border-0 mb-4">
+                            <div class="d-flex">
+                                <i class="fas fa-shield-alt me-3 mt-1"></i>
+                                <div>
+                                    <strong>Validation administrative :</strong>
+                                    Seuls les comptes rendus validés par notre équipe sont visibles.
+                                    Cela garantit la fiabilité des informations présentées.
+                                </div>
+                            </div>
+                        </div>
+
+                        {% for cr in comptes_rendus_valides %}
+                        <div class="report-card" id="report-{{ cr.id }}">
+                            <div class="report-header" onclick="toggleReport({{ cr.id }})">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="fw-bold mb-1">{{ cr.titre }}</h5>
+                                        <div class="d-flex flex-wrap gap-3">
+                                            <span class="small text-muted">
+                                                <i class="far fa-calendar me-1"></i>
+                                                {{ cr.date_creation|date:"d/m/Y à H:i" }}
+                                            </span>
+                                            {% if cr.etape %}
+                                            <span class="small text-primary">
+                                                <i class="fas fa-project-diagram me-1"></i>
+                                                {{ cr.etape.titre }}
+                                            </span>
+                                            {% endif %}
+                                            {% if cr.avancement %}
+                                            <span class="small text-success">
+                                                <i class="fas fa-chart-line me-1"></i>
+                                                {{ cr.avancement|floatformat:0 }}% d'avancement
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="report-body" id="report-body-{{ cr.id }}">
+                                <!-- Contenu du compte rendu -->
+                                <div class="mb-4">
+                                    {{ cr.contenu|linebreaks }}
+                                </div>
+
+                                <!-- Images associées -->
+                                {% if cr.images.all %}
+                                <div class="mt-4">
+                                    <h6 class="fw-bold mb-3">
+                                        <i class="fas fa-images me-2"></i>Documentation visuelle
+                                    </h6>
+                                    <div class="report-images">
+                                        {% for image in cr.images.all %}
+                                        <div class="report-image">
+                                            <a href="{{ image.image.url }}" 
+                                               data-lightbox="report-{{ cr.id }}" 
+                                               data-title="{{ image.legende|default:cr.titre }}">
+                                                <img src="{{ image.image.url }}" 
+                                                     alt="{{ image.legende|default:'Image du compte rendu' }}"
+                                                     loading="lazy">
+                                            </a>
+                                            {% if image.legende %}
+                                            <div class="p-2 small text-center">
+                                                {{ image.legende|truncatechars:30 }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Métadonnées -->
+                                <div class="mt-4 pt-3 border-top">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="small text-muted">
+                                                <i class="fas fa-user-check me-1"></i>
+                                                Validé par : {{ cr.administrateur_validateur.nom_complet|default:"Administrateur" }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 text-md-end">
+                                            <div class="small text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                Validation : {{ cr.date_validation|date:"d/m/Y"|default:"Date non spécifiée" }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="display-1 text-muted mb-4">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Aucun compte rendu validé</h5>
+                        <p class="text-muted mb-4">
+                            Aucun compte rendu n'a encore été validé par notre équipe administrative.<br>
+                            Les rapports d'avancement apparaîtront ici une fois vérifiés.
+                        </p>
+                        <div class="alert alert-light border">
+                            <i class="fas fa-info-circle me-2"></i>
+                            La validation garantit l'authenticité des informations présentées.
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- COLONNE DROITE -->
+        <div class="col-lg-4">
+            <!-- SECTION 2: INFORMATIONS GÉNÉRALES DU PROJET -->
+            <div class="section-card animate-fade-in-up" style="animation-delay: 0.3s">
+                <div class="section-card-header project">
+                    <h4 class="mb-0">
+                        <i class="fas fa-building me-3"></i>Le projet immobilier
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Image du projet -->
+                    {% if investment.projet.image_principale %}
+                    <div class="mb-4">
+                        <img src="{{ investment.projet.image_principale.url }}" 
+                             class="img-fluid rounded-3 shadow-sm" 
+                             alt="{{ investment.projet.titre }}"
+                             style="width: 100%; height: 200px; object-fit: cover;">
+                    </div>
+                    {% endif %}
+
+                    <!-- Informations principales -->
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3">{{ investment.projet.titre }}</h5>
+                        <p class="text-muted">
+                            {{ investment.projet.description|truncatechars:150 }}
+                        </p>
+                    </div>
+
+                    <!-- Détails du projet -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">Caractéristiques</h6>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="border rounded-2 p-3 text-center">
+                                    <div class="small text-muted mb-1">Localisation</div>
+                                    <div class="fw-bold">{{ investment.projet.localisation|default:"Non spécifiée" }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded-2 p-3 text-center">
+                                    <div class="small text-muted mb-1">Type</div>
+                                    <div class="fw-bold">{{ investment.projet.get_categorie_display|default:"Immobilier" }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dates importantes -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">Calendrier</h6>
+                        <div class="list-group list-group-flush">
+                            {% if investment.projet.date_debut %}
+                            <div class="list-group-item border-0 px-0 py-2">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Début du projet</span>
+                                    <span class="fw-bold">{{ investment.projet.date_debut|date:"d/m/Y" }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if investment.projet.date_fin_estimee %}
+                            <div class="list-group-item border-0 px-0 py-2">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Fin estimée</span>
+                                    <span class="fw-bold">{{ investment.projet.date_fin_estimee|date:"d/m/Y" }}</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            {% if investment.projet.duree_estimee %}
+                            <div class="list-group-item border-0 px-0 py-2">
+                                <div class="d-flex justify-content-between">
+                                    <span class="text-muted">Durée estimée</span>
+                                    <span class="fw-bold">{{ investment.projet.duree_estimee }} mois</span>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Promoteur -->
+                    <div class="border-top pt-4">
+                        <h6 class="fw-bold mb-3">Promoteur</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                    <i class="fas fa-user-tie text-primary"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-bold">{{ investment.projet.promoteur.nom_complet }}</div>
+                                <div class="small text-muted">Responsable du projet</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARTE DE RAPPEL IMPORTANT -->
+            <div class="section-card mt-4 animate-fade-in-up" style="animation-delay: 0.6s">
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <div class="bg-light rounded-circle p-3 d-inline-block mb-3">
+                            <i class="fas fa-handshake text-primary fa-2x"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Notre engagement</h5>
+                    </div>
+                    
+                    <div class="d-flex align-items-start mb-3">
+                        <i class="fas fa-check-circle text-success mt-1 me-3"></i>
+                        <div>
+                            <div class="fw-bold mb-1">Transparence totale</div>
+                            <p class="small text-muted mb-0">Toutes les informations sont validées par notre équipe administrative</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-start mb-3">
+                        <i class="fas fa-check-circle text-success mt-1 me-3"></i>
+                        <div>
+                            <div class="fw-bold mb-1">Suivi réel</div>
+                            <p class="small text-muted mb-0">Vous suivez l'état réel du chantier, pas des projections</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-check-circle text-success mt-1 me-3"></i>
+                        <div>
+                            <div class="fw-bold mb-1">Pas de promesses financières</div>
+                            <p class="small text-muted mb-0">Nous ne calculons ni ne garantissons aucun rendement</p>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{% url 'projects:detail' investment.projet.id %}" 
+                           class="btn btn-outline-primary w-100">
+                            <i class="fas fa-external-link-alt me-2"></i>
+                            Voir la page publique du projet
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript pour les interactions -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation au défilement
+    const observerOptions = {
+        threshold: 0.05,
+        rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const delay = entry.target.dataset.delay || 0;
+                setTimeout(() => {
+                    entry.target.classList.add('animate-fade-in-up');
+                }, delay);
+            }
+        });
+    }, observerOptions);
+
+    // Observer les éléments
+    document.querySelectorAll('.section-card, .transparency-notice').forEach((el, index) => {
+        el.dataset.delay = index * 100;
+        observer.observe(el);
+    });
+
+    // Animation des barres de progression
+    const progressBars = document.querySelectorAll('.progress-fill');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 500);
+    });
+});
+
+// Fonction pour ouvrir/fermer les rapports
+function toggleReport(reportId) {
+    const reportBody = document.getElementById(`report-body-${reportId}`);
+    const reportHeader = document.querySelector(`#report-${reportId} .report-header i`);
+    
+    if (reportBody.classList.contains('show')) {
+        reportBody.classList.remove('show');
+        reportHeader.classList.remove('fa-chevron-up');
+        reportHeader.classList.add('fa-chevron-down');
+    } else {
+        reportBody.classList.add('show');
+        reportHeader.classList.remove('fa-chevron-down');
+        reportHeader.classList.add('fa-chevron-up');
+    }
+}
+
+// Initialiser tous les rapports comme fermés
+window.addEventListener('load', function() {
+    document.querySelectorAll('.report-body').forEach(body => {
+        body.classList.remove('show');
+    });
+});
+
+// Lightbox pour les images
+if (typeof lightbox !== 'undefined') {
+    lightbox.option({
+        'resizeDuration': 200,
+        'wrapAround': true,
+        'albumLabel': "Image %1 sur %2"
+    });
+}
+</script>
+
+<!-- Inclure Lightbox pour les images -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+{% endblock %}

@@ -77,13 +77,16 @@ class InscriptionForm(UserCreationForm):
         }),
         label='Expérience (optionnel)'
     )
-    type_role = forms.ChoiceField(
+    
+    # CHANGER LE NOM DU CHAMP : type -> role_type
+    role_type = forms.ChoiceField(  # <-- CHANGÉ: type -> role_type
         choices=TYPE_ROLE_CHOICES,
         widget=forms.Select(attrs={
             'class': 'form-select'
         }),
         label='Type de compte'
     )
+    
     conditions_acceptees = forms.BooleanField(
         required=True,
         widget=forms.CheckboxInput(attrs={
@@ -94,7 +97,12 @@ class InscriptionForm(UserCreationForm):
     
     class Meta:
         model = Utilisateur
-        fields = ('prenom', 'nom', 'email', 'telephone', 'profession', 'entreprise', 'experience', 'type_role', 'conditions_acceptees')
+        # ENLEVER 'type' car ce n'est pas un champ du modèle Utilisateur
+        # AJOUTER les champs password1 et password2
+        fields = ('prenom', 'nom', 'email', 'telephone', 'profession', 
+                 'entreprise', 'experience', 'password1', 'password2', 
+                 'conditions_acceptees')
+        # Note: 'role_type' n'est pas dans fields car c'est un champ du formulaire, pas du modèle
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -109,12 +117,20 @@ class InscriptionForm(UserCreationForm):
         })
         self.fields['password1'].label = 'Mot de passe'
         self.fields['password2'].label = 'Confirmation du mot de passe'
+        
+        # Réorganiser l'ordre des champs si besoin
+        field_order = ['prenom', 'nom', 'email', 'telephone', 'profession',
+                      'entreprise', 'experience', 'role_type', 'password1',
+                      'password2', 'conditions_acceptees']
+        
+        # Réordonner les champs
+        self.fields = {key: self.fields[key] for key in field_order if key in self.fields}
     
     def clean_email(self):
         """Vérifier que l'email est unique"""
         email = self.cleaned_data.get('email')
         if Utilisateur.objects.filter(email=email).exists():
-            raise ValidationError('Cet email est déjà utilisé.')
+            raise forms.ValidationError('Cet email est déjà utilisé.')
         return email
     
     def clean_telephone(self):
@@ -124,7 +140,7 @@ class InscriptionForm(UserCreationForm):
             # Validation basique du format téléphone burkinabè
             import re
             if not re.match(r'^(\+226|226)?[0-9]{8}$', telephone.replace(' ', '')):
-                raise ValidationError('Format de téléphone invalide. Utilisez le format: +226 XX XX XX XX')
+                raise forms.ValidationError('Format de téléphone invalide. Utilisez le format: +226 XX XX XX XX')
         return telephone
     
     def save(self, commit=True):
@@ -141,11 +157,12 @@ class InscriptionForm(UserCreationForm):
         if commit:
             user.save()
             # Créer le rôle associé
-            type_role = self.cleaned_data['type_role']
+            role_type = self.cleaned_data['role_type']  # <-- CHANGÉ: type -> role_type
             Role.objects.create(
                 utilisateur=user,
-                type=type_role,
-                statut='EN_ATTENTE_VALIDATION'
+                type=role_type,  # ICI: 'type' est le nom du champ dans le modèle Role
+                statut='EN_ATTENTE_VALIDATION',
+                role_actif=True
             )
         
         return user

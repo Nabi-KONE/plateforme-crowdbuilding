@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Tableau de bord - crowdBuilding{% endblock %}
+{% block title %}Tableau de bord - CrowdBuilding{% endblock %}
 
 {% block content %}
 <div class="container py-4">
-    <!-- En-tête du dashboard -->
+    <!-- En-tête du dashboard - CACHÉ POUR L'ADMIN -->
+    {% if not user.est_administrateur %}
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
@@ -20,7 +21,7 @@
                 </div>
                 <div>
                     {% if user.roles.count > 1 %}
-                    <a href="{% url 'accounts:switch_role' %}" class="btn btn-outline-primary">
+                    <a href="{% url 'admin_perso:switch_role' %}" class="btn btn-outline-primary">
                         <i class="fas fa-user-tag me-2"></i>Changer de rôle
                     </a>
                     {% endif %}
@@ -28,9 +29,10 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
-    <!-- Messages d'état du compte -->
-    {% if not user.est_investisseur and not user.est_promoteur and not user.est_administrateur %}
+    <!-- Messages d'état du compte - CACHÉ POUR L'ADMIN -->
+    {% if not user.est_administrateur and not user.est_investisseur and not user.est_promoteur %}
     <div class="row mb-4">
         <div class="col-12">
             <div class="alert alert-warning" role="alert">
@@ -60,7 +62,8 @@
         {% include 'core/dashboard_attente.html' %}
     {% endif %}
 
-    <!-- Notifications récentes -->
+    <!-- Notifications récentes - CACHÉ POUR L'ADMIN -->
+    {% if not user.est_administrateur %}
     <div class="row mt-4">
         <div class="col-12">
             <div class="card">
@@ -68,7 +71,7 @@
                     <h5 class="card-title mb-0">
                         <i class="fas fa-bell me-2"></i>Notifications récentes
                     </h5>
-                    <a href="{% url 'accounts:notifications' %}" class="btn btn-sm btn-outline-primary">
+                    <a href="{% url 'notifications:list' %}" class="btn btn-sm btn-outline-primary">
                         Voir toutes
                     </a>
                 </div>
@@ -84,7 +87,7 @@
                             <h6 class="mb-1 {% if not notification.lue %}fw-bold{% endif %}">{{ notification.titre }}</h6>
                             <p class="text-muted mb-1">{{ notification.contenu|truncatewords:20 }}</p>
                             <small class="text-muted">
-                                <i class="fas fa-clock me-1"></i>{{ notification.date_creation|timesince }} ago
+                                <i class="fas fa-clock me-1"></i>{{ notification.date_creation|timesince }}
                             </small>
                         </div>
                     </div>
@@ -98,5 +101,6 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 {% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Profil Administrateur</h2>
+    <hr>
+    <p><strong>Nom :</strong> {{ user.get_full_name }}</p>
+    <p><strong>Email :</strong> {{ user.email }}</p>
+    <p><strong>Rôle :</strong> {% if user.is_superuser %}Superutilisateur{% else %}Administrateur{% endif %}</p>
+    <p><strong>Dernière connexion :</strong> {{ user.last_login|date:"d/m/Y H:i" }}</p>
+</div>
+{% endblock %}

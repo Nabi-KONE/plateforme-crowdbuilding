@@ -25,10 +25,10 @@ class StatutRole(models.TextChoices):
 
 class StatutCompte(models.TextChoices):
     """Statuts possibles pour un compte utilisateur"""
+    EN_ATTENTE = 'EN_ATTENTE', 'En attente de validation'
     ACTIF = 'ACTIF', 'Actif'
     SUSPENDU = 'SUSPENDU', 'Suspendu'
     BLOQUE = 'BLOQUE', 'Bloqué'
-
 
 class CustomUserManager(BaseUserManager):
     """Gestionnaire personnalisé pour les utilisateurs"""
@@ -82,7 +82,7 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     statut_compte = models.CharField(
         max_length=20,
         choices=StatutCompte.choices,
-        default=StatutCompte.ACTIF,
+        default=StatutCompte.EN_ATTENTE,
         verbose_name="Statut du compte"
     )
     
@@ -100,7 +100,7 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         verbose_name = "Utilisateur"
         verbose_name_plural = "Utilisateurs"
         ordering = ['-date_inscription']
-    
+
     def __str__(self):
         return f"{self.prenom} {self.nom} ({self.email})"
     
@@ -109,12 +109,63 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         """Retourne le nom complet de l'utilisateur"""
         return f"{self.prenom} {self.nom}"
     
+    def get_full_name(self):
+        """
+        Méthode requise par Django pour récupérer le nom complet
+        Utilisée par l'admin Django et d'autres composants
+        """
+        return self.nom_complet
+    
+    def get_short_name(self):
+        """
+        Méthode requise par Django pour récupérer le nom court
+        """
+        return self.prenom
+    
+    def est_valide(self):
+        """
+        Vérifie si l'utilisateur est validé
+        - Superuser est toujours validé
+        - Les autres utilisateurs doivent avoir un rôle validé
+        """
+        if self.is_superuser:
+            return True
+        
+        role_actif = self.get_role_actif()
+        return role_actif and role_actif.statut == StatutRole.VALIDE
+    
+    def est_administrateur(self):
+        """
+        Vérifie si l'utilisateur est un administrateur
+        - Soit superuser technique
+        - Soit a un rôle administrateur validé
+        """
+        if self.is_superuser:
+            return True
+        
+        role_admin = self.roles.filter(
+            type=TypeRole.ADMINISTRATEUR,
+            statut=StatutRole.VALIDE
+        ).first()
+        return role_admin is not None
+    
     def get_role_actif(self):
         """Retourne le rôle actif de l'utilisateur"""
+        if self.is_superuser:
+            # Pour les superusers, créer un rôle admin virtuel
+            return type('obj', (object,), {
+                'type': TypeRole.ADMINISTRATEUR,
+                'statut': StatutRole.VALIDE,
+                'get_type_display': lambda: 'Administrateur',
+                'role_actif': True
+            })()
+        
         return self.roles.filter(role_actif=True).first()
     
     def est_investisseur(self):
         """Vérifie si l'utilisateur est un investisseur validé"""
+        if self.is_superuser:
+            return False
         role = self.get_role_actif()
         return (role and 
                 role.type == TypeRole.INVESTISSEUR and 
@@ -122,14 +173,36 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     
     def est_promoteur(self):
         """Vérifie si l'utilisateur est un promoteur validé"""
+        if self.is_superuser:
+            return False
         role = self.get_role_actif()
         return (role and 
                 role.type == TypeRole.PROMOTEUR and 
                 role.statut == StatutRole.VALIDE)
     
-    def est_administrateur(self):
-        """Vérifie si l'utilisateur est un administrateur"""
-        return self.is_staff and self.is_superuser
+    def mettre_a_jour_statut_compte(self):
+        """
+        Met à jour automatiquement le statut du compte en fonction du rôle actif
+        """
+        role_actif = self.get_role_actif()
+        
+        if not role_actif or not hasattr(role_actif, 'statut'):
+            # Si pas de rôle, garder le statut actuel ou mettre EN_ATTENTE
+            if self.statut_compte not in [StatutCompte.BLOQUE, StatutCompte.SUSPENDU]:
+                self.statut_compte = StatutCompte.EN_ATTENTE
+            return
+            
+        # Synchronisation basée sur le statut du rôle
+        if role_actif.statut == StatutRole.VALIDE:
+            self.statut_compte = StatutCompte.ACTIF
+        elif role_actif.statut == StatutRole.REFUSE:
+            self.statut_compte = StatutCompte.BLOQUE
+        elif role_actif.statut == StatutRole.SUSPENDU:
+            self.statut_compte = StatutCompte.SUSPENDU
+        elif role_actif.statut == StatutRole.EN_ATTENTE_VALIDATION:
+            self.statut_compte = StatutCompte.EN_ATTENTE
+        
+        self.save()
 
 
 class Role(models.Model):
@@ -156,6 +229,21 @@ class Role(models.Model):
     )
     date_creation = models.DateTimeField(default=timezone.now, verbose_name="Date de création")
     role_actif = models.BooleanField(default=True, verbose_name="Rôle actif")
+
+    # ==== NOUVEAUX CHAMPS À AJOUTER ====
+    date_validation = models.DateTimeField(null=True, blank=True, verbose_name="Date de validation")
+    date_refus = models.DateTimeField(null=True, blank=True, verbose_name="Date de refus")
+    date_suspension = models.DateTimeField(null=True, blank=True, verbose_name="Date de suspension")
+    motif_refus = models.TextField(blank=True, verbose_name="Motif de refus")
+    motif_suspension = models.TextField(blank=True, verbose_name="Motif de suspension")
+    administrateur_validateur = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='roles_valides',
+        verbose_name="Administrateur validateur"
+    )
     
     class Meta:
         verbose_name = "Rôle"
@@ -172,18 +260,36 @@ class Role(models.Model):
             Role.objects.filter(utilisateur=self.utilisateur).exclude(pk=self.pk).update(role_actif=False)
         
         super().save(*args, **kwargs)
+
+        # Synchroniser le statut du compte utilisateur
+        if self.role_actif:
+            self.utilisateur.mettre_a_jour_statut_compte()
     
-    def valider(self):
+    def valider(self, administrateur):
         """Valider le rôle"""
         self.statut = StatutRole.VALIDE
+        self.date_validation = timezone.now()
+        self.administrateur_validateur = administrateur
+        self.motif_refus = ""
+        self.motif_suspension = ""
         self.save()
     
-    def refuser(self):
+    def refuser(self, administrateur, motif):
         """Refuser le rôle"""
         self.statut = StatutRole.REFUSE
+        self.date_refus = timezone.now()
+        self.administrateur_validateur = administrateur
+        self.motif_refus = motif
+        self.motif_suspension = ""
         self.save()
-    
-    def suspendre(self):
+
+    def suspendre(self, administrateur, motif):
         """Suspendre le rôle"""
         self.statut = StatutRole.SUSPENDU
+        self.date_suspension = timezone.now()
+        self.administrateur_validateur = administrateur
+        self.motif_suspension = motif
+        self.motif_refus = ""
         self.save()
+    
+    

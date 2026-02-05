@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Inscription - crowdBuilding{% endblock %}
+{% block title %}Inscription - CrowdBuilding{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -123,7 +123,7 @@
                 <div class="card-body p-5">
                     <div class="text-center mb-4">
                         <h2 class="fw-bold text-primary mb-2">
-                            <i class="fas fa-building me-2"></i>crowdBuilding
+                            <i class="fas fa-building me-2"></i>CrowdBuilding
                         </h2>
                         <p class="text-muted">Créez votre compte et rejoignez notre communauté</p>
                     </div>
@@ -278,7 +278,7 @@
                                         <i class="fas fa-building me-2"></i>Entreprise/Organisation
                                     </label>
                                     <input type="text" class="form-control" id="entreprise" name="entreprise">
-                                    <small class="form-text text-muted">Nom de votre entreprise ou organisation</small>
+                
                                 </div>
 
                                 <div class="mb-3">
@@ -292,7 +292,6 @@
                                         <option value="Expérimenté (5-10 ans)">Expérimenté (5-10 ans)</option>
                                         <option value="Expert (+10 ans)">Expert (+10 ans)</option>
                                     </select>
-                                    <small class="form-text text-muted">Votre expérience dans le domaine immobilier</small>
                                 </div>
                             </div>
 
@@ -324,10 +323,11 @@
                                 </div>
                             </div>
 
+                            
                             <!-- Conditions -->
                             <div class="mb-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="conditions" name="conditions" required>
+                                    <input class="form-check-input" type="checkbox" id="conditions" name="conditions_acceptees" required>
                                     <label class="form-check-label" for="conditions">
                                         J'accepte les <a href="#" class="text-primary">conditions générales d'utilisation</a> 
                                         et la <a href="#" class="text-primary">politique de confidentialité</a>

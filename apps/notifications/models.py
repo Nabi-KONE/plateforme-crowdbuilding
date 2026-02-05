@@ -9,6 +9,8 @@ from apps.projects.models import Projet
 from apps.investments.models import Investissement
 
 
+
+
 class TypeNotification(models.TextChoices):
     """Types de notifications"""
     VALIDATION_COMPTE = 'VALIDATION_COMPTE', 'Validation de compte'
@@ -22,6 +24,7 @@ class TypeNotification(models.TextChoices):
     PROJET_FINANCE = 'PROJET_FINANCE', 'Projet entièrement financé'
     ETAPE_TERMINEE = 'ETAPE_TERMINEE', 'Étape terminée'
     COMPTE_RENDU_PUBLIE = 'COMPTE_RENDU_PUBLIE', 'Compte rendu publié'
+    NOUVEAU_PROJET_A_VALIDER = 'NOUVEAU_PROJET_A_VALIDER', 'Nouveau projet à valider'
 
 
 class Notification(models.Model):
@@ -138,10 +141,15 @@ class Notification(models.Model):
     
     @classmethod
     def creer_notification_nouvel_investissement(cls, investissement):
-        """Crée une notification pour un nouvel investissement"""
-        titre = "Nouvel investissement reçu"
-        contenu = f"Bonjour {investissement.projet.promoteur.prenom},\n\nVotre projet '{investissement.projet.titre}' a reçu un nouvel investissement de {investissement.montant:,.0f} FCFA de la part de {investissement.investisseur.nom_complet}."
-        
+        titre = "Nouvelle intention d’investissement"
+        contenu = (
+            f"Bonjour {investissement.projet.promoteur.prenom},\n\n"
+            f"Un investisseur ({investissement.investisseur.nom_complet}) "
+            f"a manifesté son intention d’investir dans votre projet "
+            f"'{investissement.projet.titre}'.\n\n"
+            f"Statut : En attente de paiement."
+        )
+
         return cls.objects.create(
             utilisateur=investissement.projet.promoteur,
             titre=titre,
@@ -150,7 +158,28 @@ class Notification(models.Model):
             projet=investissement.projet,
             investissement=investissement
         )
+
     
+
+    @classmethod
+    def creer_notification_confirmation_investissement(cls, investissement):
+        titre = "Investissement confirmé"
+        contenu = (
+            f"Bonjour {investissement.investisseur.prenom},\n\n"
+            f"Votre paiement a été confirmé.\n"
+            f"Votre investissement dans le projet "
+            f"'{investissement.projet.titre}' est maintenant actif."
+        )
+
+        return cls.objects.create(
+            utilisateur=investissement.investisseur,
+            titre=titre,
+            contenu=contenu,
+            type=TypeNotification.CONFIRMATION_INVESTISSEMENT,
+            projet=investissement.projet,
+            investissement=investissement
+        )
+
     @classmethod
     def creer_notification_projet_finance(cls, projet):
         """Crée une notification quand un projet est entièrement financé"""
@@ -222,3 +251,32 @@ class Notification(models.Model):
     def get_notifications_recentes(cls, utilisateur, limit=10):
         """Retourne les notifications récentes d'un utilisateur"""
         return cls.objects.filter(utilisateur=utilisateur)[:limit]
+
+
+class ParametreNotification(models.Model):
+    """Paramètres de notification par utilisateur"""
+    utilisateur = models.OneToOneField(
+        Utilisateur,
+        on_delete=models.CASCADE,
+        related_name='parametres_notification'
+    )
+    
+    # Types de notifications à recevoir
+    email_projet_valide = models.BooleanField(default=True, verbose_name="Projet validé")
+    email_nouvel_investissement = models.BooleanField(default=True, verbose_name="Nouvel investissement")
+    email_objectif_atteint = models.BooleanField(default=True, verbose_name="Objectif de financement atteint")
+    email_nouveau_commentaire = models.BooleanField(default=True, verbose_name="Nouveau commentaire")
+    email_mise_a_jour = models.BooleanField(default=True, verbose_name="Mise à jour de la plateforme")
+    
+    # Fréquence des résumés
+    resume_quotidien = models.BooleanField(default=False, verbose_name="Résumé quotidien")
+    resume_hebdomadaire = models.BooleanField(default=True, verbose_name="Résumé hebdomadaire")
+    
+    date_modification = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Paramètre de notification"
+        verbose_name_plural = "Paramètres de notification"
+    
+    def __str__(self):
+        return f"Paramètres notifications - {self.utilisateur.email}"

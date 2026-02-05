@@ -1,0 +1,33 @@
+
+RAPPORT DE CORRECTION DES URLS ADMIN
+====================================
+
+Date: lun. 05 janv. 2026 15:01:24 GMT
+Racine du projet: /home/kone/Documents/plateforme crowdbuilding cursor
+Fichiers scannés: 156
+Fichiers modifiés: 18
+
+REMARQUES IMPORTANTES:
+1. Le nom d'URL 'admin_gestion_projets' a été remplacé par 'admin_perso:gestion_projets'
+2. Le namespace 'admin:' a été remplacé par 'admin_perso:'
+3. Le namespace 'accounts:' a été remplacé par 'admin_perso:'
+
+NEXT STEPS:
+1. Redémarrez le serveur Django: python manage.py runserver
+2. Testez l'accès admin: /admin-perso/
+3. Si des erreurs persistent, vérifiez les fichiers listés ci-dessus
+
+FICHIERS AVEC 'admin_gestion_projets' (6):
+  - templates/admin/sidebar.html
+  - templates/admin/dashboard.html
+  - templates/admin/admin_users.html
+  - templates/projects/detail.html
+  - admin/views.py
+  - admin/urls.py
+
+FICHIERS AVEC 'admin_users' (4):
+  - templates/admin/admin_users.html
+  - admin/views.py
+  - static/js/admin_users.js
+  - static/js/admin_projects.js
+        

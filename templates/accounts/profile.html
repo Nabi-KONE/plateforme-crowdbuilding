@@ -1,18 +1,548 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Mon Profil - crowdBuilding{% endblock %}
+{% block title %}Mon Profil - CrowdBuilding{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+}
+
+.avatar-lg {
+    width: 120px;
+    height: 120px;
+    border: 5px solid rgba(255,255,255,0.3);
+}
+
+.stats-card {
+    transition: transform 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.nav-pills .nav-link.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.activity-item {
+    border-left: 3px solid #007bff;
+    padding-left: 15px;
+}
+
+.badge-role {
+    font-size: 0.9em;
+    padding: 8px 12px;
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+
+<!-- VÉRIFICATION SI L'UTILISATEUR A UN RÔLE VALIDÉ -->
+ 
+{% with role_actif=user.get_role_actif %}
+{% if not role_actif or role_actif.statut != 'VALIDE' %}
+<div class="container-fluid py-4">
     <div class="row">
         <div class="col-12">
-            <div class="text-center py-5">
-                <i class="fas fa-user fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">Mon Profil</h4>
-                <p class="text-muted">Cette page sera développée prochainement.</p>
+            <div class="alert alert-warning text-center">
+                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                <h4>Compte en attente de validation</h4>
+                <p class="mb-0">Votre compte est en cours de validation. Vous pourrez accéder à votre profil une fois validé.</p>
             </div>
         </div>
     </div>
 </div>
+{% else %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- En-tête du profil -->
+            <div class="profile-header text-white p-4 mb-4">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <div class="avatar-lg rounded-circle bg-white d-flex align-items-center justify-content-center">
+                            <span class="text-primary fw-bold fs-2">
+                                {{ user.prenom|first }}{{ user.nom|first }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <h1 class="h3 mb-1">{{ user.prenom }} {{ user.nom }}</h1>
+                        <p class="mb-2 opacity-75">
+                            <i class="fas fa-envelope me-2"></i>{{ user.email }}
+                        </p>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% with role=user.get_role_actif %}
+                                <span class="badge badge-role bg-light text-dark">
+                                    <i class="fas fa-{% if role.type == 'PROMOTEUR' %}hard-hat{% else %}chart-line{% endif %} me-1"></i>
+                                    {{ role.get_type_display }}
+                                </span>
+                            {% endwith %}
+                            <span class="badge badge-role bg-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Compte vérifié
+                            </span>
+                            <span class="badge badge-role bg-info">
+                                Membre depuis {{ user.date_joined|date:"M Y" }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                            <i class="fas fa-edit me-2"></i>Modifier le profil
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Sidebar Navigation -->
+                <div class="col-lg-3 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="nav flex-column nav-pills">
+                                <a class="nav-link active" href="#overview" data-bs-toggle="pill">
+                                    <i class="fas fa-chart-pie me-2"></i>Aperçu
+                                </a>
+                                <a class="nav-link" href="#personal" data-bs-toggle="pill">
+                                    <i class="fas fa-user me-2"></i>Informations personnelles
+                                </a>
+                                <a class="nav-link" href="#security" data-bs-toggle="pill">
+                                    <i class="fas fa-shield-alt me-2"></i>Sécurité
+                                </a>
+                                <a class="nav-link" href="#documents" data-bs-toggle="pill">
+                                    <i class="fas fa-folder me-2"></i>Mes documents
+                                </a>
+                                <a class="nav-link" href="#activity" data-bs-toggle="pill">
+                                    <i class="fas fa-history me-2"></i>Activité récente
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                   <!-- Statistiques rapides -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>Statistiques
+                                {% if is_administrateur %}
+                                <span class="badge bg-danger ms-2">ADMIN</span>
+                                {% elif user.est_promoteur %}
+                                <span class="badge bg-primary ms-2">PROMOTEUR</span>
+                                {% elif user.est_investisseur %}
+                                <span class="badge bg-success ms-2">INVESTISSEUR</span>
+                                {% else %}
+                                <span class="badge bg-warning ms-2">EN ATTENTE</span>
+                                {% endif %}
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% if is_administrateur %}
+                            <!-- ====================== -->
+                            <!-- STATISTIQUES ADMIN -->
+                            <!-- ====================== -->
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-users me-1"></i> Utilisateurs total</span>
+                                <strong class="text-primary">{{ stats.total_utilisateurs }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-user-clock me-1"></i> En attente</span>
+                                <strong class="text-warning">{{ stats.utilisateurs_attente }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-hard-hat me-1"></i> Projets total</span>
+                                <strong class="text-info">{{ stats.total_projets }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-chart-line me-1"></i> Investissements</span>
+                                <strong class="text-success">{{ stats.total_investissements }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span><i class="fas fa-file me-1"></i> Documents en attente</span>
+                                <strong class="text-danger">{{ stats.documents_attente }}</strong>
+                            </div>
+
+                            {% elif user.est_promoteur %}
+                            <!-- ====================== -->
+                            <!-- STATISTIQUES PROMOTEUR -->
+                            <!-- ====================== -->
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-project-diagram me-1"></i> Projets créés</span>
+                                <strong class="text-primary">{{ stats.total_projets }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-play-circle me-1"></i> Projets actifs</span>
+                                <strong class="text-success">{{ stats.projets_actifs }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-check-circle me-1"></i> Projets terminés</span>
+                                <strong class="text-info">{{ stats.projets_termines }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-money-bill-wave me-1"></i> Montant levé</span>
+                                <strong class="text-warning">{{ stats.montant_levé|floatformat:0 }} FCFA</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span><i class="fas fa-file me-1"></i> Mes documents</span>
+                                <strong class="text-secondary">{{ user_documents_count }}</strong>
+                            </div>
+
+                            {% elif user.est_investisseur %}
+                            <!-- ====================== -->
+                            <!-- STATISTIQUES INVESTISSEUR -->
+                            <!-- ====================== -->
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-hand-holding-usd me-1"></i> Investissements</span>
+                                <strong class="text-primary">{{ stats.total_investissements }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-coins me-1"></i> Montant investi</span>
+                                <strong class="text-success">{{ stats.montant_investi|floatformat:0 }} FCFA</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-chart-line me-1"></i> Retour attendu</span>
+                                <strong class="text-info">{{ stats.retour_attendu|floatformat:0 }} FCFA</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-building me-1"></i> Projets investis</span>
+                                <strong class="text-warning">{{ stats.projets_investis }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span><i class="fas fa-file me-1"></i> Mes documents</span>
+                                <strong class="text-secondary">{{ user_documents_count }}</strong>
+                            </div>
+
+                            {% else %}
+                            <!-- ====================== -->
+                            <!-- STATISTIQUES EN ATTENTE -->
+                            <!-- ====================== -->
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-file-upload me-1"></i> Documents uploadés</span>
+                                <strong class="text-primary">{{ stats.documents_uploades }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-check-circle me-1"></i> Documents validés</span>
+                                <strong class="text-success">{{ stats.documents_valides }}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span><i class="fas fa-clock me-1"></i> En attente</span>
+                                <strong class="text-warning">{{ stats.documents_attente }}</strong>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Notifications communes à tous -->
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span><i class="fas fa-bell me-1"></i> Notifications</span>
+                                <strong class="text-info">{{ unread_notifications_count }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenu principal -->
+                <div class="col-lg-9">
+                    <div class="tab-content">
+                        <!-- Onglet Aperçu -->
+                        <div class="tab-pane fade show active" id="overview">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-chart-pie me-2"></i>Aperçu du compte
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-4">
+                                            <div class="stats-card card bg-primary text-white text-center">
+                                                <div class="card-body">
+                                                    <i class="fas fa-hard-hat fa-2x mb-3"></i>
+                                                    <h3>0</h3>
+                                                    <p class="mb-0">Projets actifs</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-4">
+                                            <div class="stats-card card bg-success text-white text-center">
+                                                <div class="card-body">
+                                                    <i class="fas fa-chart-line fa-2x mb-3"></i>
+                                                    <h3>0 FCFA</h3>
+                                                    <p class="mb-0">Investissements</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-4">
+                                            <div class="stats-card card bg-info text-white text-center">
+                                                <div class="card-body">
+                                                    <i class="fas fa-file-contract fa-2x mb-3"></i>
+                                                    <h3>{{ user_documents_count }}</h3>
+                                                    <p class="mb-0">Documents</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Progression du profil -->
+                                    <div class="mt-4">
+                                        <h6>Complétion du profil</h6>
+                                        <div class="progress mb-3" style="height: 10px;">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 75%;"></div>
+                                        </div>
+                                        <small class="text-muted">
+                                            Complétez votre profil pour augmenter votre visibilité
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Onglet Informations personnelles -->
+                        <div class="tab-pane fade" id="personal">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-user me-2"></i>Informations personnelles
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Nom complet</label>
+                                                <p class="form-control-plaintext">{{ user.prenom }} {{ user.nom }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Email</label>
+                                                <p class="form-control-plaintext">{{ user.email }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Téléphone</label>
+                                                <p class="form-control-plaintext">{{ user.telephone|default:"Non renseigné" }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Rôle principal</label>
+                                                <p class="form-control-plaintext">
+                                                    {% with role=user.get_role_actif %}
+                                                        {{ role.get_type_display }}
+                                                    {% endwith %}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Adresse</label>
+                                                <p class="form-control-plaintext">
+                                                    {{ user.adresse|default:"Non renseignée" }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Onglet Sécurité -->
+                        <div class="tab-pane fade" id="security">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-shield-alt me-2"></i>Sécurité du compte
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Protégez votre compte avec ces paramètres de sécurité.
+                                    </div>
+
+                                    <div class="list-group list-group-flush">
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">Mot de passe</h6>
+                                                <small class="text-muted">Dernière modification il y a 30 jours</small>
+                                            </div>
+                                            <a href="{% url 'admin_perso:change_password' %}" class="btn btn-outline-primary btn-sm">
+                                                Modifier
+                                            </a>
+                                        </div>
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">Connexions actives</h6>
+                                                <small class="text-muted">1 appareil connecté</small>
+                                            </div>
+                                            <button class="btn btn-outline-secondary btn-sm" disabled>
+                                                Voir
+                                            </button>
+                                        </div>
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">Validation en deux étapes</h6>
+                                                <small class="text-muted">Non activée</small>
+                                            </div>
+                                            <button class="btn btn-outline-warning btn-sm" disabled>
+                                                Activer
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Onglet Documents -->
+                        <div class="tab-pane fade" id="documents">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-folder me-2"></i>Mes documents
+                                    </h5>
+                                    <a href="{% url 'documents:upload' %}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-upload me-1"></i>Uploader
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    {% if user_documents %}
+                                        <div class="list-group list-group-flush">
+                                            {% for document in user_documents %}
+                                            <div class="list-group-item">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <h6 class="mb-1">{{ document.nom }}</h6>
+                                                        <small class="text-muted">
+                                                            {{ document.get_type_display }} • 
+                                                            {{ document.date_telechargement|date:"d/m/Y" }} • 
+                                                            <span class="badge bg-{% if document.statut == 'VALIDE' %}success{% elif document.statut == 'REFUSE' %}danger{% else %}warning{% endif %}">
+                                                                {{ document.get_statut_display }}
+                                                            </span>
+                                                        </small>
+                                                    </div>
+                                                    <div class="btn-group">
+                                                        <a href="{{ document.fichier.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        {% if document.statut == 'EN_ATTENTE' %}
+                                                        <a href="{% url 'documents:delete' document.id %}" class="btn btn-outline-danger btn-sm">
+                                                            <i class="fas fa-trash"></i>
+                                                        </a>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center py-4">
+                                            <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
+                                            <h5>Aucun document</h5>
+                                            <p class="text-muted">Commencez par uploader vos documents</p>
+                                            <a href="{% url 'documents:upload' %}" class="btn btn-primary">
+                                                <i class="fas fa-upload me-2"></i>Uploader un document
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Onglet Activité -->
+                        <div class="tab-pane fade" id="activity">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-history me-2"></i>Activité récente
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="activity-timeline">
+                                        {% for activity in recent_activities %}
+                                        <div class="activity-item mb-3">
+                                            <div class="d-flex justify-content-between">
+                                                <strong>{{ activity.title }}</strong>
+                                                <small class="text-muted">{{ activity.date|date:"d/m/Y H:i" }}</small>
+                                            </div>
+                                            <p class="mb-0 text-muted">{{ activity.description }}</p>
+                                        </div>
+                                        {% empty %}
+                                        <div class="text-center py-4">
+                                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                            <h5>Aucune activité récente</h5>
+                                            <p class="text-muted">Vos activités apparaîtront ici</p>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endwith %}
+
+<!-- Modal d'édition du profil -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modifier le profil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    La fonctionnalité d'édition du profil sera bientôt disponible.
+                </div>
+                <p>Pour le moment, veuillez contacter l'administrateur pour modifier vos informations.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Activation des onglets
+    const triggerTabList = [].slice.call(document.querySelectorAll('#myTab a'));
+    triggerTabList.forEach(function (triggerEl) {
+        const tabTrigger = new bootstrap.Tab(triggerEl);
+        triggerEl.addEventListener('click', function (event) {
+            event.preventDefault();
+            tabTrigger.show();
+        });
+    });
+
+    // Animation des cartes de statistiques
+    const statsCards = document.querySelectorAll('.stats-card');
+    statsCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+        });
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+});
+</script>
 {% endblock %}

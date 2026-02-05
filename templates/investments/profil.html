@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Profil Investisseur{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+    <!-- EN-TÊTE -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body d-flex align-items-center">
+            <div class="me-4">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                     style="width:80px;height:80px;font-size:32px;">
+                    {{ request.user.prenom|first }}{{ request.user.nom|first }}
+                </div>
+            </div>
+            <div>
+                <h4 class="mb-1">{{ request.user.nom_complet }}</h4>
+                <p class="mb-0 text-muted">
+                    <i class="fas fa-user-shield me-1"></i> Investisseur vérifié
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATISTIQUES -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-start border-success border-4">
+                <div class="card-body">
+                    <h6 class="text-muted">Capital confirmé</h6>
+                    <h4>{{ total_investi|intcomma }} FCFA</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-start border-primary border-4">
+                <div class="card-body">
+                    <h6 class="text-muted">Projets financés</h6>
+                    <h4>{{ nb_projets }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-start border-warning border-4">
+                <div class="card-body">
+                    <h6 class="text-muted">Parts détenues</h6>
+                    <h4>{{ total_parts }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LISTE DES INVESTISSEMENTS -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="fas fa-chart-line me-2"></i>Historique des investissements confirmés
+            </h5>
+        </div>
+
+        <div class="card-body p-0">
+            {% if investissements %}
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Projet</th>
+                            <th>Parts</th>
+                            <th>Montant</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for inv in investissements %}
+                        <tr>
+                            <td>{{ inv.projet.titre }}</td>
+                            <td>{{ inv.nombre_parts }}</td>
+                            <td>{{ inv.montant|intcomma }} FCFA</td>
+                            <td>{{ inv.date_investissement|date:"d/m/Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="text-center p-5 text-muted">
+                    Aucun investissement confirmé pour le moment.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -34,3 +34,33 @@ def recent_notifications(user, limit=5):
         return user.notifications.all()[:limit]
     except:
         return []
+
+
+# AJOUTEZ CES NOUVELLES FONCTIONS :
+
+@register.filter
+def filter_by_type(notifications, types_str):
+    """
+    Filtre les notifications par type
+    Usage dans template: {{ notifications|filter_by_type:"TYPE1,TYPE2" }}
+    """
+    if not notifications:
+        return []
+    
+    try:
+        types = [t.strip() for t in types_str.split(',')]
+        return [n for n in notifications if hasattr(n, 'type') and n.type in types]
+    except (AttributeError, ValueError):
+        return []
+
+
+@register.filter
+def get_notifications_by_user(notifications, user):
+    """Filtre les notifications par utilisateur"""
+    return [n for n in notifications if n.utilisateur == user]
+
+
+@register.filter
+def get_unread_count_by_type(notifications, notification_type):
+    """Compte les notifications non lues d'un type spécifique"""
+    return len([n for n in notifications if n.type == notification_type and not n.lue])

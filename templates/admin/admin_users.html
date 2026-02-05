@@ -1,0 +1,952 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion des Utilisateurs - Administration CrowdBuilding</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        /* Cacher la navbar publique */
+        .navbar {
+            display: none !important;
+        }
+
+        /* Variables CSS */
+        :root {
+            --primary-blue: #2563eb;
+            --light-blue: #e6f0ff;
+            --sidebar-bg: #f9fafb;
+            --text-dark: #111827;
+            --text-gray: #6b7280;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        /* ===== STRUCTURE ADMIN FIXE ===== */
+        
+        /* Sidebar fixe */
+        .admin-sidebar {
+            height: 100vh;
+            width: 280px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: var(--sidebar-bg);
+            padding: 20px 0;
+            color: var(--text-dark);
+            border-right: 1px solid #e5e7eb;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 0 25px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-family: 'Brush Script MT', cursive;
+            font-size: 24px;
+            color: var(--text-dark);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--primary-blue);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            margin: 5px 15px;
+        }
+
+        .sidebar-menu a {
+            color: var(--text-gray);
+            padding: 12px 15px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: var(--light-blue);
+            color: var(--primary-blue);
+        }
+
+        .sidebar-menu i {
+            width: 20px;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+
+        .menu-section {
+            margin: 20px 0 10px 0;
+            padding: 0 25px;
+        }
+
+        .menu-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-badge {
+            margin-left: auto;
+            font-size: 11px;
+            padding: 2px 6px;
+        }
+
+        /* Header fixe */
+        .admin-header {
+            position: fixed;
+            top: 0;
+            left: 280px;
+            right: 0;
+            height: 100px;
+            background: white;
+            border-bottom: 1px solid #e5e7eb;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 0 30px;
+        }
+
+        .header-title h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .header-title p {
+            color: var(--text-gray);
+            margin: 5px 0 0 0;
+        }
+
+        /* Profil admin déroulant */
+        .admin-profile-dropdown {
+            position: relative;
+        }
+
+        .admin-profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .admin-profile-btn:hover {
+            background: var(--light-blue);
+        }
+
+        .admin-avatar {
+            width: 45px;
+            height: 45px;
+            background: var(--primary-blue);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .admin-info {
+            text-align: left;
+        }
+
+        .admin-info h4 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .admin-info p {
+            margin: 0;
+            color: var(--text-gray);
+            font-size: 12px;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            min-width: 200px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            color: var(--text-dark);
+            text-decoration: none;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            transition: background 0.3s ease;
+        }
+
+        .dropdown-item:hover {
+            background: var(--light-blue);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 4px 0;
+        }
+
+        /* ===== CONTENU PRINCIPAL ===== */
+        .admin-main-content {
+            margin-left: 280px;
+            margin-top: 100px;
+            padding: 30px;
+            background-color: #f8fafc;
+            min-height: calc(100vh - 100px);
+        }
+
+        /* ===== STYLES SPÉCIFIQUES GESTION UTILISATEURS ===== */
+        
+        .card-stat {
+            border-left: 4px solid;
+            transition: transform 0.3s ease;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .card-stat:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        .avatar-initials {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .avatar-small {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .badge-role {
+            padding: 0.4em 0.8em;
+            font-size: 0.75em;
+            font-weight: 600;
+            border-radius: 6px;
+        }
+
+        .badge-statut {
+            padding: 0.4em 0.8em;
+            font-size: 0.75em;
+            font-weight: 600;
+            border-radius: 6px;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(248, 249, 250, 0.8) !important;
+        }
+
+        .search-box {
+            max-width: 300px;
+        }
+
+        .filter-select {
+            min-width: 150px;
+        }
+
+        .user-email {
+            color: #6b7280;
+            font-size: 0.875em;
+        }
+
+        .user-phone {
+            color: #6b7280;
+            font-size: 0.875em;
+        }
+
+        /* Styles pour les boutons d'action */
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            border: none;
+            transition: all 0.3s ease;
+            font-size: 0.8rem;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .btn-success { background-color: #d1fae5; color: #065f46; }
+        .btn-danger { background-color: #fee2e2; color: #dc2626; }
+        .btn-warning { background-color: #fef3c7; color: #d97706; }
+        .btn-view { background-color: #e0f2fe; color: #0369a1; }
+
+        /* État loading pour les boutons */
+        .action-btn.loading {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Couleurs des badges de rôle */
+        .badge-investisseur {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-promoteur {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-administrateur {
+            background-color: #ede9fe;
+            color: #5b21b6;
+        }
+
+        /* Couleurs des badges de statut */
+        .badge-valide {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-en_attente_validation {
+            background-color: #fef3c7;
+            color: #d97706;
+        }
+
+        .badge-refuse {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        .badge-suspendu {
+            background-color: #f3f4f6;
+            color: #6b7280;
+        }
+
+        /* Cartes statistiques */
+        .stat-total { border-left-color: #2563eb; }
+        .stat-attente { border-left-color: #d97706; }
+        .stat-valide { border-left-color: #16a34a; }
+        .stat-refuse { border-left-color: #dc2626; }
+
+        .stat-icon-total { background: #e0f2fe; color: #2563eb; }
+        .stat-icon-attente { background: #fef3c7; color: #d97706; }
+        .stat-icon-valide { background: #dcfce7; color: #16a34a; }
+        .stat-icon-refuse { background: #fee2e2; color: #dc2626; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            
+            .admin-header {
+                left: 0;
+                position: relative;
+            }
+            
+            .admin-main-content {
+                margin-left: 0;
+                margin-top: 0;
+                padding: 20px;
+            }
+            
+            .search-box {
+                max-width: 100%;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 2px;
+            }
+            
+            .action-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar fixe -->
+    <div class="admin-sidebar">
+        <div class="sidebar-header">
+            <a href="{% url 'core:dashboard' %}" class="logo">  
+                Administration <span>CrowdBuilding</span>
+            </a>
+        </div>
+
+        <ul class="sidebar-menu">
+            <!-- Section Tableau de bord -->
+            <div class="menu-section">
+                <div class="menu-section-title">TABLEAU DE BORD</div>
+            </div>
+            <li>
+                <a href="{% url 'core:dashboard' %}">
+                    <i class="fas fa-tachometer-alt"></i>
+                    Tableau de bord
+                </a>
+            </li>
+
+            <!-- Section Administration -->
+            <div class="menu-section">
+                <div class="menu-section-title">ADMINISTRATION</div>
+            </div>
+            <li>
+                <a href="{% url 'admin_perso:gestion_utilisateurs' %}" class="active">
+                    <i class="fas fa-users"></i>
+                    Utilisateurs
+                    {% if stats.utilisateurs_en_attente > 0 %}
+                        <span class="badge bg-warning sidebar-badge">{{ stats.utilisateurs_en_attente }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'admin_perso:gestion_projets' %}">
+                    <i class="fas fa-project-diagram"></i>
+                    Gestion des Projets
+                    {% if stats_projets.projets_en_attente > 0 %}
+                        <span class="badge bg-warning sidebar-badge">{{ stats_projets.projets_en_attente }}</span>
+                    {% endif %}
+                </a>
+            </li>
+
+            <!-- Section Site -->
+            <div class="menu-section">
+                <div class="menu-section-title">SITE</div>
+            </div>
+            <li>
+                <a href="{% url 'core:home' %}" target="_blank">
+                    <i class="fas fa-home"></i>
+                    Accueil public
+                </a>
+            </li>
+            <li>
+                <a href="{% url 'projects:list' %}" target="_blank">
+                    <i class="fas fa-building"></i>
+                    Projets public
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Header fixe -->
+    <div class="admin-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1>Gestion des Utilisateurs</h1>
+                <p>Gérez les comptes utilisateurs, validations et permissions</p>
+            </div>
+            
+            <div class="admin-profile-dropdown">
+                <button class="admin-profile-btn" id="adminProfileBtn">
+                    <div class="admin-avatar">
+                        {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
+                    </div>
+                    <div class="admin-info">
+                        <h4>{{ user.nom_complet }}</h4>
+                        <p>Administrateur</p>
+                    </div>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                
+                <div class="dropdown-menu" id="adminDropdown">
+                    <a href="{% url 'admin_perso:profile' %}" class="dropdown-item">
+                        <i class="fas fa-user"></i>Profil
+                    </a>
+                    <a href="#" class="dropdown-item">
+                        <i class="fas fa-cog"></i>Paramètres
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <form method="post" action="{% url 'admin_perso:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item">
+                            <i class="fas fa-sign-out-alt"></i>Déconnexion
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="admin-main-content">
+        <!-- En-tête de page -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-end">
+                        <span class="badge bg-primary fs-6">
+                            <i class="fas fa-users me-1"></i>
+                            {{ stats.total }} utilisateurs
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cartes de statistiques -->
+        <div class="row mb-4">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card card-stat border-left-primary h-100 stat-total">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    📊 Total Utilisateurs
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" data-stat="total">{{ stats.total }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="avatar-initials stat-icon-total">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card card-stat border-left-warning h-100 stat-attente">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    ⏳ En Attente
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" data-stat="en_attente">{{ stats.en_attente }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="avatar-initials stat-icon-attente">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card card-stat border-left-success h-100 stat-valide">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    ✅ Validés
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" data-stat="valides">{{ stats.valides }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="avatar-initials stat-icon-valide">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card card-stat border-left-danger h-100 stat-refuse">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                    ❌ Refusés
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800" data-stat="refuses">{{ stats.refuses }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="avatar-initials stat-icon-refuse">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barre de recherche et filtres -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-4 mb-2 mb-md-0">
+                                <div class="input-group search-box">
+                                    <input type="text" class="form-control" id="searchInput" 
+                                           placeholder="Rechercher par nom, email, téléphone..." 
+                                           value="{{ search_query }}">
+                                    <button class="btn btn-outline-primary" type="button" id="searchButton">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2 mb-md-0">
+                                <select class="form-select filter-select" id="statutFilter">
+                                    <option value="">Tous les statuts</option>
+                                    <option value="EN_ATTENTE_VALIDATION" {% if statut_filter == "EN_ATTENTE_VALIDATION" %}selected{% endif %}>
+                                        En attente
+                                    </option>
+                                    <option value="VALIDE" {% if statut_filter == "VALIDE" %}selected{% endif %}>
+                                        Validé
+                                    </option>
+                                    <option value="REFUSE" {% if statut_filter == "REFUSE" %}selected{% endif %}>
+                                        Refusé
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-2 mb-md-0">
+                                <select class="form-select filter-select" id="roleFilter">
+                                    <option value="">Tous les rôles</option>
+                                    <option value="INVESTISSEUR" {% if role_filter == "INVESTISSEUR" %}selected{% endif %}>
+                                        Investisseur
+                                    </option>
+                                    <option value="PROMOTEUR" {% if role_filter == "PROMOTEUR" %}selected{% endif %}>
+                                        Promoteur
+                                    </option>
+                                    <option value="ADMINISTRATEUR" {% if role_filter == "ADMINISTRATEUR" %}selected{% endif %}>
+                                        Administrateur
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <span class="text-muted small">
+                                    {{ count_resultats }} résultat{{ count_resultats|pluralize }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau des utilisateurs -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list me-2"></i>Liste des utilisateurs
+                            </h5>
+                            <span class="badge bg-primary">{{ count_resultats }} résultat{{ count_resultats|pluralize }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="20%">Utilisateur</th>
+                                        <th width="15%">Rôle</th>
+                                        <th width="15%">Statut</th>
+                                        <th width="20%">Contact</th>
+                                        <th width="15%">Inscription</th>
+                                        <th width="15%">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for utilisateur in utilisateurs %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-small me-3">
+                                                    {{ utilisateur.prenom|first|upper }}{{ utilisateur.nom|first|upper }}
+                                                </div>
+                                                <div>
+                                                    <strong class="d-block">{{ utilisateur.nom_complet }}</strong>
+                                                    <small class="text-muted">ID: {{ utilisateur.id }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% with role_actif=utilisateur.get_role_actif %}
+                                                {% if role_actif %}
+                                                    <span class="badge badge-role badge-{{ role_actif.type|lower }}">
+                                                        {{ role_actif.get_type_display }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge badge-secondary">Aucun rôle</span>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </td>
+                                        <td>
+                                            {% with role_actif=utilisateur.get_role_actif %}
+                                                {% if role_actif %}
+                                                    <span class="badge badge-statut badge-{{ role_actif.statut|lower }}">
+                                                        {{ role_actif.get_statut_display }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge badge-secondary">Inconnu</span>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </td>
+                                        <td>
+                                            <div class="user-email">
+                                                <i class="fas fa-envelope me-1"></i>{{ utilisateur.email }}
+                                            </div>
+                                            {% if utilisateur.telephone %}
+                                            <div class="user-phone">
+                                                <i class="fas fa-phone me-1"></i>{{ utilisateur.telephone }}
+                                            </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ utilisateur.date_inscription|date:"d/m/Y" }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <!-- Bouton Voir Détails -->
+                                                <a href="{% url 'admin_perso:details_utilisateur' utilisateur.id %}"
+                                                   class="action-btn btn-view" 
+                                                   title="Voir les détails">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                
+                                                <!-- Bouton Valider -->
+                                                {% with role_actif=utilisateur.get_role_actif %}
+                                                    {% if role_actif and role_actif.statut == 'EN_ATTENTE_VALIDATION' %}
+                                                    <button class="action-btn btn-success" 
+                                                            data-action="valider" 
+                                                            data-user-id="{{ utilisateur.id }}"
+                                                            data-user-name="{{ utilisateur.nom_complet }}"
+                                                            title="Valider le compte">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                    {% endif %}
+                                                {% endwith %}
+                                                
+                                                <!-- Bouton Refuser -->
+                                                {% with role_actif=utilisateur.get_role_actif %}
+                                                    {% if role_actif and role_actif.statut == 'EN_ATTENTE_VALIDATION' %}
+                                                    <button class="action-btn btn-danger" 
+                                                            data-action="refuser" 
+                                                            data-user-id="{{ utilisateur.id }}"
+                                                            data-user-name="{{ utilisateur.nom_complet }}"
+                                                            title="Refuser le compte">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                    {% endif %}
+                                                {% endwith %}
+                                                
+                                                <!-- Bouton Suspendre -->
+                                                {% with role_actif=utilisateur.get_role_actif %}
+                                                    {% if role_actif and role_actif.statut == 'VALIDE' %}
+                                                    <button class="action-btn btn-warning" 
+                                                            data-action="suspendre" 
+                                                            data-user-id="{{ utilisateur.id }}"
+                                                            data-user-name="{{ utilisateur.nom_complet }}"
+                                                            title="Suspendre le compte">
+                                                        <i class="fas fa-pause"></i>
+                                                    </button>
+                                                    {% endif %}
+                                                {% endwith %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4">
+                                            <i class="fas fa-users fa-2x text-muted mb-3"></i>
+                                            <p class="text-muted mb-0">Aucun utilisateur trouvé</p>
+                                            {% if search_query or statut_filter or role_filter %}
+                                            <small class="text-muted">Essayez de modifier vos critères de recherche</small>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de refus -->
+    <div class="modal fade" id="refuseModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Refuser le compte
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="refuseForm">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Vous êtes sur le point de refuser le compte de <strong id="refuseUserName"></strong>.
+                        </div>
+                        <div class="mb-3">
+                            <label for="motifRefus" class="form-label fw-bold">
+                                Motif du refus <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="motifRefus" name="motif" rows="4" 
+                                      placeholder="Veuillez indiquer la raison du refus (ex: documents manquants, informations incomplètes...)" 
+                                      required></textarea>
+                            <div class="form-text">
+                                Ce motif sera communiqué à l'utilisateur.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-ban me-1"></i>Confirmer le refus
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de suspension -->
+    <div class="modal fade" id="suspendModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-pause me-2"></i>
+                        Suspendre le compte
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="suspendForm">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Vous êtes sur le point de suspendre le compte de <strong id="suspendUserName"></strong>.
+                        </div>
+                        <div class="mb-3">
+                            <label for="motifSuspend" class="form-label fw-bold">
+                                Motif de suspension <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="motifSuspend" name="motif" rows="4" 
+                                      placeholder="Veuillez indiquer la raison de la suspension..." 
+                                      required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-warning text-white">
+                            <i class="fas fa-pause me-1"></i>Confirmer la suspension
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Gestion du menu déroulant du profil admin
+        document.addEventListener('DOMContentLoaded', function() {
+            const profileBtn = document.getElementById('adminProfileBtn');
+            const dropdown = document.getElementById('adminDropdown');
+
+            profileBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dropdown.classList.toggle('show');
+            });
+
+            document.addEventListener('click', function() {
+                dropdown.classList.remove('show');
+            });
+
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+
+    </script>
+    
+    <!-- Scripts spécifiques -->
+    <script src="{% static 'js/admin_users.js' %}"></script>
+</body>
+</html>

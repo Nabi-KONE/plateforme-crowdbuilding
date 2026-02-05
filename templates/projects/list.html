@@ -1,160 +1,336 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
-{% block title %}Projets Immobiliers - crowdBuilding{% endblock %}
+{% block title %}Projets Immobiliers - CrowdBuilding{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <!-- En-tête -->
-    <div class="row mb-4">
+<div class="container-fluid px-4 py-4">
+    <!-- EN-TÊTE SIMPLIFIÉE -->
+    <div class="row mb-5">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 fw-bold mb-1">Projets Immobiliers</h1>
-                    <p class="text-muted mb-0">Découvrez les projets de financement participatif disponibles</p>
-                </div>
-                {% if user.is_authenticated and user.est_promoteur %}
-                <div>
-                    <a href="{% url 'projects:create' %}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>Nouveau projet
-                    </a>
-                </div>
-                {% endif %}
-            </div>
+            <h1 class="display-5 fw-bold mb-3" style="color: #1e293b;">
+                🏢 Investissez dans l'Immobilier
+            </h1>
+            <p class="text-muted mb-0 lead">
+                Découvrez des projets prometteurs et participez à leur financement
+            </p>
         </div>
     </div>
 
-    <!-- Filtres -->
+    <!-- FILTRES SIMPLIFIÉS -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <form method="get" class="row g-3">
-                        <div class="col-md-3">
-                            <label for="search" class="form-label">Rechercher</label>
-                            <input type="text" class="form-control" id="search" name="search" placeholder="Titre du projet...">
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+                <div class="card-body p-4">
+                    <div class="row g-3 align-items-end">
+                        <!-- Barre de recherche -->
+                        <div class="col-md-4">
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control border-start-0 ps-0" 
+                                       id="searchInput"
+                                       placeholder="Rechercher un projet...">
+                            </div>
                         </div>
+                        
+                        <!-- Filtre catégorie -->
                         <div class="col-md-3">
-                            <label for="ville" class="form-label">Ville</label>
-                            <select class="form-select" id="ville" name="ville">
-                                <option value="">Toutes les villes</option>
-                                <option value="Ouagadougou">Ouagadougou</option>
-                                <option value="Bobo-Dioulasso">Bobo-Dioulasso</option>
-                                <option value="Koudougou">Koudougou</option>
+                            <select class="form-select form-select-lg" id="categorieFilter">
+                                <option value="">Toutes catégories</option>
+                                <option value="RESIDENTIEL">Résidentiel</option>
+                                <option value="COMMERCIAL">Commercial</option>
+                                <option value="BUREAUX">Bureaux</option>
+                                <option value="INDUSTRIEL">Industriel</option>
                             </select>
                         </div>
+                        
+                        <!-- Filtre statut -->
                         <div class="col-md-3">
-                            <label for="rendement_min" class="form-label">Rendement minimum (%)</label>
-                            <input type="number" class="form-control" id="rendement_min" name="rendement_min" placeholder="0">
+                            <select class="form-select form-select-lg" id="statutFilter">
+                                <option value="">Tous statuts</option>
+                                <option value="EN_CAMPAGNE">En financement</option>
+                                <option value="FINANCE">Financé</option>
+                                <option value="EN_COURS_EXECUTION">En cours</option>
+                            </select>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">&nbsp;</label>
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-outline-primary">
-                                    <i class="fas fa-search me-2"></i>Filtrer
-                                </button>
-                            </div>
+                        
+                        <!-- Bouton réinitialiser -->
+                        <div class="col-md-2">
+                            <button class="btn btn-outline-secondary w-100" id="resetFilters">
+                                <i class="fas fa-redo me-2"></i>Réinitialiser
+                            </button>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Liste des projets -->
-    <div class="row">
+    <!-- COMPTEUR DE PROJETS -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h3 class="fw-bold mb-0" style="color: #1e293b;">
+                        <span id="projectCount">{{ projects|length }}</span> projets disponibles
+                    </h3>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown">
+                        <i class="fas fa-sort me-2"></i>Trier par
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-sort="financement">Financement (%)</a></li>
+                        <li><a class="dropdown-item" href="#" data-sort="investisseurs">Investisseurs</a></li>
+                        <li><a class="dropdown-item" href="#" data-sort="rendement">Rendement</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LISTE DES PROJETS - 3 CARTES PAR LIGNE -->
+    <div class="row" id="projectsGrid">
         {% for project in projects %}
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body d-flex flex-column">
-                    <!-- En-tête du projet -->
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <span class="badge bg-primary">{{ project.reference }}</span>
-                        <span class="badge bg-{% if project.statut == 'VALIDE' %}success{% elif project.statut == 'EN_COURS_FINANCEMENT' %}info{% else %}secondary{% endif %}">
-                            {{ project.get_statut_display }}
+        <div class="col-lg-4 col-md-6 col-sm-12 mb-4 project-card" 
+             data-categorie="{{ project.categorie }}"
+             data-statut="{{ project.statut }}"
+             data-rendement="{{ project.taux_rendement }}"
+             data-duree="{{ project.duree }}"
+             data-taux-financement="{{ project.taux_financement }}"
+             data-investisseurs="{{ project.investisseurs_count|default:0 }}">
+            
+            <!-- CARTE AVEC BORDURE COLORÉE -->
+            <div class="card h-100 border-0 shadow-sm project-card-inner" 
+                 style="border-radius: 16px; overflow: hidden; transition: all 0.3s ease; 
+                        border: 2px solid {% if project.statut == 'EN_CAMPAGNE' %}#e0f2fe{% elif project.statut == 'FINANCE' %}#dcfce7{% else %}#fef3c7{% endif %};">
+                
+                <!-- SECTION IMAGE -->
+                <div class="position-relative" style="height: 180px; overflow: hidden;">
+                    {% if project.image_garde %}
+                        <img src="{{ project.image_garde.url }}" 
+                             class="img-fluid w-100 h-100 project-image" 
+                             alt="{{ project.titre }}"
+                             style="object-fit: cover; transition: transform 0.5s ease;">
+                    {% else %}
+                        <div class="h-100 w-100 d-flex align-items-center justify-content-center" 
+                             style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);">
+                            <i class="fas fa-building fa-3x text-gray-400"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- OVERLAY GRADIENT SIMPLE -->
+                    <div class="position-absolute top-0 start-0 w-100 h-100" 
+                         style="background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.6) 100%);">
+                    </div>
+                    
+                    <!-- BADGE STATUT AMÉLIORÉ -->
+                    <div class="position-absolute top-3 start-3">
+                        <span class="badge px-3 py-2" 
+                              style="background: {% if project.statut == 'EN_CAMPAGNE' %}#0ea5e9{% elif project.statut == 'FINANCE' %}#10b981{% else %}#f59e0b{% endif %}; 
+                                     color: white; border-radius: 8px; font-size: 0.75rem; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <i class="fas 
+                                {% if project.statut == 'EN_CAMPAGNE' %}fa-rocket
+                                {% elif project.statut == 'FINANCE' %}fa-check-circle
+                                {% elif project.statut == 'EN_COURS_EXECUTION' %}fa-hammer
+                                {% else %}fa-clock{% endif %} 
+                                me-1"></i>
+                            {{ project.get_statut_display|truncatechars:15 }}
                         </span>
                     </div>
-
-                    <!-- Titre et description -->
-                    <h5 class="card-title fw-bold mb-3">{{ project.titre }}</h5>
-                    <p class="card-text text-muted flex-grow-1">{{ project.description|truncatewords:20 }}</p>
-
-                    <!-- Barre de progression -->
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between mb-1">
-                            <small class="text-muted">Financement</small>
-                            <small class="fw-bold">{{ project.taux_financement|floatformat:1 }}%</small>
-                        </div>
-                        <div class="progress">
-                            <div class="progress-bar" role="progressbar" style="width: {{ project.taux_financement }}%"></div>
-                        </div>
+                    
+                    <!-- TITRE SUR IMAGE -->
+                    <div class="position-absolute bottom-0 start-0 w-100 p-3">
+                        <h3 class="fw-bold text-white mb-1" style="font-size: 1.2rem;">
+                            {{ project.titre|truncatechars:40 }}
+                        </h3>
+                        <p class="text-white-80 mb-0 small">
+                            <i class="fas fa-map-marker-alt me-1"></i>{{ project.localisation|truncatechars:35 }}
+                        </p>
                     </div>
+                </div>
 
-                    <!-- Informations financières -->
-                    <div class="row text-center mb-3">
-                        <div class="col-4">
-                            <small class="text-muted">Montant total</small>
-                            <div class="fw-bold">{{ project.montant_total|floatformat:0 }} FCFA</div>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted">Collecté</small>
-                            <div class="fw-bold text-success">{{ project.montant_collecte|floatformat:0 }} FCFA</div>
-                        </div>
-                        <div class="col-4">
-                            <small class="text-muted">Rendement</small>
-                            <div class="fw-bold text-primary">{{ project.taux_rendement }}%</div>
-                        </div>
-                    </div>
-
-                    <!-- Localisation et durée -->
+                <!-- CORPS DE LA CARTE - INFORMATIONS ESSENTIELLES -->
+                <div class="card-body p-3 d-flex flex-column">
+                    
+                    <!-- STATUT VISUEL -->
                     <div class="mb-3">
-                        <div class="row text-center">
-                            <div class="col-6">
-                                <small class="text-muted">
-                                    <i class="fas fa-map-marker-alt me-1"></i>{{ project.localisation }}
-                                </small>
-                            </div>
-                            <div class="col-6">
-                                <small class="text-muted">
-                                    <i class="fas fa-clock me-1"></i>{{ project.duree }} mois
-                                </small>
+                        <div class="d-flex align-items-center">
+                            <div class="me-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2" style="width: 8px; height: 8px; border-radius: 50%; 
+                                        background: {% if project.statut == 'EN_CAMPAGNE' %}#0ea5e9
+                                                  {% elif project.statut == 'FINANCE' %}#10b981
+                                                  {% elif project.statut == 'EN_COURS_EXECUTION' %}#f59e0b
+                                                  {% else %}#9ca3af{% endif %};">
+                                    </div>
+                                    <span class="fw-bold small" style="color: {% if project.statut == 'EN_CAMPAGNE' %}#0ea5e9
+                                                                           {% elif project.statut == 'FINANCE' %}#10b981
+                                                                           {% elif project.statut == 'EN_COURS_EXECUTION' %}#f59e0b
+                                                                           {% else %}#9ca3af{% endif %};">
+                                        {% if project.statut == 'EN_CAMPAGNE' %}
+                                            Projet en financement
+                                        {% elif project.statut == 'FINANCE' %}
+                                            Projet financé
+                                        {% elif project.statut == 'EN_COURS_EXECUTION' %}
+                                            Réalisation en cours
+                                        {% else %}
+                                            {{ project.get_statut_display }}
+                                        {% endif %}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Actions -->
-                    <div class="d-flex justify-content-between align-items-center mt-auto">
-                        <small class="text-muted">
-                            <i class="fas fa-user me-1"></i>{{ project.promoteur.nom_complet }}
-                        </small>
-                        <a href="{% url 'projects:detail' project.id %}" class="btn btn-outline-primary btn-sm">
-                            Voir le projet
+                    
+                    <!-- BARRE DE PROGRESSION -->
+                    <div class="mb-4">
+                        <!-- Pourcentage au-dessus -->
+                        <div class="text-center mb-2">
+                            <span class="fw-bold h4" style="color: #3b82f6;">
+                                {{ project.taux_financement|floatformat:0 }}%
+                            </span>
+                        </div>
+                        
+                        <!-- Barre de progression -->
+                        <div class="progress mb-2" style="height: 10px; border-radius: 5px; background: #e2e8f0;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {{ project.taux_financement }}%; 
+                                        background: linear-gradient(90deg, 
+                                            {% if project.taux_financement >= project.seuil_declenchement %}#10b981, #34d399
+                                            {% else %}#3b82f6, #60a5fa{% endif %});
+                                        border-radius: 5px;">
+                            </div>
+                        </div>
+                        
+                        <!-- Montants collecté/objectif -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-start">
+                                <div class="fw-bold text-dark h6 mb-0">{{ project.montant_collecte|intcomma }} FCFA</div>
+                                <small class="text-muted">Collecté</small>
+                            </div>
+                            
+                            <div class="text-end">
+                                <div class="fw-bold text-dark h6 mb-0">{{ project.montant_total|intcomma }} FCFA</div>
+                                <small class="text-muted">Objectif</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- INFORMATIONS CLÉS EN GRID COMPACT -->
+                    <div class="row g-2 mb-3">
+                        <!-- Durée de réalisation -->
+                        <div class="col-4">
+                            <div class="text-center p-2 card-info-box">
+                                <div class="text-muted mb-1 small">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="fw-bold text-dark small">{{ project.duree }} mois</div>
+                                <small class="text-muted">Durée réal.</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Durée de collecte -->
+                        <div class="col-4">
+                            <div class="text-center p-2 card-info-box">
+                                <div class="text-muted mb-1 small">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="fw-bold text-dark small">{{ project.duree_campagne|default:"-" }} mois</div>
+                                <small class="text-muted">Collecte</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Nombre d'investisseurs -->
+                        <div class="col-4">
+                            <div class="text-center p-2 card-info-box">
+                                <div class="text-muted mb-1 small">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="fw-bold text-dark small">
+                                    {% if project.investisseurs_count %}
+                                        {{ project.investisseurs_count }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">Investiss.</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- DEUXIÈME LIGNE D'INFORMATIONS -->
+                    <div class="row g-2 mb-3">
+                        <!-- Prix unitaire -->
+                        <div class="col-6">
+                            <div class="text-center p-2 card-info-box">
+                                <div class="text-muted mb-1 small">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="fw-bold text-dark small">
+                                    {% with prix=project.prix_unitaire|default:project.valeur_part|default:0 %}
+                                        {{ prix|floatformat:0|intcomma }}
+                                    {% endwith %} FCFA
+                                </div>
+                                <small class="text-muted">Prix/part</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Parts restantes -->
+                        <div class="col-6">
+                            <div class="text-center p-2 card-info-box">
+                                <div class="text-muted mb-1 small">
+                                    <i class="fas fa-chart-pie"></i>
+                                </div>
+                                <div class="fw-bold text-dark small">
+                                    {% if project.parts_restantes %}
+                                        {{ project.parts_restantes|intcomma }}
+                                    {% else %}
+                                        {{ project.nombre_total_parts|default:0|intcomma }}
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">Parts rest.</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- BOUTON D'ACTION -->
+                    <div class="mt-2">
+                        <a href="{% url 'projects:detail' project.id %}" 
+                           class="btn btn-outline-primary w-100 py-2 d-flex align-items-center justify-content-center"
+                           style="border-radius: 10px; font-weight: 600; border-width: 2px; font-size: 0.9rem;">
+                            <i class="fas fa-eye me-2"></i>
+                            <span>Voir détails</span>
                         </a>
                     </div>
                 </div>
             </div>
         </div>
         {% empty %}
+        <!-- ÉTAT VIDE -->
         <div class="col-12">
-            <div class="text-center py-5">
-                <i class="fas fa-home fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">Aucun projet disponible</h4>
-                <p class="text-muted">Il n'y a actuellement aucun projet de financement participatif disponible.</p>
-                {% if user.is_authenticated and user.est_promoteur %}
-                <a href="{% url 'projects:create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>Créer le premier projet
-                </a>
-                {% endif %}
+            <div class="card border-0 shadow-sm text-center py-5">
+                <div class="card-body">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3 opacity-50"></i>
+                    <h4 class="fw-bold text-muted mb-3">Aucun projet disponible</h4>
+                    <p class="text-muted mb-4">
+                        Aucun projet n'est actuellement en campagne de financement.
+                    </p>
+                </div>
             </div>
         </div>
         {% endfor %}
     </div>
-
-    <!-- Pagination -->
+    
+    <!-- PAGINATION OU MESSAGE -->
     {% if projects.has_other_pages %}
-    <div class="row mt-4">
+    <div class="row mt-5">
         <div class="col-12">
-            <nav aria-label="Navigation des projets">
+            <nav aria-label="Pagination">
                 <ul class="pagination justify-content-center">
                     {% if projects.has_previous %}
                     <li class="page-item">
@@ -162,16 +338,16 @@
                     </li>
                     {% endif %}
                     
-                    {% for num in projects.paginator.page_range %}
-                    {% if projects.number == num %}
-                    <li class="page-item active">
-                        <span class="page-link">{{ num }}</span>
-                    </li>
-                    {% elif num > projects.number|add:'-3' and num < projects.number|add:'3' %}
-                    <li class="page-item">
-                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
-                    </li>
-                    {% endif %}
+                    {% for i in projects.paginator.page_range %}
+                        {% if projects.number == i %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ i }}</span>
+                        </li>
+                        {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                        </li>
+                        {% endif %}
                     {% endfor %}
                     
                     {% if projects.has_next %}
@@ -185,4 +361,321 @@
     </div>
     {% endif %}
 </div>
+
+<!-- STYLES AMÉLIORÉS POUR 3 CARTES PAR LIGNE -->
+<style>
+/* Utilisation de toute la largeur */
+.container-fluid {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+/* 3 cartes par ligne sur grand écran */
+.col-lg-4 {
+    flex: 0 0 auto;
+    width: 33.33333333%;
+}
+
+/* Animation des cartes */
+.project-card-inner {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.project-card-inner:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+    border-color: 
+        {% if project.statut == 'EN_CAMPAGNE' %}#7dd3fc !important;
+        {% elif project.statut == 'FINANCE' %}#86efac !important;
+        {% else %}#fde68a !important;
+        {% endif %};
+}
+
+.project-card-inner:hover .project-image {
+    transform: scale(1.05);
+}
+
+/* Bordures colorées selon le statut */
+.card[style*="border: 2px solid #e0f2fe"] {
+    border-left: 4px solid #0ea5e9 !important;
+}
+
+.card[style*="border: 2px solid #dcfce7"] {
+    border-left: 4px solid #10b981 !important;
+}
+
+.card[style*="border: 2px solid #fef3c7"] {
+    border-left: 4px solid #f59e0b !important;
+}
+
+/* Style pour les informations clés */
+.card-info-box {
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    padding: 0.5rem !important;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+}
+
+.card-info-box:hover {
+    background-color: white;
+    border-color: #e2e8f0;
+    transform: translateY(-2px);
+}
+
+/* Barre de progression améliorée */
+.progress {
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.progress-bar {
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Style pour les montants */
+.text-start .h6, .text-end .h6 {
+    font-size: 1rem;
+}
+
+/* Bouton amélioré */
+.btn-outline-primary {
+    transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+    background-color: #3b82f6;
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Style pour le badge statut */
+.badge {
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+    .col-lg-4 {
+        width: 50%;
+    }
+}
+
+@media (max-width: 992px) {
+    .col-lg-4, .col-md-6 {
+        width: 50%;
+    }
+}
+
+@media (max-width: 768px) {
+    .col-md-6, .col-sm-12 {
+        width: 100%;
+    }
+    
+    .position-relative {
+        height: 160px !important;
+    }
+    
+    .display-5 {
+        font-size: 1.8rem !important;
+    }
+    
+    .row.g-2 {
+        font-size: 0.85rem;
+    }
+    
+    .btn-outline-primary {
+        padding: 0.4rem !important;
+        font-size: 0.85rem !important;
+    }
+    
+    .card-info-box {
+        padding: 0.4rem !important;
+    }
+    
+    .container-fluid {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}
+
+@media (max-width: 576px) {
+    .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+/* Animation pour le compteur */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#projectCount {
+    animation: fadeIn 0.5s ease;
+}
+
+/* Espacement entre les cartes */
+.mb-4 {
+    margin-bottom: 1.5rem !important;
+}
+
+/* Effet de séparation visuelle */
+.project-card {
+    position: relative;
+}
+
+.project-card::after {
+    content: '';
+    position: absolute;
+    bottom: -0.75rem;
+    left: 15%;
+    width: 70%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+}
+
+.project-card:nth-child(3n)::after {
+    display: none;
+}
+
+@media (max-width: 1200px) {
+    .project-card:nth-child(2n)::after {
+        display: none;
+    }
+    .project-card:nth-child(3n)::after {
+        display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    .project-card::after {
+        display: none !important;
+    }
+}
+
+/* Layout fixe */
+html, body {
+    overflow-x: hidden;
+}
+
+.container-fluid {
+    min-width: 100%;
+}
+</style>
+
+<!-- SCRIPTS SIMPLIFIÉS -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Éléments DOM
+    const searchInput = document.getElementById('searchInput');
+    const categorieFilter = document.getElementById('categorieFilter');
+    const statutFilter = document.getElementById('statutFilter');
+    const resetFiltersBtn = document.getElementById('resetFilters');
+    const projectCards = document.querySelectorAll('.project-card');
+    const projectCount = document.getElementById('projectCount');
+    const sortItems = document.querySelectorAll('[data-sort]');
+    
+    // Initialisation des filtres
+    function initFilters() {
+        // Écouteurs pour les filtres
+        searchInput.addEventListener('input', applyFilters);
+        categorieFilter.addEventListener('change', applyFilters);
+        statutFilter.addEventListener('change', applyFilters);
+        resetFiltersBtn.addEventListener('click', resetFilters);
+        
+        // Écouteurs pour le tri
+        sortItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                applySort(this.dataset.sort);
+            });
+        });
+        
+        // Appliquer les filtres initiaux
+        applyFilters();
+    }
+
+    // Appliquer les filtres
+    function applyFilters() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedCategorie = categorieFilter.value;
+        const selectedStatut = statutFilter.value;
+        
+        let visibleCount = 0;
+        
+        projectCards.forEach(card => {
+            const title = card.querySelector('h3').textContent.toLowerCase();
+            const localisation = card.querySelector('.fa-map-marker-alt').parentElement.textContent.toLowerCase();
+            const categorie = card.dataset.categorie;
+            const statut = card.dataset.statut;
+            
+            const matchesSearch = !searchTerm || 
+                                 title.includes(searchTerm) || 
+                                 localisation.includes(searchTerm);
+            const matchesCategorie = !selectedCategorie || categorie === selectedCategorie;
+            const matchesStatut = !selectedStatut || statut === selectedStatut;
+            
+            if (matchesSearch && matchesCategorie && matchesStatut) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Mettre à jour le compteur
+        projectCount.textContent = visibleCount;
+        projectCount.style.animation = 'none';
+        setTimeout(() => projectCount.style.animation = 'fadeIn 0.5s ease', 10);
+    }
+
+    // Réinitialiser les filtres
+    function resetFilters() {
+        searchInput.value = '';
+        categorieFilter.value = '';
+        statutFilter.value = '';
+        applyFilters();
+    }
+
+    // Appliquer le tri
+    function applySort(sortType) {
+        const container = document.getElementById('projectsGrid');
+        const cards = Array.from(container.querySelectorAll('.project-card'));
+        
+        cards.sort((a, b) => {
+            let aValue, bValue;
+            
+            switch (sortType) {
+                case 'financement':
+                    aValue = parseFloat(a.dataset.tauxFinancement) || 0;
+                    bValue = parseFloat(b.dataset.tauxFinancement) || 0;
+                    return bValue - aValue; // Descendant
+                    
+                case 'investisseurs':
+                    aValue = parseInt(a.dataset.investisseurs) || 0;
+                    bValue = parseInt(b.dataset.investisseurs) || 0;
+                    return bValue - aValue; // Descendant
+                    
+                case 'rendement':
+                    aValue = parseFloat(a.dataset.rendement) || 0;
+                    bValue = parseFloat(b.dataset.rendement) || 0;
+                    return bValue - aValue; // Descendant
+                    
+                default:
+                    return 0;
+            }
+        });
+        
+        // Réorganiser les cartes
+        cards.forEach(card => container.appendChild(card));
+    }
+
+    // Initialiser
+    initFilters();
+});
+</script>
 {% endblock %}

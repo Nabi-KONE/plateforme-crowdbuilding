@@ -3,16 +3,323 @@
 
 {% block title %}Uploader Documents - crowdBuilding{% endblock %}
 
+{% block extra_css %}
+<style>
+.document-card {
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.document-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.document-valide {
+    border-left-color: #28a745;
+}
+
+.document-en-attente {
+    border-left-color: #ffc107;
+}
+
+.document-refuse {
+    border-left-color: #dc3545;
+}
+
+.upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    border-color: #007bff;
+    background-color: #f8f9fa;
+}
+
+.file-info {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    padding: 10px;
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-4">
+<div class="container-fluid py-4">
     <div class="row">
         <div class="col-12">
-            <div class="text-center py-5">
-                <i class="fas fa-upload fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">Uploader des documents</h4>
-                <p class="text-muted">Cette page sera développée prochainement.</p>
+            <!-- En-tête -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 fw-bold mb-1">
+                        <i class="fas fa-cloud-upload-alt me-2"></i>Mes Documents
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Téléchargez vos documents justificatifs pour finaliser votre inscription
+                    </p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-primary fs-6">
+                        {{ documents_utilisateur.count }} document(s)
+                    </span>
+                </div>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row">
+                <!-- Formulaire d'upload -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-upload me-2"></i>Uploader un Nouveau Document
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" enctype="multipart/form-data" id="upload-form">
+                                {% csrf_token %}
+                                
+                                <!-- Nom du document -->
+                                <div class="mb-3">
+                                    <label for="{{ form.nom.id_for_label }}" class="form-label fw-bold">
+                                        <i class="fas fa-file-signature me-2"></i>Nom du document
+                                    </label>
+                                    {{ form.nom }}
+                                    {% if form.nom.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.nom.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        Donnez un nom clair et descriptif à votre document
+                                    </div>
+                                </div>
+                                
+                                <!-- Type de document -->
+                                <div class="mb-3">
+                                    <label for="{{ form.type.id_for_label }}" class="form-label fw-bold">
+                                        <i class="fas fa-tags me-2"></i>Type de document
+                                    </label>
+                                    {{ form.type }}
+                                    {% if form.type.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.type.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        Sélectionnez le type de document correspondant
+                                    </div>
+                                </div>
+                                
+                                <!-- Fichier -->
+                                <div class="mb-4">
+                                    <label for="{{ form.fichier.id_for_label }}" class="form-label fw-bold">
+                                        <i class="fas fa-file me-2"></i>Fichier
+                                    </label>
+                                    <div class="upload-area p-4 text-center">
+                                        {{ form.fichier }}
+                                        {% if form.fichier.errors %}
+                                            <div class="text-danger small mt-2">
+                                                {{ form.fichier.errors }}
+                                            </div>
+                                        {% endif %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Formats acceptés: PDF, DOC, DOCX, JPG, PNG (max 10MB)
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Bouton de soumission -->
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-cloud-upload-alt me-2"></i>
+                                        Uploader le Document
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Informations importantes -->
+                    <div class="card mt-4">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-info-circle me-2"></i>Documents Requis
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            {% if user.get_role_actif.type == 'INVESTISSEUR' %}
+                                <h6 class="fw-bold text-primary">📊 Pour les Investisseurs :</h6>
+                                <ul class="mb-0">
+                                    <li><strong>Justificatif d'identité :</strong> CNI, Passeport</li>
+                                    <li><strong>Justificatif de revenus :</strong> Bulletins de salaire, Avis d'imposition</li>
+                                    <li><strong>Justificatif de fonds :</strong> Relevés bancaires</li>
+                                </ul>
+                            {% else %}
+                                <h6 class="fw-bold text-primary">🏗️ Pour les Promoteurs :</h6>
+                                <ul class="mb-0">
+                                    <li><strong>Justificatif d'identité :</strong> CNI, Passeport</li>
+                                    <li><strong>Justificatif de revenus</strong></li>
+                                    <li><strong>Statuts d'entreprise</strong></li>
+                                    <li><strong>Plan financier</strong></li>
+                                    <li><strong>Documents de projet</strong></li>
+                                </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mes documents -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-folder me-2"></i>Mes Documents Uploadés
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if documents_utilisateur %}
+                                <div class="list-group list-group-flush">
+                                    {% for document in documents_utilisateur %}
+                                    <div class="list-group-item document-card 
+                                                {% if document.statut == 'VALIDE' %}document-valide
+                                                {% elif document.statut == 'REFUSE' %}document-refuse
+                                                {% else %}document-en-attente{% endif %}">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <i class="fas 
+                                                        {% if document.est_pdf %}fa-file-pdf text-danger
+                                                        {% elif document.est_image %}fa-file-image text-success
+                                                        {% else %}fa-file text-primary{% endif %} 
+                                                        me-3 fa-lg">
+                                                    </i>
+                                                    <div>
+                                                        <h6 class="mb-1 fw-bold">{{ document.nom }}</h6>
+                                                        <div class="text-muted small">
+                                                            <span class="me-3">
+                                                                <i class="fas fa-tag me-1"></i>
+                                                                {{ document.get_type_display }}
+                                                            </span>
+                                                            <span>
+                                                                <i class="fas fa-weight me-1"></i>
+                                                                {{ document.taille_mb }} MB
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-clock me-1"></i>
+                                                        Uploadé le {{ document.date_telechargement|date:"d/m/Y à H:i" }}
+                                                    </small>
+                                                    <span class="badge 
+                                                        {% if document.statut == 'VALIDE' %}bg-success
+                                                        {% elif document.statut == 'REFUSE' %}bg-danger
+                                                        {% else %}bg-warning{% endif %}">
+                                                        {{ document.get_statut_display }}
+                                                    </span>
+                                                </div>
+
+                                                {% if document.statut == 'REFUSE' and document.motif_refus %}
+                                                <div class="alert alert-danger mt-2 py-2 small" role="alert">
+                                                    <strong><i class="fas fa-exclamation-triangle me-1"></i>Motif du refus :</strong><br>
+                                                    {{ document.motif_refus }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted py-5">
+                                    <i class="fas fa-file-upload fa-3x mb-3"></i>
+                                    <h5>Aucun document uploadé</h5>
+                                    <p class="mb-0">Commencez par uploader vos documents justificatifs</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Statistiques -->
+                    {% if documents_utilisateur %}
+                    <div class="card mt-4">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-chart-pie me-2"></i>Statistiques
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="fw-bold text-primary fs-4">
+                                        {{ documents_utilisateur.count }}
+                                    </div>
+                                    <small class="text-muted">Total</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="fw-bold text-warning fs-4">
+                                        {{ documents_utilisateur|length }}
+                                    </div>
+                                    <small class="text-muted">En attente</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="fw-bold text-success fs-4">
+                                        {{ documents_utilisateur|length }}
+                                    </div>
+                                    <small class="text-muted">Validés</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation pour le formulaire d'upload
+    const fileInput = document.getElementById('{{ form.fichier.id_for_label }}');
+    const uploadArea = document.querySelector('.upload-area');
+    
+    if (fileInput && uploadArea) {
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                uploadArea.style.borderColor = '#28a745';
+                uploadArea.style.backgroundColor = '#f8fff9';
+            }
+        });
+    }
+
+    // Auto-dismiss des alertes après 5 secondes
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+});
+</script>
 {% endblock %}

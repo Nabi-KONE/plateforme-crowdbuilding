@@ -1,0 +1,503 @@
+<!-- templates/promoteur/etapes.html -->
+{% extends 'promoteur/base_promoteur.html' %}
+{% load static %}
+
+{% block title %}{% if est_nouveau_projet %}Définition des étapes - Étape 2/2{% else %}Gestion des étapes{% endif %} - Promoteur{% endblock %}
+
+{% block page_title %}
+    {% if est_nouveau_projet %}
+        Nouveau projet - Définition des étapes
+    {% else %}
+        Gestion des étapes
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Indicateur de progression pour nouveau projet -->
+    {% if est_nouveau_projet %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="steps-progress">
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <span class="step-label">Informations</span>
+                </div>
+                <div class="step active">
+                    <span class="step-number">2</span>
+                    <span class="step-label">Étapes</span>
+                </div>
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <span class="step-label">Confirmation</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-sm">
+                {% if not est_nouveau_projet %}
+                <div class="card-header bg-white border-0 py-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="card-title fw-bold mb-0">Gestion des étapes</h2>
+                            <p class="text-muted mb-0">Définissez les étapes de vos projets validés</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="card-body p-4">
+                    {% if not est_nouveau_projet %}
+                    <!-- Section Sélection du projet -->
+                    <div class="mb-5">
+                        <h4 class="fw-bold mb-4 text-primary">
+                            <i class="ri-building-line me-2"></i>Sélection du projet
+                        </h4>
+                        
+                        <form method="post" id="formSelectionProjet" class="row g-3 align-items-end">
+                            {% csrf_token %}
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold">Choisir un projet</label>
+                                <select name="projet_id" class="form-control" id="selectProjet" required>
+                                    <option value="">Sélectionnez un projet</option>
+                                    {% for projet in projets %}
+                                    <option value="{{ projet.id }}" 
+                                            {% if projet_selectionne and projet.id == projet_selectionne.id %}selected{% endif %}>
+                                        {{ projet.titre }} - {{ projet.reference }} 
+                                        ({{ projet.get_statut_display }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="ri-eye-line me-2"></i>Voir les étapes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    {% if projet_selectionne or est_nouveau_projet %}
+                    <!-- Informations du projet -->
+                    <div class="alert {% if projet.statut == 'BROUILLON' %}alert-warning{% else %}alert-info{% endif %} mb-4">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="fw-bold mb-1">
+                                    {% if est_nouveau_projet %}{{ projet.titre }}{% else %}{{ projet_selectionne.titre }}{% endif %}
+                                </h6>
+                                <p class="mb-1">
+                                    <strong>Référence:</strong> 
+                                    {% if est_nouveau_projet %}{{ projet.reference }}{% else %}{{ projet_selectionne.reference }}{% endif %}
+                                </p>
+                                <p class="mb-0">
+                                    <strong>Date début prévue de réalisation:</strong> 
+                                    {% if est_nouveau_projet %}{{ projet.date_debut|date:"d/m/Y" }}{% else %}{{ projet_selectionne.date_debut|date:"d/m/Y" }}{% endif %} |
+                                    <strong>Durée:</strong> 
+                                    {% if est_nouveau_projet %}{{ projet.duree }}{% else %}{{ projet_selectionne.duree }}{% endif %} mois
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="etapesForm" method="post">
+                        {% csrf_token %}
+                        {% if projet_selectionne %}
+                        <input type="hidden" name="projet_id" value="{{ projet_selectionne.id }}">
+                        {% endif %}
+                        
+                        <!-- Section principale des étapes -->
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">
+                                    <i class="ri-list-check me-2"></i>Définition des étapes de réalisation
+                                    <small class="float-end" id="etapeCountDisplay">(0 étape définie)</small>
+                                </h5>
+                            </div>
+                            
+                            <div class="card-body"> 
+                                <!-- Dans la section des étapes existantes, modifier pour utiliser les données préparées -->
+                                <div id="etapesContainer" class="mb-4">
+                                    {% for etape in etapes_existantes %}
+                                    <div class="card mb-3 etape-card" data-index="{{ forloop.counter0 }}">
+                                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">Étape #{{ forloop.counter }}</span>
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-supprimer-etape">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">Intitulé *</label>
+                                                    <input type="text" class="form-control etape-titre" 
+                                                        name="etape_titre_{{ forloop.counter0 }}" 
+                                                        value="{{ etape.titre }}" 
+                                                        placeholder="Ex: Fondations, Gros œuvre">
+                                                </div>
+                                                <div class="col-md-3 mb-3">
+                                                    <label class="form-label">Ordre d'exécution</label>
+                                                    <input type="text" class="form-control" 
+                                                        value="{{ forloop.counter }}" readonly>
+                                                    <input type="hidden" class="etape-ordre" 
+                                                        name="etape_ordre_{{ forloop.counter0 }}" 
+                                                        value="{{ forloop.counter }}">
+                                                </div>
+                                                <div class="col-md-3 mb-3">
+                                                    <label class="form-label">Durée estimée (mois) *</label>
+                                                    <input type="number" class="form-control etape-duree" 
+                                                        name="etape_duree_{{ forloop.counter0 }}" 
+                                                        value="{{ etape.duree_mois }}" 
+                                                        min="1">
+                                                </div>
+                                                
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">Description (optionnelle)</label>
+                                                    <textarea class="form-control etape-description" 
+                                                            name="etape_description_{{ forloop.counter0 }}" 
+                                                            rows="2">{{ etape.description }}</textarea>
+                                                </div>
+                                                
+                                                <div class="col-md-3 mb-3">
+                                                    <label class="form-label">Date de début prévue *</label>
+                                                    <input type="date" class="form-control etape-date-debut" 
+                                                        name="etape_date_debut_{{ forloop.counter0 }}" 
+                                                        value="{{ etape.date_debut }}">
+                                                </div>
+                                                
+                                                <div class="col-md-3 mb-3">
+                                                    <label class="form-label">Date de fin prévue (calculée)</label>
+                                                    <input type="date" class="form-control etape-date-fin" 
+                                                        readonly
+                                                        placeholder="Calculée automatiquement">
+                                                    <small class="form-text text-muted">Basée sur date début + durée</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <!-- Bouton pour ajouter une étape -->
+                                <div class="card border-dashed mb-4">
+                                    <div class="card-body text-center">
+                                        <button type="button" class="btn btn-outline-primary" id="btnAjouterEtape">
+                                            <i class="ri-add-circle-line me-2"></i>Ajouter une étape
+                                        </button>
+                                        <div class="mt-2 text-muted small">
+                                            Cliquez pour ajouter une nouvelle étape
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Message d'aide -->
+                                <div class="alert alert-light border-dashed mt-3">
+                                    <div class="d-flex">
+                                        <i class="ri-information-line me-3 fs-4 text-primary"></i>
+                                        <div>
+                                            <h6 class="alert-heading mb-2">Comment définir vos étapes ?</h6>
+                                            <ul class="mb-0 small">
+                                                <li>Cliquez sur "Ajouter une étape" pour créer une nouvelle étape</li>
+                                                <li><strong>Pour supprimer une étape</strong> : Cliquez sur l'icône <i class="ri-delete-bin-line text-danger"></i></li>
+                                                <li><strong>Pour ignorer les étapes</strong> : Ne remplissez aucune étape et cliquez sur "Terminer"</li>
+                                                <li>Les champs marqués d'un <span class="text-danger">*</span> sont requis <strong>uniquement si vous remplissez l'étape</strong></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Boutons d'action -->
+                        <div class="d-flex justify-content-between pt-4 border-top">
+                            {% if est_nouveau_projet %}
+                                <a href="{% url 'projects:promoteur_nouveau_projet' %}" class="btn btn-outline-secondary">
+                                    <i class="ri-arrow-left-line me-2"></i>Retour aux informations
+                                </a>
+                                <div>
+                                   <!-- Dans la section des boutons d'action -->
+                                <button type="submit" name="action" value="terminer_etapes" 
+                                        class="btn btn-success" id="btnTerminerEtapes">
+                                    <i class="ri-check-double-line me-2"></i>Terminer la définition des étapes
+                                </button>
+                                </div>
+                            {% else %}
+                                <a href="{% url 'projects:promoteur_projets' %}" class="btn btn-outline-secondary">
+                                    <i class="ri-arrow-left-line me-2"></i>Retour aux projets
+                                </a>
+                                <div>
+                                    {% if projet_selectionne %}
+                                    <button type="submit" name="action" value="sauvegarder" 
+                                            class="btn btn-primary" id="btnSauvegarderEtapes">
+                                        <i class="ri-save-line me-2"></i>Enregistrer les étapes
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modèle d'étape (caché) -->
+<div id="etape-template" class="d-none">
+    <div class="card etape-card mb-3">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <span class="fw-bold etape-numero">Étape #1</span>
+            <button type="button" class="btn btn-sm btn-outline-danger btn-supprimer-etape">
+                <i class="ri-delete-bin-line"></i>
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Intitulé <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control etape-titre" 
+                           name="etape_titre_INDEX" 
+                           placeholder="Ex: Fondations, Gros œuvre">
+                    <small class="form-text text-muted">Obligatoire si vous remplissez cette étape</small>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Ordre d'exécution</label>
+                    <input type="text" class="form-control etape-ordre-display" 
+                           value="1" readonly>
+                    <input type="hidden" class="etape-ordre" 
+                           name="etape_ordre_INDEX" value="1">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Durée estimée (mois) <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control etape-duree" 
+                           name="etape_duree_INDEX" min="1" 
+                           placeholder="1" 
+                           data-required="conditionnel">
+                    <small class="form-text text-muted">Obligatoire si vous remplissez cette étape</small>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Description (optionnelle)</label>
+                    <textarea class="form-control etape-description" 
+                              name="etape_description_INDEX" rows="2"
+                              placeholder="Détails sur ce qui est réalisé durant cette étape"></textarea>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Date de début prévue <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control etape-date-debut" 
+                           name="etape_date_debut_INDEX"
+                           data-required="conditionnel">
+                    <small class="form-text text-muted">Obligatoire si vous remplissez cette étape</small>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Date de fin prévue</label>
+                    <input type="date" class="form-control etape-date-fin" 
+                           name="etape_date_fin_INDEX" 
+                           readonly
+                           placeholder="Calculée automatiquement">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const etapesContainer = document.getElementById('etapesContainer');
+    const btnAjouter = document.getElementById('btnAjouterEtape');
+    const compteur = document.getElementById('etapeCountDisplay');
+
+    // Initialisation de l'index selon le nombre d'étapes existantes
+    let index = document.querySelectorAll('.etape-card').length;
+
+    /* ===============================
+       CALCUL DATE FIN
+    =============================== */
+    function calculerDateFin(dateDebut, duree) {
+        if (!dateDebut || !duree) return '';
+        const d = new Date(dateDebut);
+        d.setMonth(d.getMonth() + parseInt(duree));
+        return d.toISOString().split('T')[0];
+    }
+
+    /* ===============================
+       METTRE À JOUR L'ORDRE ET COMPTEUR
+    =============================== */
+    function mettreAJourEtapes() {
+        const etapes = etapesContainer.querySelectorAll('.etape-card');
+        etapes.forEach((card, i) => {
+            card.dataset.index = i;
+            card.querySelector('.etape-numero').textContent = `Étape #${i + 1}`;
+            const titre = card.querySelector('.etape-titre');
+            if(titre) titre.name = `etape_titre_${i}`;
+            const desc = card.querySelector('.etape-description');
+            if(desc) desc.name = `etape_description_${i}`;
+            const dateDebut = card.querySelector('.etape-date-debut');
+            if(dateDebut) dateDebut.name = `etape_date_debut_${i}`;
+            const duree = card.querySelector('.etape-duree');
+            if(duree) duree.name = `etape_duree_${i}`;
+            const ordre = card.querySelector('.etape-ordre');
+            if(ordre) ordre.name = `etape_ordre_${i}`; 
+            if(ordre) ordre.value = i + 1;
+            const ordreDisplay = card.querySelector('.etape-ordre-display');
+            if(ordreDisplay) ordreDisplay.value = i + 1;
+        });
+        compteur.textContent = `(${etapes.length} étape${etapes.length > 1 ? 's' : ''})`;
+    }
+
+    /* ===============================
+       AJOUT D'UNE ETAPE VIA TEMPLATE
+    =============================== */
+    if (btnAjouter) {
+        btnAjouter.addEventListener('click', () => {
+            const template = document.getElementById('etape-template').innerHTML;
+            const html = template.replace(/INDEX/g, index);
+            etapesContainer.insertAdjacentHTML('beforeend', html);
+            index++;
+            mettreAJourEtapes();
+        });
+    }
+
+    /* ===============================
+       SUPPRESSION D'UNE ETAPE
+    =============================== */
+    etapesContainer.addEventListener('click', e => {
+        if (e.target.closest('.btn-supprimer-etape')) {
+            const card = e.target.closest('.etape-card');
+            if(card) card.remove();
+            mettreAJourEtapes();
+        }
+    });
+
+    /* ===============================
+       CALCUL DATE FIN DYNAMIQUE
+    =============================== */
+    etapesContainer.addEventListener('input', e => {
+        const card = e.target.closest('.etape-card');
+        if (!card) return;
+
+        if (e.target.classList.contains('etape-duree') || e.target.classList.contains('etape-date-debut')) {
+            const debut = card.querySelector('.etape-date-debut')?.value;
+            const duree = card.querySelector('.etape-duree')?.value;
+            const fin = card.querySelector('.etape-date-fin');
+            if(fin) fin.value = calculerDateFin(debut, duree);
+        }
+    });
+
+    /* ===============================
+       VALIDATION AVANT SUBMIT
+    =============================== */
+    const form = document.getElementById('etapesForm');
+    form.addEventListener('submit', function (e) {
+        let etapesValides = 0;
+
+        document.querySelectorAll('.etape-card').forEach(card => {
+            const titre = card.querySelector('.etape-titre')?.value.trim();
+            const duree = card.querySelector('.etape-duree')?.value;
+            const dateDebut = card.querySelector('.etape-date-debut')?.value;
+
+            // Supprimer les étapes totalement vides
+            if (!titre && !duree && !dateDebut) {
+                card.remove();
+                return;
+            }
+
+            // Compter les étapes valides
+            if (titre && duree && dateDebut) {
+                etapesValides++;
+            }
+        });
+
+        mettreAJourEtapes();
+
+        if (etapesValides === 0) {
+            e.preventDefault();
+            alert("Veuillez renseigner au moins une étape ou continuer sans étapes.");
+            return false;
+        }
+    });
+
+    // Initialiser le compteur au chargement
+    mettreAJourEtapes();
+});
+</script>
+<style>
+.etape-card {
+    border-left: 4px solid #28a745;
+    transition: all 0.3s ease;
+}
+
+.etape-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.card.border-dashed {
+    border: 2px dashed #dee2e6;
+    background-color: #f8f9fa;
+}
+
+.btn-supprimer-etape:hover {
+    background-color: #dc3545;
+    color: white;
+}
+
+.steps-progress {
+    display: flex;
+    justify-content: space-between;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.step {
+    text-align: center;
+    flex: 1;
+    position: relative;
+}
+
+.step-number {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    border-radius: 50%;
+    background-color: #e9ecef;
+    color: #6c757d;
+    font-weight: bold;
+    margin-bottom: 5px;
+    border: 3px solid #e9ecef;
+}
+
+.step.active .step-number {
+    background-color: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+.step-label {
+    display: block;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.step.active .step-label {
+    color: #28a745;
+    font-weight: 500;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.etape-date-fin {
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %}

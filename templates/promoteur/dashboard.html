@@ -1,0 +1,305 @@
+{% extends 'promoteur/base_promoteur.html' %}
+{% load static %}
+
+{% block title %}Tableau de bord - Promoteur{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<!-- Statistiques -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card bg-blue-50 border-0">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="fw-bold text-primary">{{ stats.projets_actifs }}</h4>
+                        <span class="text-muted">Projets actifs</span>
+                    </div>
+                    <div class="text-primary fs-2">
+                        <i class="ri-building-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card bg-green-50 border-0">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="fw-bold text-success">{{ stats.montant_collecte|floatformat:0 }} FCFA</h4>
+                        <span class="text-muted">Montant collecté</span>
+                    </div>
+                    <div class="text-success fs-2">
+                        <i class="ri-money-euro-circle-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card bg-yellow-50 border-0">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="fw-bold text-warning">{{ stats.en_attente_validation }}</h4>
+                        <span class="text-muted">En attente de validation</span>
+                    </div>
+                    <div class="text-warning fs-2">
+                        <i class="ri-time-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card bg-purple-50 border-0">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4 class="fw-bold text-purple">{{ stats.projets_termines }}</h4>
+                        <span class="text-muted">Projets terminés</span>
+                    </div>
+                    <div class="text-purple fs-2">
+                        <i class="ri-check-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Projets récents -->
+    <div class="col-12 mb-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold">Mes projets récents</h5>
+                <a href="{% url 'projects:promoteur_projets' %}" class="btn btn-outline-primary btn-sm">
+                    Voir tout <i class="ri-arrow-right-line ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-promoteur table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="px-4">Projet</th>
+                                <th>Statut</th>
+                                <th>Progression</th>
+                                <th>Montant</th>
+                                <th>Actes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for projet in projets_recents %}
+                            <tr>
+                                <td class="px-4">
+                                    <div class="fw-bold">{{ projet.titre }}</div>
+                                    <small class="text-muted">{{ projet.get_categorie_display|default:"Immobilier" }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{{ projet.statut|lower }} rounded-pill">
+                                        {{ projet.get_statut_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                            <div class="progress-bar" style="width: {{ projet.taux_financement }}%"></div>
+                                        </div>
+                                        <small class="fw-bold">{{ projet.taux_financement|floatformat:0 }}%</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">{{ projet.montant_collecte|floatformat:0 }} FCFA</div>
+                                    <small class="text-muted">sur {{ projet.montant_total|floatformat:0 }} FCFA</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'projects:promoteur_projet_detail' projet.id %}" class="btn btn-outline-primary btn-sm">
+                                            Voir
+                                        </a>
+                                        {% if projet.peut_ajouter_compte_rendu %}
+                                        <a href="{% url 'projects:promoteur_compte_rendu' %}?projet={{ projet.id }}" class="btn btn-outline-success btn-sm">
+                                            Rapport
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="ri-building-line fs-1 mb-2 d-block"></i>
+                                    Aucun projet pour le moment
+                                    <div class="mt-2">
+                                        <a href="{% url 'projects:promoteur_nouveau_projet' %}" class="btn btn-primary btn-sm">
+                                            Créer votre premier projet
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activité récente et Actions rapides -->
+<div class="row">
+    <!-- Activité récente -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="card-title mb-0 fw-bold">Activité récente</h5>
+            </div>
+            <div class="card-body">
+                {% for activite in activites_recentes %}
+                <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
+                    <div class="flex-shrink-0">
+                        <div class="bg-{{ activite.color }}-50 text-{{ activite.color }} rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="{{ activite.icon }} fs-5"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="fw-bold small mb-1">{{ activite.titre }}</div>
+                        <div class="text-muted small mb-1">{{ activite.description }}</div>
+                        <div class="text-muted xsmall">{{ activite.date }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="ri-history-line fs-1 mb-2 d-block"></i>
+                    Aucune activité récente
+                    <div class="mt-2">
+                        <a href="{% url 'projects:promoteur_nouveau_projet' %}" class="btn btn-outline-primary btn-sm">
+                            Commencer un projet
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                {% if activites_recentes %}
+                <div class="text-center mt-3">
+                    <a href="#" class="btn btn-outline-secondary btn-sm">
+                        Voir toute l'activité
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions rapides -->
+    <div class="col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="card-title mb-0 fw-bold">Actions rapides</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <a href="{% url 'projects:promoteur_nouveau_projet' %}" class="btn btn-primary w-100 d-flex align-items-center justify-content-center py-3">
+                            <i class="ri-add-circle-line me-3 fs-5"></i>
+                            <div class="text-start">
+                                <div class="fw-bold">Créer un nouveau projet</div>
+                                <small class="opacity-75">Lancez un nouveau projet immobilier</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-12">
+                        <a href="{% url 'projects:promoteur_projets' %}" class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center py-3">
+                            <i class="ri-building-line me-3 fs-5"></i>
+                            <div class="text-start">
+                                <div class="fw-bold">Gérer mes projets</div>
+                                <small class="opacity-75">Voir tous vos projets</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-12">
+                        <a href="{% url 'projects:promoteur_etapes' %}" class="btn btn-outline-success w-100 d-flex align-items-center justify-content-center py-3">
+                            <i class="ri-list-check me-3 fs-5"></i>
+                            <div class="text-start">
+                                <div class="fw-bold">Gérer les étapes</div>
+                                <small class="opacity-75">Définir les étapes de vos projets</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-12">
+                        <a href="{% url 'notifications:list' %}" class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center py-3">
+                            <i class="ri-notification-line me-3 fs-5"></i>
+                            <div class="text-start">
+                                <div class="fw-bold">Voir les notifications</div>
+                                <small class="opacity-75">Restez informé des mises à jour</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Projets nécessitant une attention -->
+{% if projets_attention %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-warning border-2">
+            <div class="card-header bg-warning bg-opacity-10 border-warning border-0 py-3">
+                <h5 class="card-title mb-0 fw-bold text-warning">
+                    <i class="ri-alert-line me-2"></i>Attention requise
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for projet in projets_attention %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-warning border">
+                            <div class="card-body">
+                                <h6 class="fw-bold">{{ projet.titre }}</h6>
+                                <p class="small mb-2">{{ projet.raison_attention }}</p>
+                                <a href="{% url 'projects:promoteur_projet_detail' projet.id %}" class="btn btn-warning btn-sm">
+                                    <i class="ri-external-link-line me-1"></i>Intervenir
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.table-promoteur th {
+    border-top: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+.table-promoteur td {
+    vertical-align: middle;
+    padding: 1rem 0.5rem;
+}
+.bg-blue-50 { background-color: #eff6ff; }
+.bg-green-50 { background-color: #f0fdf4; }
+.bg-yellow-50 { background-color: #fefce8; }
+.bg-purple-50 { background-color: #faf5ff; }
+.text-purple { color: #8b5cf6; }
+</style>
+{% endblock %}

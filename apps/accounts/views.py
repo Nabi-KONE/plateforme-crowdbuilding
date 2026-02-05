@@ -6,22 +6,27 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.urls import reverse_lazy
-from django.utils.decorators import method_decorator
+from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, UpdateView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.db import transaction
-from django.core.mail import send_mail
 from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from django.utils import timezone
+from django.db.models import Q, Count
 
 from apps.documents import models
+from apps.documents.models import Document
 
 from .models import Utilisateur, Role
 from .forms import InscriptionForm, ConnexionForm, ProfilForm, ChangementMotDePasseForm
 from apps.notifications.models import Notification
+from .models import Utilisateur, Role, TypeRole, StatutRole, StatutCompte
+from apps.projects.models import StatutProjet  # Pour les constantes de statut
+from django.db.models import Sum
+
 
 
 class ConnexionView(LoginView):
@@ -82,9 +87,6 @@ class DeconnexionView(LogoutView):
 
 
 class InscriptionView(CreateView):
-    """
-    Vue d'inscription
-    """
     model = Utilisateur
     form_class = InscriptionForm
     template_name = 'accounts/register.html'
@@ -92,68 +94,205 @@ class InscriptionView(CreateView):
     
     def form_valid(self, form):
         """Traitement du formulaire d'inscription"""
+        print("⭐ DÉBUT FORM_VALID - Le formulaire est valide!")
         try:
             with transaction.atomic():
+                print("⭐ TRANSACTION DÉBUT")
+                
                 # Sauvegarder l'utilisateur et créer le rôle
                 user = form.save()
+                print(f"⭐ UTILISATEUR CRÉÉ: {user.email}")
                 
-                # Envoyer une notification de bienvenue
+                # CONNEXION AUTOMATIQUE
+                from django.contrib.auth import login
+                login(self.request, user)
+                print("⭐ UTILISATEUR CONNECTÉ")
+                
+                # Notification
                 Notification.objects.create(
                     utilisateur=user,
                     titre="Bienvenue sur crowdBuilding !",
-                    contenu=f"Bonjour {user.prenom},\n\nVotre compte a été créé avec succès. Il est actuellement en attente de validation par nos administrateurs.\n\nVous recevrez une notification une fois votre compte validé.",
+                    contenu=f"Bonjour {user.prenom}, Votre compte est en attente de validation.",
                     type='VALIDATION_COMPTE'
                 )
+                print("⭐ NOTIFICATION CRÉÉE")
                 
-                messages.success(
-                    self.request, 
-                    'Votre compte a été créé avec succès ! Vous pouvez maintenant vous connecter.'
-                )
-                return redirect(self.success_url)
+                messages.success(self.request, 'Compte créé avec succès !')
+                print("⭐ REDIRECTION VERS DASHBOARD")
+                
+                return redirect('core:dashboard')
                 
         except Exception as e:
-            messages.error(
-                self.request, 
-                'Une erreur est survenue lors de la création de votre compte. Veuillez réessayer.'
-            )
+            print(f"⭐ ERREUR dans form_valid: {e}")
+            messages.error(self.request, f'Erreur: {str(e)}')
             return self.form_invalid(form)
-
+    
+    def form_invalid(self, form):
+        """Traitement du formulaire invalide"""
+        print("⭐ FORM_INVALID - Le formulaire a des erreurs!")
+        print(f"⭐ ERREURS DU FORMULAIRE: {form.errors}")
+        print(f"⭐ DONNÉES DU FORMULAIRE: {form.cleaned_data}")
+        
+        messages.error(self.request, 'Veuillez corriger les erreurs ci-dessous.')
+        return super().form_invalid(form)
 
 @login_required
 def profil(request):
     """
     Vue de consultation et modification du profil
     """
+    # IMPORT TOUJOURS EN HAUT de la fonction
+    from apps.documents.models import Document
+    from apps.projects.models import Projet
+    from apps.investments.models import Investissement
+    from apps.notifications.models import Notification as NotifModel
+    from django.db import models
+    
+    # LES SUPERUSERS ET ADMINISTRATEURS ONT TOUJOURS ACCÈS
+    if not request.user.est_valide() and not request.user.est_administrateur():
+        messages.warning(request, "Votre compte est en attente de validation. Vous ne pouvez pas accéder à votre profil pour le moment.")
+        return redirect('core:dashboard')
+    
     user = request.user
     role_actif = user.get_role_actif()
     
-    # Statistiques de l'utilisateur
-    stats = {}
-    if user.est_promoteur():
-        from apps.projects.models import Projet
-        stats['total_projets'] = user.projets.count()
-        stats['projets_valides'] = user.projets.filter(statut='VALIDE').count()
-    elif user.est_investisseur():
-        from apps.investments.models import Investissement
-        stats['total_investissements'] = user.investissements.filter(statut='CONFIRME').count()
-        stats['montant_investi'] = user.investissements.filter(statut='CONFIRME').aggregate(
-            total=models.Sum('montant')
-        )['total'] or 0
-    
+    # CONTEXTE DE BASE
     context = {
         'user': user,
         'role_actif': role_actif,
-        'stats': stats,
+        'is_superuser': user.is_superuser,
+        'is_administrateur': user.est_administrateur(),
     }
     
+    # PROFIL DIFFÉRENT SELON LE RÔLE
+    if user.est_administrateur():
+        # ======================
+        # PROFIL ADMINISTRATEUR
+        # ======================
+        all_documents = Document.objects.all()
+        documents_attente = Document.get_documents_en_attente()
+        
+        # Statistiques globales pour l'admin
+        stats = {
+            'total_utilisateurs': Utilisateur.objects.count(),
+            'utilisateurs_attente': Utilisateur.objects.filter(
+                roles__statut='EN_ATTENTE_VALIDATION'
+            ).distinct().count(),
+            'total_projets': Projet.objects.count(),
+            'projets_actifs': Projet.objects.filter(statut='ACTIF').count(),
+            'total_investissements': Investissement.objects.count(),
+            'documents_attente': documents_attente.count(),
+            'investissements_total': Investissement.objects.aggregate(
+                total=models.Sum('montant')
+            )['total'] or 0,
+        }
+        
+        context.update({
+            'stats': stats,
+            'all_documents': all_documents,
+            'documents_count': all_documents.count(),
+            'documents_attente': documents_attente,
+            # CORRECTION : 'lu' → 'lue'
+            'unread_notifications_count': NotifModel.objects.filter(lue=False).count(),
+        })
+        
+    elif user.est_promoteur():
+        # ======================
+        # PROFIL PROMOTEUR
+        # ======================
+        user_documents = Document.get_documents_utilisateur(user.id)
+        projets_utilisateur = user.projets.all()
+        
+        stats = {
+            'total_projets': projets_utilisateur.count(),
+            'projets_actifs': projets_utilisateur.filter(statut='ACTIF').count(),
+            'projets_termines': projets_utilisateur.filter(statut='TERMINE').count(),
+            'projets_attente': projets_utilisateur.filter(statut='EN_ATTENTE').count(),
+            'montant_levé': projets_utilisateur.aggregate(
+                total=models.Sum('montant_collecte')
+            )['total'] or 0,
+        }
+        
+        context.update({
+            'stats': stats,
+            'user_documents': user_documents,
+            'user_documents_count': user_documents.count(),
+            'projets': projets_utilisateur[:5],  # 5 derniers projets
+            # CORRECTION : 'lu' → 'lue'
+            'unread_notifications_count': NotifModel.objects.filter(utilisateur=user, lue=False).count(),
+        })
+        
+    elif user.est_investisseur():
+        # ======================
+        # PROFIL INVESTISSEUR
+        # ======================
+        user_documents = Document.get_documents_utilisateur(user.id)
+        investissements_utilisateur = user.investissements.filter(statut='CONFIRME')
+        
+        # CORRECTION : Calcul manuel du retour estimé avec Decimal
+        from decimal import Decimal
+        
+        # Récupérer le montant total investi
+        montant_total_investi = investissements_utilisateur.aggregate(
+            total=models.Sum('montant')
+        )['total']
+        
+        # Si aucun investissement, mettre à 0
+        if montant_total_investi is None:
+            montant_total_investi = Decimal('0')
+        
+        # CORRECTION : Utiliser Decimal pour le calcul du retour (10%)
+        retour_estime = montant_total_investi * Decimal('0.10')
+        
+        stats = {
+            'total_investissements': investissements_utilisateur.count(),
+            'montant_investi': montant_total_investi,
+            # CORRECTION : Utilisation du retour calculé avec Decimal
+            'retour_attendu': retour_estime,
+            'projets_investis': investissements_utilisateur.values('projet').distinct().count(),
+            # Optionnel : Ajouter le retour annuel moyen
+            'retour_moyen_annuel': Decimal('12.5'),  # En pourcentage
+        }
+        
+        context.update({
+            'stats': stats,
+            'user_documents': user_documents,
+            'user_documents_count': user_documents.count(),
+            'investissements': investissements_utilisateur[:5],  # 5 derniers investissements
+            'unread_notifications_count': NotifModel.objects.filter(utilisateur=user, lue=False).count(),
+        })
+            
+    else:
+        # ======================
+        # PROFIL UTILISATEUR EN ATTENTE
+        # ======================
+        user_documents = Document.get_documents_utilisateur(user.id)
+        
+        stats = {
+            'documents_uploades': user_documents.count(),
+            'documents_valides': user_documents.filter(statut='VALIDE').count(),
+            'documents_attente': user_documents.filter(statut='EN_ATTENTE').count(),
+        }
+        
+        context.update({
+            'stats': stats,
+            'user_documents': user_documents,
+            'user_documents_count': user_documents.count(),
+            # CORRECTION : 'lu' → 'lue'
+            'unread_notifications_count': NotifModel.objects.filter(utilisateur=user, lue=False).count(),
+        })
+    
     return render(request, 'accounts/profile.html', context)
-
 
 @login_required
 def modifier_profil(request):
     """
     Vue de modification du profil
     """
+    if not request.user.est_valide:
+        messages.warning(request, "Votre compte est en attente de validation.")
+        return redirect('core:dashboard_attente')
+        
     if request.method == 'POST':
         form = ProfilForm(request.POST, instance=request.user)
         if form.is_valid():
@@ -228,20 +367,36 @@ def basculer_role(request):
 @login_required
 def notifications(request):
     """
-    Vue des notifications de l'utilisateur
+    Vue des notifications de l'utilisateur - NOUVELLE VERSION
     """
     user = request.user
-    notifications_list = user.notifications.all()[:20]  # 20 dernières notifications
+    notifications_list = user.notifications.all().order_by('-date_creation')
     
-    # Marquer toutes les notifications comme lues
-    user.notifications.filter(lue=False).update(lue=True)
+    # Récupérer ou créer les paramètres de notification
+    from apps.notifications.models import ParametreNotification
+    from apps.notifications.forms import ParametreNotificationForm
+    
+    parametres, created = ParametreNotification.objects.get_or_create(utilisateur=user)
+    form = ParametreNotificationForm(instance=parametres)
+    
+    if request.method == 'POST':
+        form = ParametreNotificationForm(request.POST, instance=parametres)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Vos paramètres de notification ont été mis à jour.")
+            return redirect('accounts:notifications')
+    
+    # Marquer toutes les notifications comme lues (optionnel)
+    # user.notifications.filter(lue=False).update(lue=True)
     
     context = {
         'notifications': notifications_list,
+        'total_count': notifications_list.count(),
+        'unread_count': notifications_list.filter(lue=False).count(),
+        'form': form,
     }
     
-    return render(request, 'accounts/notifications.html', context)
-
+    return render(request, 'promoteur/notifications.html', context)
 
 @login_required
 @require_http_methods(["POST"])
@@ -282,85 +437,30 @@ def valider_documents(request):
     return render(request, 'accounts/validate_documents.html', context)
 
 
-@login_required
-def valider_comptes(request):
+# Dans views.py - Améliorez la fonction calculer_statistiques_utilisateurs
+def calculer_statistiques_utilisateurs():
     """
-    Vue pour valider les comptes utilisateurs (pour les administrateurs)
+    Calcule les statistiques pour les 4 cartes du dashboard
     """
-    if not request.user.est_administrateur():
-        messages.error(request, 'Accès non autorisé.')
-        return redirect('core:dashboard')
+    # Total des utilisateurs
+    total = Utilisateur.objects.count()
     
-    from django.db.models import Q
+    # Utilisateurs en attente de validation (basé sur les rôles)
+    en_attente = Role.objects.filter(statut=StatutRole.EN_ATTENTE_VALIDATION).count()
     
-    # Utilisateurs avec des rôles en attente
-    utilisateurs_attente = Utilisateur.objects.filter(
-        roles__statut='EN_ATTENTE_VALIDATION'
-    ).distinct()
+    # Utilisateurs validés (rôles validés)
+    valides = Role.objects.filter(statut=StatutRole.VALIDE).count()
     
-    context = {
-        'utilisateurs_attente': utilisateurs_attente,
+    # Utilisateurs refusés (rôles refusés)
+    refuses = Role.objects.filter(statut=StatutRole.REFUSE).count()
+    
+    return {
+        'total': total,
+        'en_attente': en_attente,
+        'valides': valides,
+        'refuses': refuses,
+        # Pour la compatibilité avec l'ancien dashboard
+        'total_utilisateurs': total,
+        'utilisateurs_en_attente': en_attente,
     }
-    
-    return render(request, 'accounts/validate_accounts.html', context)
 
-
-@login_required
-@require_http_methods(["POST"])
-def valider_utilisateur(request, user_id):
-    """
-    Valider un utilisateur (pour les administrateurs)
-    """
-    if not request.user.est_administrateur():
-        messages.error(request, 'Accès non autorisé.')
-        return redirect('core:dashboard')
-    
-    try:
-        user = get_object_or_404(Utilisateur, id=user_id)
-        role_attente = user.roles.filter(statut='EN_ATTENTE_VALIDATION').first()
-        
-        if role_attente:
-            role_attente.valider()
-            
-            # Créer une notification de validation
-            Notification.creer_notification_validation_compte(user, valide=True)
-            
-            messages.success(request, f'Le compte de {user.nom_complet} a été validé avec succès.')
-        else:
-            messages.error(request, 'Aucun rôle en attente trouvé pour cet utilisateur.')
-    
-    except Exception as e:
-        messages.error(request, f'Erreur lors de la validation: {str(e)}')
-    
-    return redirect('accounts:validate_accounts')
-
-
-@login_required
-@require_http_methods(["POST"])
-def refuser_utilisateur(request, user_id):
-    """
-    Refuser un utilisateur (pour les administrateurs)
-    """
-    if not request.user.est_administrateur():
-        messages.error(request, 'Accès non autorisé.')
-        return redirect('core:dashboard')
-    
-    try:
-        user = get_object_or_404(Utilisateur, id=user_id)
-        motif = request.POST.get('motif', '')
-        role_attente = user.roles.filter(statut='EN_ATTENTE_VALIDATION').first()
-        
-        if role_attente:
-            role_attente.refuser()
-            
-            # Créer une notification de refus
-            Notification.creer_notification_validation_compte(user, valide=False)
-            
-            messages.success(request, f'Le compte de {user.nom_complet} a été refusé.')
-        else:
-            messages.error(request, 'Aucun rôle en attente trouvé pour cet utilisateur.')
-    
-    except Exception as e:
-        messages.error(request, f'Erreur lors du refus: {str(e)}')
-    
-    return redirect('accounts:validate_accounts')

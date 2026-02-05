@@ -2,73 +2,84 @@
 Modèles pour la gestion des investissements et transactions
 Plateforme crowdBuilding - Burkina Faso
 """
+
 from django.db import models
+from django.forms import ValidationError
 from django.utils import timezone
 from django.core.validators import MinValueValidator
 from apps.accounts.models import Utilisateur
 from apps.projects.models import Projet
-import uuid
+from django.db import transaction as db_transaction
+from django.db import transaction
 
+
+
+
+# =========================
+# ENUMS / STATUTS
+# =========================
 
 class StatutInvestissement(models.TextChoices):
-    """Statuts possibles pour un investissement"""
-    EN_ATTENTE = 'EN_ATTENTE', 'En attente'
-    CONFIRME = 'CONFIRME', 'Confirmé'
+    EN_ATTENTE_PAIEMENT = 'EN_ATTENTE_PAIEMENT', 'En attente de paiement'
+    PAIEMENT_RECU = 'PAIEMENT_RECU', 'Paiement reçu'
+    CONFIRME = 'CONFIRME', 'Confirmé par admin'
+    REJETE = 'REJETE', 'Rejeté'
     ANNULE = 'ANNULE', 'Annulé'
+    REMBOURSE = 'REMBOURSE', 'Remboursé'
 
 
 class TypeTransaction(models.TextChoices):
-    """Types de transactions"""
     INVESTISSEMENT = 'INVESTISSEMENT', 'Investissement'
     REMBOURSEMENT = 'REMBOURSEMENT', 'Remboursement'
-    RENDEMENT = 'RENDEMENT', 'Rendement'
 
 
 class StatutTransaction(models.TextChoices):
-    """Statuts possibles pour une transaction"""
     EN_ATTENTE = 'EN_ATTENTE', 'En attente'
     VALIDEE = 'VALIDEE', 'Validée'
     ECHOUEE = 'ECHOUEE', 'Échouée'
     ANNULEE = 'ANNULEE', 'Annulée'
 
 
+# =========================
+# INVESTISSEMENT
+# =========================
+
 class Investissement(models.Model):
-    """
-    Modèle pour les investissements dans les projets
-    """
-    # Informations de base
+
     reference = models.CharField(max_length=20, unique=True, verbose_name="Référence")
+
     investisseur = models.ForeignKey(
         Utilisateur,
         on_delete=models.CASCADE,
-        related_name='investissements',
-        verbose_name="Investisseur"
+        related_name='investissements'
     )
+
     projet = models.ForeignKey(
         Projet,
         on_delete=models.CASCADE,
-        related_name='investissements',
-        verbose_name="Projet"
+        related_name='investissements'
     )
-    
-    # Informations financières
+
+    nombre_parts = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+        verbose_name="Nombre de parts détenues"
+    )
+
     montant = models.DecimalField(
         max_digits=15,
         decimal_places=2,
-        validators=[MinValueValidator(10000)],  # Minimum 10 000 FCFA
+        validators=[MinValueValidator(10000)],
         verbose_name="Montant investi (FCFA)"
     )
-    
-    # Métadonnées
-    date_investissement = models.DateTimeField(default=timezone.now, verbose_name="Date d'investissement")
+
+    date_investissement = models.DateTimeField(default=timezone.now)
+
     statut = models.CharField(
-        max_length=15,
+        max_length=30,
         choices=StatutInvestissement.choices,
-        default=StatutInvestissement.EN_ATTENTE,
-        verbose_name="Statut de l'investissement"
+        default=StatutInvestissement.EN_ATTENTE_PAIEMENT
     )
-    
-    # Informations supplémentaires
+
     origine_fonds = models.CharField(
         max_length=100,
         choices=[
@@ -78,165 +89,171 @@ class Investissement(models.Model):
             ('EPARGNE', 'Épargne'),
             ('DIASPORA', 'Fonds de la diaspora'),
             ('AUTRE', 'Autre'),
-        ],
-        verbose_name="Origine des fonds"
+        ]
     )
-    contrat_accepte = models.BooleanField(default=False, verbose_name="Contrat accepté")
-    date_contrat = models.DateTimeField(null=True, blank=True, verbose_name="Date d'acceptation du contrat")
-    
-    class Meta:
-        verbose_name = "Investissement"
-        verbose_name_plural = "Investissements"
-        ordering = ['-date_investissement']
-        unique_together = ['investisseur', 'projet']  # Un investisseur ne peut investir qu'une fois par projet
-    
-    def __str__(self):
-        return f"{self.reference} - {self.investisseur.nom_complet} - {self.projet.titre}"
-    
-    def save(self, *args, **kwargs):
-        """Override save pour générer automatiquement la référence"""
-        if not self.reference:
-            # Générer une référence unique : INV-YYYY-XXXX
-            year = timezone.now().year
-            last_investment = Investissement.objects.filter(
-                reference__startswith=f'INV-{year}-'
-            ).order_by('-reference').first()
-            
-            if last_investment:
-                last_number = int(last_investment.reference.split('-')[-1])
-                new_number = last_number + 1
-            else:
-                new_number = 1
-            
-            self.reference = f'INV-{year}-{new_number:04d}'
-        
-        super().save(*args, **kwargs)
-    
-    def confirmer(self):
-        """Confirme l'investissement"""
-        self.statut = StatutInvestissement.CONFIRME
-        self.save()
-        
-        # Mettre à jour le montant collecté du projet
-        self.projet.montant_collecte += self.montant
-        self.projet.save()
-        
-        # Vérifier si le projet est entièrement financé
-        if self.projet.est_finance_complet:
-            self.projet.finaliser_financement()
-    
-    def annuler(self):
-        """Annule l'investissement"""
-        self.statut = StatutInvestissement.ANNULE
-        self.save()
-    
-    def calculer_rendement(self):
-        """Calcule le rendement attendu de l'investissement"""
-        taux_rendement = self.projet.taux_rendement / 100
-        return self.montant * taux_rendement
-    
-    def calculer_rendement_mensuel(self):
-        """Calcule le rendement mensuel attendu"""
-        rendement_total = self.calculer_rendement()
-        duree_mois = self.projet.duree
-        return rendement_total / duree_mois if duree_mois > 0 else 0
 
+    contrat_accepte = models.BooleanField(default=False)
+    date_contrat = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date_investissement']
+
+    def __str__(self):
+        return f"{self.reference} - {self.investisseur} - {self.projet}"
+
+  
+    def save(self, *args, **kwargs):
+        if not self.reference:
+            with transaction.atomic():
+                year = timezone.now().year
+                last = Investissement.objects.select_for_update().filter(
+                    reference__startswith=f'INV-{year}-'
+                ).order_by('-reference').first()
+                number = int(last.reference.split('-')[-1]) + 1 if last else 1
+                self.reference = f'INV-{year}-{number:04d}'
+
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+
+
+    # =========================
+    # ACTIONS METIER (ADMIN)
+    # =========================
+
+    def confirmer_par_admin(self):
+        if self.statut != StatutInvestissement.PAIEMENT_RECU.value:
+            raise ValueError("Paiement non reçu")
+
+        self.statut = StatutInvestissement.CONFIRME.value
+        self.save()
+
+        # Mise à jour projet
+        projet = self.projet
+        projet.montant_collecte += self.montant
+        projet.parts_vendues += self.nombre_parts
+        projet.save()
+
+        # Finalisation automatique si 100%
+        projet.finaliser_financement()
+        
+
+
+    def rejeter_avec_remboursement(self, raison=""):
+        """
+        Rejet administratif avec remboursement si paiement déjà reçu
+        """
+        if self.statut not in [
+            StatutInvestissement.PAIEMENT_RECU.value,
+            StatutInvestissement.EN_ATTENTE_PAIEMENT.value
+        ]:
+            raise ValueError("Impossible de rejeter cet investissement dans son état actuel.")
+
+        with db_transaction.atomic():
+
+            # Paiement déjà reçu → remboursement
+            if self.statut == StatutInvestissement.PAIEMENT_RECU.value:
+                Transaction.objects.create(
+                    investissement=self,
+                    montant=self.montant,
+                    type=TypeTransaction.REMBOURSEMENT,
+                    statut=StatutTransaction.VALIDEE,
+                    description=f"Remboursement automatique suite rejet : {raison}"
+                )
+                self.statut = StatutInvestissement.REMBOURSE.value
+
+            # Jamais payé → simple rejet
+            else:
+                self.statut = StatutInvestissement.REJETE.value
+
+            self.save()
+
+
+    def annuler(self):
+        self.statut = StatutInvestissement.ANNULE.value
+        self.save()
+    
+    def clean(self):
+        if self.nombre_parts < self.projet.nombre_min_parts:
+            raise ValidationError(
+                f"Minimum requis : {self.projet.nombre_min_parts} parts."
+            )
+
+    
+
+
+# =========================
+# TRANSACTION
+# =========================
 
 class Transaction(models.Model):
-    """
-    Modèle pour toutes les transactions financières
-    """
-    # Informations de base
-    reference = models.CharField(max_length=20, unique=True, verbose_name="Référence")
+
+    reference = models.CharField(max_length=20, unique=True)
+
     investissement = models.ForeignKey(
         Investissement,
         on_delete=models.CASCADE,
-        related_name='transactions',
-        verbose_name="Investissement"
+        related_name='transactions'
     )
-    
-    # Informations financières
+
     montant = models.DecimalField(
         max_digits=15,
         decimal_places=2,
-        validators=[MinValueValidator(0.01)],
-        verbose_name="Montant (FCFA)"
+        validators=[MinValueValidator(0.01)]
     )
-    
-    # Métadonnées
-    date_transaction = models.DateTimeField(default=timezone.now, verbose_name="Date de transaction")
-    type = models.CharField(
-        max_length=15,
-        choices=TypeTransaction.choices,
-        verbose_name="Type de transaction"
-    )
+
+    date_transaction = models.DateTimeField(default=timezone.now)
+
+    type = models.CharField(max_length=20, choices=TypeTransaction.choices)
     statut = models.CharField(
-        max_length=15,
+        max_length=20,
         choices=StatutTransaction.choices,
-        default=StatutTransaction.EN_ATTENTE,
-        verbose_name="Statut de la transaction"
+        default=StatutTransaction.EN_ATTENTE
     )
-    
-    # Informations supplémentaires
-    description = models.TextField(blank=True, verbose_name="Description")
-    numero_transaction_bancaire = models.CharField(
-        max_length=50,
-        blank=True,
-        verbose_name="Numéro de transaction bancaire"
+
+    mode_paiement = models.CharField(
+        max_length=20,
+        choices=[
+            ('ORANGE_MONEY', 'Orange Money'),
+            ('MOOV_MONEY', 'Moov Money'),
+            ('WAVE', 'Wave'),
+            ('CARTE_BANCAIRE', 'Carte Bancaire'),
+            ('VIREMENT', 'Virement Bancaire'),
+        ],
+        blank=True
     )
-    
+
+    description = models.TextField(blank=True)
+
     class Meta:
-        verbose_name = "Transaction"
-        verbose_name_plural = "Transactions"
         ordering = ['-date_transaction']
-    
+
     def __str__(self):
-        return f"{self.reference} - {self.get_type_display()} - {self.montant} FCFA"
-    
+        return f"{self.reference} - {self.montant} FCFA"
+
     def save(self, *args, **kwargs):
-        """Override save pour générer automatiquement la référence"""
         if not self.reference:
-            # Générer une référence unique : TXN-YYYY-XXXX
             year = timezone.now().year
-            last_transaction = Transaction.objects.filter(
+            last = Transaction.objects.filter(
                 reference__startswith=f'TXN-{year}-'
             ).order_by('-reference').first()
-            
-            if last_transaction:
-                last_number = int(last_transaction.reference.split('-')[-1])
-                new_number = last_number + 1
-            else:
-                new_number = 1
-            
-            self.reference = f'TXN-{year}-{new_number:04d}'
-        
+            number = int(last.reference.split('-')[-1]) + 1 if last else 1
+            self.reference = f'TXN-{year}-{number:04d}'
         super().save(*args, **kwargs)
-    
-    def valider(self):
-        """Valide la transaction"""
-        self.statut = StatutTransaction.VALIDEE
+
+    def valider_paiement(self):
+        """
+        Paiement validé (admin ou webhook)
+        """
+        if self.statut == StatutTransaction.VALIDEE:
+            return
+
+        if self.investissement.statut != StatutInvestissement.EN_ATTENTE_PAIEMENT.value:
+            raise ValueError("Impossible de valider ce paiement")
+
+        self.statut = StatutTransaction.VALIDEE.value
         self.save()
-        
-        # Si c'est un investissement, confirmer l'investissement
-        if self.type == TypeTransaction.INVESTISSEMENT:
-            self.investissement.confirmer()
-    
-    def annuler(self):
-        """Annule la transaction"""
-        self.statut = StatutTransaction.ANNULEE
-        self.save()
-    
-    def marquer_echouee(self):
-        """Marque la transaction comme échouée"""
-        self.statut = StatutTransaction.ECHOUEE
-        self.save()
-    
-    @property
-    def est_validee(self):
-        """Vérifie si la transaction est validée"""
-        return self.statut == StatutTransaction.VALIDEE
-    
-    @property
-    def est_en_attente(self):
-        """Vérifie si la transaction est en attente"""
-        return self.statut == StatutTransaction.EN_ATTENTE
+
+        self.investissement.statut = StatutInvestissement.PAIEMENT_RECU.value
+        self.investissement.save()

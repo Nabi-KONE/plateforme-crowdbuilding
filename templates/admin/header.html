@@ -1,0 +1,41 @@
+{% load static %}  <!-- Toujours en haut du fichier -->
+
+<!-- Header Admin Fixe -->
+<div class="admin-header">
+    <div class="header-content">
+        <div class="header-title">
+            <h1>{% block page_title %}Tableau de bord Administrateur{% endblock %}</h1>
+            <p>{% block page_subtitle %}Bienvenue, {{ user.prenom }} ! Vous gérez la plateforme CrowdBuilding en tant qu'administrateur.{% endblock %}</p>
+        </div>
+        
+        <div class="admin-profile-dropdown">
+            <button class="admin-profile-btn" id="adminProfileBtn">
+                <div class="admin-avatar">
+                    {{ user.get_initials }}
+                </div>
+                <div class="admin-info">
+                    <h4>{{ user.nom_complet }}</h4>
+                    <p>Administrateur</p>
+                </div>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            
+            <div class="dropdown-menu" id="adminDropdown">
+                <!-- Lien vers le profil admin personnalisé -->
+                <a href="{% url 'admin_perso:profile' %}" class="dropdown-item">
+                    <i class="fas fa-user"></i> Profil
+                </a>
+        
+                <div class="dropdown-divider"></div>
+                
+                <!-- Formulaire de logout -->
+                <form method="post" action="{% url 'admin_perso:logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item">
+                        <i class="fas fa-sign-out-alt"></i> Déconnexion
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

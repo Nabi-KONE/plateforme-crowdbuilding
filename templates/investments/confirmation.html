@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Confirmation d'investissement - CrowdBuilding{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+
+            <!-- ✅ En-tête succès -->
+            <div class="text-center mb-5">
+                <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                <h1 class="h2 fw-bold text-success mb-3">Investissement enregistré !</h1>
+                <p class="text-muted">Votre investissement a été enregistré avec succès.</p>
+            </div>
+
+            <!-- 📋 Récapitulatif investissement -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white text-center">
+                    <h4 class="fw-bold mb-0">📋 Récapitulatif</h4>
+                </div>
+                <div class="card-body">
+
+                    <div class="mb-4 p-3 bg-light rounded text-center">
+                        <h5 class="fw-bold mb-2">{{ projet.titre }}</h5>
+                        <p class="text-muted mb-0">{{ projet.localisation }}</p>
+                    </div>
+
+                    <div class="row text-center mb-4">
+                        <div class="col-6">
+                            <div class="fw-bold text-primary fs-4">{{ investissement.montant|floatformat:0 }} FCFA</div>
+                            <small class="text-muted">Montant investi</small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3"><strong>Référence:</strong> <span class="text-muted">{{ investissement.reference }}</span></div>
+                    <div class="mb-3"><strong>Date:</strong> <span class="text-muted">{{ investissement.date_investissement|date:"d/m/Y à H:i" }}</span></div>
+                    <div class="mb-3"><strong>Statut:</strong> 
+                        <span class="badge {% if investissement.statut == 'EN_ATTENTE' %}bg-warning{% else %}bg-success{% endif %}">
+                            {{ investissement.get_statut_display }}
+                        </span>
+                    </div>
+
+                    <!-- 🔹 Bouton Confirmer et payer -->
+                    <div class="mt-4 text-center">
+                        <a href="{% url 'payments:mock_api_payment' investissement.id %}" 
+                            class="btn btn-success btn-lg w-100">
+                            💳 Confirmer et payer
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 🔙 Liens navigation -->
+            <div class="text-center mt-4">
+                <a href="{% url 'investments:mes_investissements' %}" class="btn btn-primary me-3">
+                    <i class="fas fa-chart-line me-2"></i>Mes investissements
+                </a>
+                <a href="{% url 'projects:detail' projet.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Retour au projet
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

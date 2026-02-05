@@ -1,0 +1,386 @@
+{% extends 'promoteur/base_promoteur.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Mes Projets - Promoteur{% endblock %}
+{% block page_title %}Mes Projets{% endblock %}
+
+{% block content %}
+<!-- En-tête avec bouton -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Mes projets</h1>
+        <p class="text-muted mb-0">Gérez tous vos projets de financement participatif</p>
+    </div>
+    <a href="{% url 'projects:promoteur_nouveau_projet' %}" class="btn btn-primary">
+        <i class="ri-add-circle-line me-2"></i>Nouveau projet
+    </a>
+</div>
+
+<!-- Statistiques simplifiées -->
+<div class="row mb-4">
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0 bg-primary bg-opacity-10">
+            <div class="card-body text-center py-3">
+                <div class="fw-bold text-primary fs-4">{{ projets.count }}</div>
+                <small class="text-muted">Total</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0 bg-warning bg-opacity-10">
+            <div class="card-body text-center py-3">
+                <div class="fw-bold text-warning fs-4">{{ projets.en_campagne.count|default:0 }}</div>
+                <small class="text-muted">En campagne</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0 bg-success bg-opacity-10">
+            <div class="card-body text-center py-3">
+                <div class="fw-bold text-success fs-4">{{ projets.finances.count|default:0 }}</div>
+                <small class="text-muted">Financés</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6 mb-3">
+        <div class="card border-0 bg-info bg-opacity-10">
+            <div class="card-body text-center py-3">
+                <div class="fw-bold text-info fs-4">{{ projets.termines.count|default:0 }}</div>
+                <small class="text-muted">Terminés</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres et recherche -->
+<form method="get" action="{% url 'projects:promoteur_projets' %}" id="filterForm">
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body py-3">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="ri-search-line text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0" 
+                               placeholder="Rechercher un projet..." 
+                               name="search" 
+                               value="{{ request.GET.search }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" name="statut" id="statutSelect">
+                        <option value="">Tous les statuts</option>
+                        {% for statut in statuts %}
+                        <option value="{{ statut.0 }}" {% if request.GET.statut == statut.0 %}selected{% endif %}>
+                            {{ statut.1 }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 text-end">
+                    <span class="text-muted small">{{ projets.count }} projet{{ projets.count|pluralize:"s" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Grille des projets COMPACTE -->
+<div class="row">
+    {% for projet in projets %}
+    <div class="col-xl-4 col-lg-6 mb-4">
+        <div class="card border-0 shadow-sm h-100 project-card">
+            <!-- En-tête avec image -->
+            <div class="position-relative project-header">
+                {% if projet.image_garde %}
+                <img src="{{ projet.image_garde.url }}" 
+                     class="card-img-top project-cover-img" 
+                     alt="{{ projet.titre }}"
+                     loading="lazy">
+                {% else %}
+                <div class="project-placeholder">
+                    <i class="ri-building-line"></i>
+                </div>
+                {% endif %}
+                
+                <!-- Badge statut -->
+                <div class="project-status-badge">
+                    <span class="badge bg-{{ projet.get_statut_color }} rounded-pill">
+                        {{ projet.get_statut_display }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="card-body d-flex flex-column p-3">
+                <!-- Titre et référence -->
+                <div class="mb-2">
+                    <h6 class="card-title fw-bold mb-1 text-truncate">{{ projet.titre }}</h6>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-light text-dark border small">
+                            <i class="ri-building-2-line me-1"></i>{{ projet.get_categorie_display }}
+                        </span>
+                        <span class="text-muted small">{{ projet.reference }}</span>
+                    </div>
+                </div>
+                
+                <!-- Description TRÈS COURTE -->
+                <div class="mb-3">
+                    <p class="card-text text-muted small description-truncate">
+                        {{ projet.description|truncatechars:80 }}
+                    </p>
+                </div>
+                
+                <!-- Métriques financières compactes -->
+                <div class="mb-3">
+                    <!-- Barre de progression -->
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="fw-semibold">{{ projet.taux_financement|floatformat:0 }}%</small>
+                        <small class="text-muted">{{ projet.montant_collecte|intcomma }} FCFA</small>
+                    </div>
+                    <div class="progress mb-2" style="height: 6px;">
+                        <div class="progress-bar bg-{% if projet.taux_financement >= projet.seuil_declenchement|default:100 %}success{% else %}primary{% endif %}" 
+                             style="width: {{ projet.taux_financement }}%">
+                        </div>
+                    </div>
+                    
+                    <!-- Mini-stats en ligne -->
+                    <div class="d-flex justify-content-between small">
+                        <div class="text-center">
+                            <div class="fw-bold">
+                                {% if projet.parts_vendues %}
+                                    {{ projet.parts_vendues }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </div>
+                            <div class="text-muted">Parts</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="fw-bold">
+                                {% if projet.investisseurs_count %}
+                                    {{ projet.investisseurs_count }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </div>
+                            <div class="text-muted">Invest.</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="fw-bold">{{ projet.duree_campagne|default:"-" }}</div>
+                            <div class="text-muted">Mois collecte</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="fw-bold">{{ projet.duree }}</div>
+                            <div class="text-muted">Mois réal.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Localisation et bouton -->
+                <div class="mt-auto pt-2 border-top">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">
+                            <i class="ri-map-pin-line me-1"></i>{{ projet.ville }}
+                        </span>
+                        <a href="{% url 'projects:promoteur_projet_detail' projet.id %}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="ri-eye-line"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <!-- État vide -->
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <div class="mb-4">
+                    <i class="ri-building-line text-muted" style="font-size: 3rem;"></i>
+                </div>
+                <h5 class="text-muted mb-2">Aucun projet créé</h5>
+                <p class="text-muted mb-4 small">Créez votre premier projet de financement participatif</p>
+                <a href="{% url 'projects:promoteur_nouveau_projet' %}" class="btn btn-primary">
+                    <i class="ri-add-circle-line me-2"></i>Créer un projet
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination simplifiée -->
+{% if is_paginated %}
+<nav aria-label="Pagination" class="mt-4">
+    <ul class="pagination justify-content-center pagination-sm">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                <i class="ri-arrow-left-s-line"></i>
+            </a>
+        </li>
+        {% endif %}
+        
+        <li class="page-item disabled">
+            <span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        </li>
+        
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                <i class="ri-arrow-right-s-line"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit du formulaire de filtre
+    document.getElementById('statutSelect').addEventListener('change', function() {
+        document.getElementById('filterForm').submit();
+    });
+    
+    // Animation simple au survol
+    const cards = document.querySelectorAll('.project-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-4px)';
+            card.style.boxShadow = '0 6px 12px rgba(0,0,0,0.1)';
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translateY(0)';
+            card.style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)';
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Carte compacte */
+.project-card {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    height: 100%;
+}
+
+.project-header {
+    height: 140px;
+    overflow: hidden;
+}
+
+.project-cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.project-card:hover .project-cover-img {
+    transform: scale(1.03);
+}
+
+.project-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+}
+
+.project-placeholder i {
+    font-size: 2.5rem;
+}
+
+.project-status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+}
+
+/* Description très courte */
+.description-truncate {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.4;
+    max-height: 2.8em;
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+
+/* Progress bar */
+.progress {
+    border-radius: 3px;
+    background-color: #f0f0f0;
+}
+
+.progress-bar {
+    border-radius: 3px;
+}
+
+/* Bouton compact */
+.btn-outline-primary.btn-sm {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .project-header {
+        height: 120px;
+    }
+    
+    .project-placeholder i {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .project-header {
+        height: 100px;
+    }
+}
+
+/* Couleurs des badges */
+.badge.bg-warning { background-color: #ffc107 !important; }
+.badge.bg-primary { background-color: #0d6efd !important; }
+.badge.bg-success { background-color: #198754 !important; }
+.badge.bg-info { background-color: #0dcaf0 !important; }
+.badge.bg-danger { background-color: #dc3545 !important; }
+.badge.bg-secondary { background-color: #6c757d !important; }
+
+/* Typographie */
+.card-title {
+    font-size: 1rem;
+    line-height: 1.3;
+}
+
+.small {
+    font-size: 0.8rem;
+}
+
+/* Pagination compacte */
+.pagination-sm .page-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}

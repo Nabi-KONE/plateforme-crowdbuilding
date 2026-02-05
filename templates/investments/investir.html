@@ -1,0 +1,922 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Investir dans {{ projet.titre }} - CrowdBuilding{% endblock %}
+
+{% block content %}
+<style>
+    /* STYLES MODERNES ET CAPTIVANTS - IMPRESSION DE CONFIANCE */
+    .investment-hero {
+        background: linear-gradient(135deg, #0d6efd 0%, #0d6efd 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 50px 40px;
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(13, 110, 253, 0.2);
+    }
+    
+    .investment-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        opacity: 0.3;
+    }
+    
+    .hero-badge {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        border-radius: 50px;
+        padding: 10px 25px;
+        display: inline-block;
+        margin-bottom: 20px;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .investment-card {
+        background: white;
+        border-radius: 15px;
+        border: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+    }
+    
+    .investment-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+    }
+    
+    .stats-circle {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .btn-success-lg {
+        background: linear-gradient(135deg, #198754, #157347);
+        border: none;
+        border-radius: 12px;
+        padding: 18px 30px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+    
+    .btn-success-lg:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(25, 135, 84, 0.3);
+        background: linear-gradient(135deg, #157347, #13653f);
+    }
+    
+    .paiement-card {
+        cursor: pointer;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        height: 100%;
+        background: white;
+    }
+    
+    .paiement-card:hover {
+        border-color: #0d6efd;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.1);
+    }
+    
+    .paiement-card.selected {
+        border-color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.1);
+    }
+    
+    .part-input-group {
+        border-radius: 12px;
+        overflow: hidden;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+    
+    .part-input-group:focus-within {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+        background: white;
+    }
+    
+    .part-btn {
+        background: #f8f9fa;
+        border: none;
+        color: #0d6efd;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        padding: 0 20px;
+    }
+    
+    .part-btn:hover {
+        background: #e9ecef;
+        color: #0b5ed7;
+    }
+    
+    .form-check-input:checked {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+    }
+    
+    .progress-bar {
+        border-radius: 4px;
+    }
+    
+    /* Animation pour la confirmation */
+    @keyframes successPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+    
+    .success-pulse {
+        animation: successPulse 0.5s ease;
+    }
+    
+    /* Responsive avec mise en page décentrée à gauche */
+    .container {
+        max-width: 1400px;
+    }
+    
+    .col-lg-8 {
+        padding-right: 40px;
+    }
+    
+    @media (max-width: 1200px) {
+        .col-lg-8 {
+            padding-right: 20px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .investment-hero {
+            padding: 30px 20px;
+            margin-left: -15px;
+            margin-right: -15px;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .col-lg-8 {
+            padding-right: 15px;
+        }
+        
+        .stats-circle {
+            width: 60px;
+            height: 60px;
+            font-size: 1.2rem;
+        }
+    }
+    
+    /* Badge pour les avantages */
+    .badge-avantage {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 10px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        height: 100%;
+        border: 1px solid #e9ecef;
+    }
+    
+    .badge-avantage:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border-color: #0d6efd;
+    }
+    
+    /* Icône de vérification moderne */
+    .check-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: #198754;
+        color: white;
+        border-radius: 50%;
+        margin-right: 10px;
+        font-size: 12px;
+    }
+    
+    /* Mise en page des stats */
+    .stat-item {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #0d6efd;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    /* Compteur de jours restants */
+    .jours-restants {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #dc3545;
+        line-height: 1;
+    }
+    
+    .jours-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+</style>
+
+<div class="container-fluid py-4">
+    <!-- EN-TÊTE HÉROÏQUE PROFESSIONNELLE -->
+    <div class="investment-hero">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <span class="hero-badge">
+                    <i class="fas fa-chart-line me-2"></i>Opportunité d'investissement vérifiée
+                </span>
+                <h1 class="display-5 fw-bold mb-3">
+                    Investir dans <span class="text-warning">{{ projet.titre|truncatechars:50 }}</span>
+                </h1>
+                <p class="lead mb-0 opacity-90">
+                    Participez au développement immobilier avec <span class="fw-bold">{{ investisseurs_count|default:0 }}</span> investisseurs déjà engagés
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="bg-white text-dark rounded-3 p-4 d-inline-block shadow-sm">
+                    <div class="small text-muted mb-1">Disponibilité des parts</div>
+                    <div class="h3 fw-bold text-primary mb-0">
+                        {% if projet.parts_restantes %}
+                            {{ projet.parts_restantes|intcomma }}
+                        {% else %}
+                            {{ projet.nombre_total_parts|default:0|intcomma }}
+                        {% endif %}
+                        <small class="fs-6 text-muted">parts</small>
+                    </div>
+                    <div class="small text-muted mt-1">sur {{ projet.nombre_total_parts|default:0|intcomma }} au total</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- COLONNE PRINCIPALE - FORMULAIRE D'INVESTISSEMENT -->
+        <div class="col-lg-8">
+            <!-- CARTE RÉSUMÉ DU PROJET -->
+            <div class="investment-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-start">
+                        <div class="flex-shrink-0">
+                            {% if projet.image_garde %}
+                            <img src="{{ projet.image_garde.url }}" 
+                                 class="rounded shadow-sm" 
+                                 style="width: 100px; height: 100px; object-fit: cover;">
+                            {% else %}
+                            <div class="stats-circle bg-primary-light text-primary">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1 ms-4">
+                            <h4 class="fw-bold mb-2">{{ projet.titre }}</h4>
+                            <div class="row">
+                                <div class="col-md-3 col-6 mb-2">
+                                    <div class="small text-muted">Localisation</div>
+                                    <div class="fw-bold">{{ projet.ville }}</div>
+                                </div>
+                                <div class="col-md-3 col-6 mb-2">
+                                    <div class="small text-muted">Catégorie</div>
+                                    <div class="fw-bold">{{ projet.get_categorie_display }}</div>
+                                </div>
+                                <div class="col-md-3 col-6 mb-2">
+                                    <div class="small text-muted">Durée de collecte</div>
+                                    <div class="fw-bold">
+                                        <span id="joursRestants">
+                                            {% if projet.jours_restants %}
+                                                {{ projet.jours_restants }} jours
+                                            {% else %}
+                                                {{ projet.duree_campagne }} mois
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6 mb-2">
+                                    <div class="small text-muted">Promoteur</div>
+                                    <div class="fw-bold">{{ projet.promoteur.nom_complet }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FORMULAIRE D'INVESTISSEMENT -->
+            <form method="post" id="investForm" class="investment-card" action="{% url 'investments:investir' project_id=projet.id %}">
+                {% csrf_token %}
+                <div class="card-body p-4">
+
+                    <!-- NOMBRE DE PARTS -->
+                    <div class="mb-5">
+                        <label class="form-label fw-bold mb-3">
+                            Combien de parts souhaitez-vous acquérir ? *
+                        </label>
+                        <div class="input-group mb-3">
+                            <button type="button" class="btn btn-outline-secondary" onclick="adjustParts(-1)">-</button>
+                            <input type="number"
+                                    name="nombre_parts"
+                                    id="nombre_parts"
+                                    value="{{ projet.nombre_min_parts|default:1 }}"
+                                    min="{{ projet.nombre_min_parts|default:1 }}"
+                                    class="form-control text-center">
+
+                            <button type="button" class="btn btn-outline-secondary" onclick="adjustParts(1)">+</button>
+                        <div class="small text-muted mt-1">
+                            Minimum requis : <strong>{{ projet.nombre_min_parts|default:1 }} parts</strong>
+                        </div>
+
+                        </div>
+                        <div class="mt-2">
+                            Prix unitaire : <strong>{{ valeur_part|floatformat:0|intcomma }} FCFA</strong>
+                        </div>
+                        <div class="mt-2">
+                            Montant total : <strong id="montantTotalDisplay">{{ valeur_part|floatformat:0|intcomma }} FCFA</strong>
+                        </div>
+                    </div>
+
+                    <!-- MODE DE PAIEMENT -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold mb-2">Mode de paiement *</label>
+                        <select name="mode_paiement" class="form-select" required>
+                            <option value="">Choisir</option>
+                            <option value="CARTE_BANCAIRE">Carte bancaire</option>
+                            <option value="MOBILE_MONEY">Mobile Money</option>
+                        </select>
+                    </div>
+
+                    <!-- ORIGINE DES FONDS -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold mb-2">Origine des fonds *</label>
+                        <select name="origine_fonds" class="form-select" required>
+                            <option value="">Sélectionnez</option>
+                            <option value="SALAIRE">Salaire</option>
+                            <option value="BUSINESS">Activité commerciale</option>
+                            <option value="HERITAGE">Héritage</option>
+                            <option value="EPARGNE">Épargne</option>
+                            <option value="DIASPORA">Diaspora</option>
+                            <option value="AUTRE">Autre</option>
+                        </select>
+                    </div>
+
+                    <!-- ACCEPTATION CONTRAT -->
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" id="contrat_accepte" name="contrat_accepte" required>
+                        <label class="form-check-label" for="contrat_accepte">J'accepte le contrat d'investissement *</label>
+                    </div>
+
+                    <!-- BOUTON CONFIRMER -->
+                    <div class="d-grid">
+                        <button type="submit" id="btnConfirmer" class="btn btn-success-lg" onclick="submitInvestment(); return false;">
+                            Confirmer et payer
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <!-- COLONNE LATERALE - STATS ET AVANTAGES -->
+        <div class="col-lg-4">
+            <!-- CARTE STATISTIQUES -->
+            <div class="investment-card">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h4 class="fw-bold mb-3">
+                        <i class="fas fa-chart-bar me-2 text-primary"></i>Statistiques du projet
+                    </h4>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- PROGRESSION -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <div class="small text-muted">Progression du financement</div>
+                            <div class="fw-bold text-success">{{ projet.taux_financement|floatformat:0 }}%</div>
+                        </div>
+                        <div class="progress mb-3">
+                            <div class="progress-bar bg-success" style="width: {{ projet.taux_financement }}%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span>{{ projet.montant_collecte|intcomma }} FCFA</span>
+                            <span>{{ projet.montant_total|intcomma }} FCFA</span>
+                        </div>
+                    </div>
+                    
+                    <!-- DISTRIBUTION DES PARTS -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">Distribution des parts</h6>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <div class="stat-value text-success">
+                                        {{ projet.parts_vendues|default:0|intcomma }}
+                                    </div>
+                                    <div class="stat-label">Vendues</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-item">
+                                    <div class="stat-value text-primary">
+                                        {% if projet.parts_restantes %}
+                                            {{ projet.parts_restantes|intcomma }}
+                                        {% else %}
+                                            {{ projet.nombre_total_parts|default:0|intcomma }}
+                                        {% endif %}
+                                    </div>
+                                    <div class="stat-label">Disponibles</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- JOURS RESTANTS -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">Temps restant</h6>
+                        <div class="stat-item text-center">
+                            <div class="jours-restants" id="dynamicDays">
+                                {% if projet.jours_restants %}
+                                    {{ projet.jours_restants }}
+                                {% else %}
+                                    {{ projet.duree_campagne|default:3 }} mois
+                                {% endif %}
+                            </div>
+                            <div class="jours-label">
+                                {% if projet.jours_restants %}
+                                    Jours de collecte restants
+                                {% else %}
+                                    Durée de collecte
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- INVESTISSEURS -->
+                    <div>
+                        <h6 class="fw-bold mb-3">Communauté</h6>
+                        <div class="stat-item">
+                            <div class="stat-value">
+                                {{ investisseurs_count|default:0|intcomma }}
+                            </div>
+                            <div class="stat-label">Investisseurs engagés</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CARTE AVANTAGES -->
+            <div class="investment-card mt-4">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">
+                        <i class="fas fa-shield-alt me-2 text-primary"></i>Sécurité & Transparence
+                    </h5>
+                    
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="badge-avantage text-center">
+                                <i class="fas fa-file-contract fa-2x text-primary mb-3"></i>
+                                <div class="small fw-bold">Contrat légal</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="badge-avantage text-center">
+                                <i class="fas fa-user-check fa-2x text-success mb-3"></i>
+                                <div class="small fw-bold">Promoteur vérifié</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="badge-avantage text-center">
+                                <i class="fas fa-chart-line fa-2x text-warning mb-3"></i>
+                                <div class="small fw-bold">Suivi détaillé</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="badge-avantage text-center">
+                                <i class="fas fa-headset fa-2x text-info mb-3"></i>
+                                <div class="small fw-bold">Support dédié</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-light border-0 mt-4">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-handshake me-3 mt-1 text-primary"></i>
+                            <div>
+                                <small class="text-muted">
+                                    <strong>Investissement sécurisé</strong><br>
+                                    Tous les projets sont vérifiés par notre équipe avant publication.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE CONFIRMATION -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0" style="border-radius: 15px;">
+            <!-- EN-TÊTE -->
+            <div class="modal-header border-0" style="background: linear-gradient(135deg, #198754, #157347); border-radius: 15px 15px 0 0;">
+                <h5 class="modal-title text-white fw-bold">
+                    <i class="fas fa-check-circle me-2"></i>Confirmation d'investissement
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex p-3 mb-3">
+                        <i class="fas fa-check-circle fa-3x text-success"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2">Confirmez votre investissement</h4>
+                    <p class="text-muted">
+                        Vous êtes sur le point d'investir dans le projet
+                        <span class="fw-bold text-primary">{{ projet.titre }}</span>
+                    </p>
+                </div>
+                
+                <div class="card border-0 bg-light mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3">Détails de l'investissement</h6>
+                                <table class="table table-sm">
+                                    <tbody>
+                                        <tr>
+                                            <td class="border-0 ps-0 text-muted">Nombre de parts :</td>
+                                            <td class="border-0 text-end fw-bold" id="modalParts">1</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border-0 ps-0 text-muted">Prix par part :</td>
+                                            <td class="border-0 text-end">{{ valeur_part|floatformat:0|intcomma }} FCFA</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border-0 ps-0 text-muted">Montant total :</td>
+                                            <td class="border-0 text-end fw-bold text-primary" id="modalMontant">
+                                                {{ valeur_part|floatformat:0|intcomma }} FCFA
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="border-0 ps-0 text-muted">Mode de paiement :</td>
+                                            <td class="border-0 text-end fw-bold" id="modalPaiement">Carte bancaire</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3">Impact sur le projet</h6>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <div class="text-center p-2 border rounded">
+                                            <div class="small text-muted">Financement total</div>
+                                            <div class="fw-bold text-success" id="modalFinancement">
+                                                {{ projet.taux_financement|floatformat:0 }}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-center p-2 border rounded">
+                                            <div class="small text-muted">Parts vendues</div>
+                                            <div class="fw-bold text-primary" id="modalTotalParts">
+                                                {{ projet.parts_vendues|default:0|intcomma }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning border-0">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle me-3"></i>
+                        <div>
+                            <small class="text-muted">
+                                En confirmant, vous serez redirigé vers notre plateforme de paiement sécurisée pour finaliser la transaction.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-arrow-left me-2"></i>Retour
+                </button>
+                <button type="button" id="finalConfirmBtn" class="btn btn-success" onclick="submitInvestment()">
+                    <i class="fas fa-lock me-2"></i>Confirmer et payer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// VARIABLES GLOBALES - BASÉES UNIQUEMENT SUR LES VARIABLES DISPONIBLES
+const valeurPart = parseFloat("{{ valeur_part }}") || 10000;
+const nombreTotalParts = parseInt("{{ projet.nombre_total_parts|default:'1000' }}") || 1000;
+const partsVenduesInitial = parseInt("{{ projet.parts_vendues|default:'0' }}") || 0;
+const nombreMinParts = parseInt("{{ projet.nombre_min_parts|default:'1' }}") || 1;
+
+
+// Calculer les parts restantes
+const partsRestantes = Math.max(0, nombreTotalParts - partsVenduesInitial);
+const maxPartsPossible = Math.min(partsRestantes, nombreTotalParts);
+
+// ÉLÉMENTS DOM
+let nombrePartsInput, montantTotalDisplay, btnConfirmer;
+let conditionsCheckbox, contratAccepteCheckbox;
+let modalParts, modalMontant, modalPaiement, modalFinancement, modalTotalParts;
+let confirmationModal;
+
+// FONCTIONS DE VALIDATION
+function validatePartsInput(input) {
+    let value = input.value;
+
+    if (value === '') return;
+
+    let numberValue = parseInt(value);
+
+    if (isNaN(numberValue) || numberValue < nombreMinParts) {
+        input.value = nombreMinParts;
+        numberValue = nombreMinParts;
+    }
+
+    if (numberValue > maxPartsPossible) {
+        input.value = maxPartsPossible;
+        numberValue = maxPartsPossible;
+    }
+
+    updateCalculs();
+}
+
+
+function adjustParts(delta) {
+    let current = parseInt(nombrePartsInput.value) || nombreMinParts;
+    let newValue = current + delta;
+
+    if (newValue < nombreMinParts) newValue = nombreMinParts;
+    if (newValue > maxPartsPossible) newValue = maxPartsPossible;
+
+    nombrePartsInput.value = newValue;
+    updateCalculs();
+}
+
+
+function updateCalculs() {
+    let nombreParts = parseInt(nombrePartsInput.value);
+
+    if (isNaN(nombreParts) || nombreParts < nombreMinParts) {
+        nombreParts = nombreMinParts;
+        nombrePartsInput.value = nombreMinParts;
+    }
+
+    const montantTotal = nombreParts * valeurPart;
+    montantTotalDisplay.textContent = formatMoney(montantTotal) + ' FCFA';
+
+    updateConfirmButton();
+}
+
+
+function selectPaymentMethod(method) {
+    // Retirer la sélection
+    document.querySelectorAll('.paiement-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Ajouter la sélection
+    if (method === 'CARTE_BANCAIRE') {
+        document.getElementById('paiementCarte').classList.add('selected');
+        document.querySelector('input[value="CARTE_BANCAIRE"]').checked = true;
+    } else {
+        document.getElementById('paiementMobile').classList.add('selected');
+        document.querySelector('input[value="MOBILE_MONEY"]').checked = true;
+    }
+    
+    updateConfirmButton();
+}
+
+function updateConfirmButton() {
+    const contratAccepte = document.getElementById('contrat_accepte').checked;
+
+    // ✅ ON PREND LA VALEUR DU SELECT
+    const modePaiement = document.querySelector('select[name="mode_paiement"]').value;
+    const origineFonds = document.querySelector('select[name="origine_fonds"]').value;
+    const nombreParts = parseInt(nombrePartsInput.value) || 0;
+
+    const isValid =
+        contratAccepte &&
+        modePaiement !== "" &&
+        origineFonds !== "" &&
+        nombreParts > 0;
+
+    btnConfirmer.disabled = !isValid;
+}
+
+
+function showConfirmationModal() {
+    if (btnConfirmer.disabled) return;
+    
+    const nombreParts = parseInt(nombrePartsInput.value) || 1;
+    const modePaiement = document.querySelector('input[name="mode_paiement"]:checked');
+    const montantTotal = nombreParts * valeurPart;
+    const origineFonds = document.querySelector('select[name="origine_fonds"]').value;
+    
+    // Mettre à jour le modal
+    modalParts.textContent = formatNumber(nombreParts);
+    modalMontant.textContent = formatMoney(montantTotal) + ' FCFA';
+    modalPaiement.textContent = modePaiement.value === 'CARTE_BANCAIRE' ? 
+        'Carte bancaire' : 'Mobile Money';
+    
+    // Calculer le nouveau taux de financement
+    const montantCollecteInitial = parseFloat("{{ projet.montant_collecte }}") || 0;
+    const montantTotalProjet = parseFloat("{{ projet.montant_total }}") || 1;
+    const nouveauMontantCollecte = montantCollecteInitial + montantTotal;
+    const nouveauTaux = (nouveauMontantCollecte / montantTotalProjet) * 100;
+    modalFinancement.textContent = nouveauTaux.toFixed(0) + '%';
+    
+    // Calculer le nouveau total de parts vendues
+    const nouvellesPartsVendues = partsVenduesInitial + nombreParts;
+    modalTotalParts.textContent = formatNumber(nouvellesPartsVendues);
+    
+    // Afficher le modal
+    confirmationModal.show();
+}
+
+function submitInvestment() {
+    const nombreParts = parseInt(nombrePartsInput.value) || nombreMinParts;
+    const modePaiement = document.querySelector('select[name="mode_paiement"]').value;
+    const origineFonds = document.querySelector('select[name="origine_fonds"]').value;
+
+    const csrftoken = getCookie('csrftoken');
+
+    btnConfirmer.disabled = true;
+    btnConfirmer.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Traitement...';
+
+    fetch("{% url 'payments:mock_api_payment' investissement.id %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({
+            // ici tu peux ajouter les données nécessaires si besoin
+            nombre_parts: nombreParts,
+            mode_paiement: modePaiement,
+            origine_fonds: origineFonds
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success){
+            window.location.href = "{% url 'investments:mes_investissements' %}";
+        } else {
+            alert(data.message);
+            btnConfirmer.disabled = false;
+            btnConfirmer.innerHTML = '💳 Confirmer et payer';
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Erreur lors du paiement.");
+        btnConfirmer.disabled = false;
+        btnConfirmer.innerHTML = '💳 Confirmer et payer';
+    });
+
+}
+
+// FONCTIONS UTILITAIRES
+function formatMoney(amount) {
+    return Math.round(amount).toLocaleString('fr-FR');
+}
+
+function formatNumber(num) {
+    return num.toLocaleString('fr-FR');
+}
+
+// FONCTION POUR METTRE À JOUR LES JOURS RESTANTS (dynamique)
+function updateRemainingDays() {
+    // Récupérer la date de fin du projet
+    const dateFinProjet = "{{ projet.date_fin|date:'Y-m-d' }}";
+    
+    if (dateFinProjet) {
+        const dateFin = new Date(dateFinProjet);
+        const aujourdhui = new Date();
+        const differenceMs = dateFin - aujourdhui;
+        const joursRestants = Math.ceil(differenceMs / (1000 * 60 * 60 * 24));
+        
+        const joursRestantsElement = document.getElementById('dynamicDays');
+        if (joursRestantsElement) {
+            if (joursRestants > 0) {
+                joursRestantsElement.textContent = joursRestants;
+                joursRestantsElement.parentElement.querySelector('.jours-label').textContent = 'Jours de collecte restants';
+            } else {
+                joursRestantsElement.textContent = 'Terminé';
+                joursRestantsElement.parentElement.querySelector('.jours-label').textContent = 'Collecte terminée';
+            }
+        }
+    }
+}
+
+// INITIALISATION
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser les éléments DOM
+    nombrePartsInput = document.getElementById('nombre_parts');
+    montantTotalDisplay = document.getElementById('montantTotalDisplay');
+    btnConfirmer = document.getElementById('btnConfirmer');
+    contratAccepteCheckbox = document.getElementById('contrat_accepte');
+    // Initialisation avec le minimum défini par le promoteur
+    nombrePartsInput.value = nombreMinParts;
+    nombrePartsInput.min = nombreMinParts;
+
+    
+    // Éléments modal
+    modalParts = document.getElementById('modalParts');
+    modalMontant = document.getElementById('modalMontant');
+    modalPaiement = document.getElementById('modalPaiement');
+    modalFinancement = document.getElementById('modalFinancement');
+    modalTotalParts = document.getElementById('modalTotalParts');
+    
+    // Initialiser le modal
+    confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+    
+    // Configurer l'input pour accepter la saisie libre
+    nombrePartsInput.addEventListener('input', function() {
+        validatePartsInput(this);
+    });
+    
+    nombrePartsInput.addEventListener('blur', function() {
+        if (this.value === '' || this.value < nombreMinParts) {
+            this.value = 1;
+            updateCalculs();
+        }
+    });
+    
+    // Événements pour la validation
+    contratAccepteCheckbox.addEventListener('change', updateConfirmButton);
+    
+    document.querySelector('select[name="origine_fonds"]').addEventListener('change', updateConfirmButton);
+    
+    document.querySelector('select[name="mode_paiement"]').addEventListener(
+    'change',
+    updateConfirmButton
+    );
+
+    
+    // Initialiser
+    updateCalculs();
+    selectPaymentMethod('CARTE_BANCAIRE');
+    
+    // Mettre à jour les jours restants
+    updateRemainingDays();
+    
+    // Mettre à jour toutes les minutes (optionnel)
+    setInterval(updateRemainingDays, 60000);
+    
+    // Ajuster le max de l'input
+    nombrePartsInput.max = maxPartsPossible;
+    
+    // Définir le max dans l'attribut pour validation HTML
+    nombrePartsInput.setAttribute('max', maxPartsPossible);
+});
+</script>
+{% endblock %}

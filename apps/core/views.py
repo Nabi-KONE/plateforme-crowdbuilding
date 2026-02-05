@@ -57,45 +57,53 @@ def home(request):
 @login_required
 def dashboard(request):
     """
-    Tableau de bord personnalisé selon le rôle de l'utilisateur
+    Tableau de bord central - REDIRECTION VERS LE BON DASHBOARD
     """
     user = request.user
+    
+    # 1. Vérifier le statut du rôle actif (en attente de validation)
     role_actif = user.get_role_actif()
+    if role_actif and role_actif.statut == 'EN_ATTENTE_VALIDATION':
+        # Utilisateur en attente de validation
+        return render(request, 'accounts/dashboard_attente.html', get_dashboard_attente_data(user))
     
-    context = {
-        'user': user,
-        'role_actif': role_actif,
-    }
-    
+    # 2. Rediriger selon le rôle validé
     if user.est_administrateur():
-        # Dashboard administrateur
-        context.update(get_dashboard_admin_data())
-    elif user.est_promoteur():
-        # Dashboard promoteur
-        context.update(get_dashboard_promoteur_data(user))
-    elif user.est_investisseur():
-        # Dashboard investisseur
-        context.update(get_dashboard_investisseur_data(user))
-    else:
-        # Dashboard utilisateur non validé
-        context.update(get_dashboard_attente_data(user))
+        # Si vous avez un dashboard admin spécifique
+        return redirect('admin_perso:dashboard')
+        # OU si vous avez un template admin/dashboard_admin.html
+        # return render(request, 'admin/dashboard_admin.html', get_dashboard_admin_data())
     
-    return render(request, 'core/dashboard.html', context)
-
+    elif user.est_promoteur():
+        # REDIRECTION VERS LE DASHBOARD PROMOTEUR
+        return redirect('projects:promoteur_dashboard') 
+    
+    elif user.est_investisseur():
+        # REDIRECTION VERS LE DASHBOARD INVESTISSEUR
+        return redirect('investments:dashboard_investisseur')
+    
+    else:
+        # Cas par défaut (aucun rôle)
+        messages.info(request, "Veuillez sélectionner un rôle pour accéder au tableau de bord.")
+        return redirect('accounts:switch_role')
 
 def get_dashboard_admin_data():
     """
     Données pour le dashboard administrateur
     """
-    from django.db.models import Q
-    
-    # Statistiques générales
+    from django.db.models import Q, Sum, Count
+    from apps.documents.models import Document
+
+    # Stats générales
+    total_projets = Projet.objects.count()
+    projets_finances = Projet.objects.filter(statut='FINANCE').count()
+
     stats = {
         'total_utilisateurs': Utilisateur.objects.count(),
         'utilisateurs_en_attente': Utilisateur.objects.filter(
             roles__statut='EN_ATTENTE_VALIDATION'
         ).distinct().count(),
-        'total_projets': Projet.objects.count(),
+        'total_projets': total_projets,
         'projets_en_attente': Projet.objects.filter(
             statut='EN_ATTENTE_VALIDATION'
         ).count(),
@@ -105,25 +113,34 @@ def get_dashboard_admin_data():
         'montant_total_collecte': Investissement.objects.filter(
             statut='CONFIRME'
         ).aggregate(total=Sum('montant'))['total'] or 0,
+        'taux_reussite': round((projets_finances / max(total_projets, 1)) * 100, 1),
     }
-    
-    # Éléments en attente de validation
+
+    # Notifications récentes
+    notifications = Notification.objects.all().order_by('-date_creation')[:5]
+
+    # Investissements récents
+    investissements_recents = Investissement.objects.filter(
+        statut='CONFIRME'
+    ).order_by('-date_investissement')[:4]
+
+    # Éléments en attente
     utilisateurs_attente = Utilisateur.objects.filter(
         roles__statut='EN_ATTENTE_VALIDATION'
-    ).distinct()[:10]
-    
+    ).distinct()[:5]
+
     projets_attente = Projet.objects.filter(
         statut='EN_ATTENTE_VALIDATION'
-    ).order_by('-date_creation')[:10]
-    
-    # Documents en attente
-    from apps.documents.models import Document
+    ).order_by('-date_creation')[:5]
+
     documents_attente = Document.objects.filter(
         statut='EN_ATTENTE'
-    ).order_by('-date_telechargement')[:10]
-    
+    ).order_by('-date_telechargement')[:5]
+
     return {
         'stats': stats,
+        'notifications': notifications,
+        'investissements_recents': investissements_recents,
         'utilisateurs_attente': utilisateurs_attente,
         'projets_attente': projets_attente,
         'documents_attente': documents_attente,
@@ -179,7 +196,7 @@ def get_dashboard_promoteur_data(user):
 
 def get_dashboard_investisseur_data(user):
     """
-    Données pour le dashboard investisseur
+    Données pour le dashboard investisseur (pour référence)
     """
     # Investissements de l'utilisateur
     investissements = user.investissements.filter(statut='CONFIRME')
@@ -198,28 +215,24 @@ def get_dashboard_investisseur_data(user):
         investissements__statut='CONFIRME'
     ).distinct()
     
-    # Rendement attendu total
-    rendement_attendu = 0
-    for investissement in investissements:
-        rendement_attendu += investissement.calculer_rendement()
+    # Projets en cours vs terminés
+    projets_en_cours = projets_investis.filter(
+        statut__in=['EN_CAMPAGNE', 'EN_CONSTRUCTION']
+    ).count()
+    
+    projets_termines = projets_investis.filter(
+        statut__in=['FINANCE', 'TERMINE']
+    ).count()
     
     # Investissements récents
     investissements_recents = investissements.order_by('-date_investissement')[:10]
     
-    # Projets recommandés (autres projets valides)
-    projets_recommandes = Projet.objects.filter(
-        statut__in=['VALIDE', 'EN_COURS_FINANCEMENT']
-    ).exclude(
-        investissements__investisseur=user
-    ).order_by('-date_creation')[:6]
-    
     return {
-        'investissements': investissements,
         'stats_investissements': stats_investissements,
         'projets_investis': projets_investis,
-        'rendement_attendu': rendement_attendu,
+        'projets_en_cours': projets_en_cours,
+        'projets_termines': projets_termines,
         'investissements_recents': investissements_recents,
-        'projets_recommandes': projets_recommandes,
     }
 
 
@@ -246,9 +259,16 @@ def get_dashboard_attente_data(user):
         if not documents_utilisateur.filter(type=type_doc, statut='VALIDE').exists():
             documents_manquants.append(type_doc)
     
+    # Projets à découvrir pendant l'attente
+    projets_decouverte = Projet.objects.filter(
+        statut__in=['VALIDE', 'EN_COURS_FINANCEMENT']
+    ).order_by('-date_creation')[:6]
+    
     return {
+        'user': user,
         'documents_manquants': documents_manquants,
         'documents_utilisateur': documents_utilisateur,
+        'projets_decouverte': projets_decouverte,
     }
 
 
