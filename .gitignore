@@ -1,33 +1,27 @@
+
+# Ajoutez ici les dossiers/fichiers spécifiques que vous voulez ignorer
+db.sqlite3
+# === DJANGO ===
+# === DOSSIERS SPÉCIFIQUES À VOTRE PROJET ===
+.DS_Store
+.env
+env/
 # === ENVIRONNEMENT VIRTUEL ===
+.env.local
+# === FICHIERS SENSIBLES ===
+.idea/
+# === IDE/EDITORS ===
+*.log
+logs/
+# === LOGS ===
+media/
+*.pyc
+__pycache__/
+staticfiles/
+*.swo
+*.swp
+# === SYSTÈME ===
+Thumbs.db
 .venv/
 venv/
-env/
-
-# === DJANGO ===
-__pycache__/
-*.pyc
-db.sqlite3
-media/
-staticfiles/
-*.log
-
-# === FICHIERS SENSIBLES ===
-.env
-.env.local
-
-# === LOGS ===
-logs/
-*.log
-
-# === IDE/EDITORS ===
 .vscode/
-.idea/
-*.swp
-*.swo
-
-# === SYSTÈME ===
-.DS_Store
-Thumbs.db
-
-# === DOSSIERS SPÉCIFIQUES À VOTRE PROJET ===
-# Ajoutez ici les dossiers/fichiers spécifiques que vous voulez ignorer
