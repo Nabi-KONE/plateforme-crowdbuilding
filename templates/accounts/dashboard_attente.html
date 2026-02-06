@@ -1,301 +1,742 @@
-    <!-- Message d'attente PERSONNALISÉ -->
-    <div class="col-12 mb-4">
-        <div class="alert alert-info" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-info-circle me-3 fa-2x"></i>
-                <div>
-                    <h5 class="alert-heading mb-1">
-                        {% if role_actif.type == 'PROMOTEUR' %}
-                            Promoteur en attente de validation
-                        {% else %}
-                            Investisseur en attente de validation  
-                        {% endif %}
-                    </h5>
-                    <p class="mb-0">
-                        {% if role_actif.type == 'PROMOTEUR' %}
-                            💼 <strong>Votre profil promoteur est en cours de vérification.</strong><br>
-                            Une fois validé, vous pourrez créer et gérer vos projets immobiliers.
-                        {% else %}
-                            💰 <strong>Votre profil investisseur est en cours de vérification.</strong><br>
-                            Une fois validé, vous pourrez découvrir et investir dans des projets.
-                        {% endif %}
-                        <br><br>
-                        ⏳ <em>Délai de traitement : 24-48 heures maximum</em>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
+{% extends 'base.html' %}
+{% load static %}
 
-    <!-- Documents requis -->
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-file-upload me-2"></i>Documents requis
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if documents_manquants %}
-                <div class="alert alert-warning">
-                    <h6 class="alert-heading">Documents manquants ou non validés</h6>
-                    <p class="mb-0">Veuillez uploader les documents suivants pour finaliser votre inscription :</p>
-                </div>
-                
-                <ul class="list-group list-group-flush">
-                    {% for type_doc in documents_manquants %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-file me-2 text-muted"></i>
-                            <span>{{ type_doc }}</span>
-                        </div>
-                        <span class="badge bg-warning">Manquant</span>
-                    </li>
-                    {% endfor %}
-                </ul>
-                
-                <div class="mt-3">
-                    <a href="{% url 'documents:upload' %}" class="btn btn-primary">
-                        <i class="fas fa-upload me-2"></i>Uploader des documents
-                    </a>
-                </div>
-                {% else %}
-                <div class="alert alert-success">
-                    <h6 class="alert-heading">Tous les documents requis sont présents</h6>
-                    <p class="mb-0">Vos documents sont en cours de validation par nos administrateurs.</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+{% block title %}Validation en cours - CrowdBuilding{% endblock %}
 
-    <!-- Documents uploadés -->
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-file-check me-2"></i>Mes documents
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if documents_utilisateur %}
-                <div class="list-group list-group-flush">
-                    {% for document in documents_utilisateur %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-file me-2 text-muted"></i>
-                            <span>{{ document.nom }}</span>
-                            <br>
-                            <small class="text-muted">{{ document.get_type_display }}</small>
-                        </div>
-                        <span class="badge bg-{% if document.statut == 'VALIDE' %}success{% elif document.statut == 'REFUSE' %}danger{% else %}warning{% endif %}">
-                            {{ document.get_statut_display }}
-                        </span>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="text-center text-muted py-4">
-                    <i class="fas fa-file fa-2x mb-2"></i>
-                    <p>Aucun document uploadé</p>
-                    <a href="{% url 'documents:upload' %}" class="btn btn-sm btn-primary">Uploader des documents</a>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Informations utiles -->
-    <div class="col-12 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-lightbulb me-2"></i>Que faire en attendant ?
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <div class="text-center p-3 border rounded">
-                            <i class="fas fa-search fa-2x text-primary mb-3"></i>
-                            <h6 class="fw-bold">Explorer les projets</h6>
-                            <p class="text-muted small">Découvrez les projets immobiliers disponibles sur la plateforme</p>
-                            <a href="{% url 'projects:list' %}" class="btn btn-sm btn-outline-primary">Voir les projets</a>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="text-center p-3 border rounded">
-                            <i class="fas fa-book fa-2x text-success mb-3"></i>
-                            <h6 class="fw-bold">Lire la documentation</h6>
-                            <p class="text-muted small">Apprenez comment fonctionne le financement participatif</p>
-                            <a href="{% url 'core:help' %}" class="btn btn-sm btn-outline-success">Centre d'aide</a>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="text-center p-3 border rounded">
-                            <i class="fas fa-envelope fa-2x text-info mb-3"></i>
-                            <h6 class="fw-bold">Nous contacter</h6>
-                            <p class="text-muted small">Avez-vous des questions ? Notre équipe est là pour vous aider</p>
-                            <a href="{% url 'core:contact' %}" class="btn btn-sm btn-outline-info">Contact</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Section découverte des projets -->
-    <div class="col-12 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-binoculars me-2"></i>Découvrez les projets en cours
-                </h5>
-            </div>
-            <div class="card-body">
-                <p class="text-muted mb-3">
-                    Explorez les projets disponibles. Une fois votre compte validé, vous pourrez 
-                    {% if role_actif.type == 'PROMOTEUR' %}
-                        créer vos propres projets.
-                    {% else %}
-                        investir dans ces projets.
-                    {% endif %}
-                </p>
-                <div class="row">
-                    {% for projet in projets_decouverte %}
-                    <div class="col-md-4 mb-3">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h6 class="card-title">{{ projet.titre }}</h6>
-                                <p class="card-text small text-muted">
-                                    {{ projet.description|truncatewords:15 }}
-                                </p>
-                                <div class="progress mb-2" style="height: 5px;">
-                                    <div class="progress-bar" style="width: {{ projet.taux_financement }}%"></div>
-                                </div>
-                                <small class="text-muted">{{ projet.taux_financement|floatformat:0 }}% financé</small>
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="col-12 text-center text-muted py-3">
-                        <i class="fas fa-home fa-2x mb-2"></i>
-                        <p>Aucun projet disponible pour le moment</p>
-                    </div>
-                    {% endfor %}
-                </div>
-                <div class="text-center mt-3">
-                    <a href="{% url 'projects:list' %}" class="btn btn-outline-primary">
-                        Voir tous les projets
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- Timeline de validation -->
-    <div class="col-12 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-clock me-2"></i>Étapes de validation
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="timeline">
-                    <div class="timeline-item completed">
-                        <div class="timeline-marker bg-success">
-                            <i class="fas fa-check"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <h6 class="fw-bold">Inscription terminée</h6>
-                            <p class="text-muted mb-0">Votre compte a été créé avec succès</p>
-                            <small class="text-muted">{{ user.date_inscription|date:"d/m/Y à H:i" }}</small>
-                        </div>
-                    </div>
-                    
-                    <div class="timeline-item {% if documents_utilisateur %}completed{% else %}active{% endif %}">
-                        <div class="timeline-marker {% if documents_utilisateur %}bg-success{% else %}bg-primary{% endif %}">
-                            <i class="fas fa-{% if documents_utilisateur %}check{% else %}upload{% endif %}"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <h6 class="fw-bold">Documents uploadés</h6>
-                            <p class="text-muted mb-0">
-                                {% if documents_utilisateur %}
-                                    Tous les documents requis ont été uploadés
-                                {% else %}
-                                    Upload des documents justificatifs requis
-                                {% endif %}
-                            </p>
-                        </div>
-                    </div>
-                    
-                    <div class="timeline-item">
-                        <div class="timeline-marker bg-secondary">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <h6 class="fw-bold">Validation administrative</h6>
-                            <p class="text-muted mb-0">Examen de votre dossier par nos administrateurs</p>
-                        </div>
-                    </div>
-                    
-                    <div class="timeline-item">
-                        <div class="timeline-marker bg-secondary">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <h6 class="fw-bold">Compte validé</h6>
-                            <p class="text-muted mb-0">Accès complet à toutes les fonctionnalités</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+{% block extra_css %}
 <style>
-.timeline {
-    position: relative;
-    padding-left: 30px;
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
 }
 
-.timeline-item {
-    position: relative;
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+.validation-container {
+    padding: 40px 0;
+}
+
+/* Hero Section */
+.hero-section {
+    background: white;
+    border-radius: 20px;
+    padding: 50px;
     margin-bottom: 30px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
 }
 
-.timeline-item:not(:last-child)::before {
+.hero-section::before {
     content: '';
     position: absolute;
-    left: -25px;
-    top: 30px;
-    width: 2px;
-    height: 100%;
-    background-color: #dee2e6;
-}
-
-.timeline-item.completed:not(:last-child)::before {
-    background-color: #28a745;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: -32px;
     top: 0;
-    width: 14px;
-    height: 14px;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: var(--primary-gradient);
+}
+
+.hero-icon {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 20px;
+    background: var(--info-gradient);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.hero-icon i {
+    font-size: 50px;
     color: white;
 }
 
-.timeline-content {
-    padding-left: 20px;
+.hero-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    color: #6c757d;
+    margin-bottom: 30px;
+}
+
+/* Status Badge */
+.status-badge {
+    display: inline-block;
+    padding: 12px 30px;
+    border-radius: 50px;
+    background: var(--warning-gradient);
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Cards modernes */
+.modern-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    height: 100%;
+    border: none;
+}
+
+.modern-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+}
+
+.card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: white;
+}
+
+.icon-documents { background: var(--warning-gradient); }
+.icon-timeline { background: var(--info-gradient); }
+.icon-projects { background: var(--success-gradient); }
+.icon-help { background: var(--primary-gradient); }
+
+.card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: #2d3748;
+}
+
+/* Timeline moderne */
+.modern-timeline {
+    position: relative;
+    padding: 30px 0;
+}
+
+.timeline-step {
+    position: relative;
+    padding-left: 80px;
+    margin-bottom: 40px;
+    animation: fadeInLeft 0.6s ease-out backwards;
+}
+
+.timeline-step:nth-child(1) { animation-delay: 0.1s; }
+.timeline-step:nth-child(2) { animation-delay: 0.2s; }
+.timeline-step:nth-child(3) { animation-delay: 0.3s; }
+.timeline-step:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.timeline-icon {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.timeline-step.completed .timeline-icon {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.timeline-step.active .timeline-icon {
+    background: var(--info-gradient);
+    animation: pulse 2s infinite;
+}
+
+.timeline-step.pending .timeline-icon {
+    background: #e9ecef;
+    color: #adb5bd;
+}
+
+.timeline-step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 29px;
+    top: 70px;
+    width: 2px;
+    height: calc(100% - 30px);
+    background: #e9ecef;
+}
+
+.timeline-step.completed:not(:last-child)::before {
+    background: linear-gradient(180deg, #11998e 0%, #38ef7d 100%);
+}
+
+.timeline-content h6 {
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 8px;
+}
+
+.timeline-date {
+    display: inline-block;
+    padding: 4px 12px;
+    background: #f7fafc;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #718096;
+    margin-top: 8px;
+}
+
+/* Document Items */
+.document-item {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.document-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.doc-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.badge-warning { background: #fef3c7; color: #d97706; }
+.badge-success { background: #d1fae5; color: #059669; }
+.badge-danger { background: #fee2e2; color: #dc2626; }
+
+/* Action Cards */
+.action-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    height: 100%;
+}
+
+.action-card:hover {
+    border-color: #667eea;
+    transform: translateY(-5px);
+}
+
+.action-icon {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    color: white;
+}
+
+.action-btn {
+    padding: 10px 25px;
+    border-radius: 50px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    transform: scale(1.05);
+}
+
+/* Project Cards */
+.project-preview {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.project-preview:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.project-header {
+    padding: 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.project-title {
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 8px;
+}
+
+.project-progress {
+    padding: 20px;
+}
+
+.progress-bar-modern {
+    height: 8px;
+    border-radius: 10px;
+    background: #e9ecef;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--success-gradient);
+    border-radius: 10px;
+    transition: width 1s ease;
+}
+
+/* Alert moderne */
+.modern-alert {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    border-left: 5px solid;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+.modern-alert.alert-info {
+    border-left-color: #3b82f6;
+}
+
+.modern-alert.alert-success {
+    border-left-color: #10b981;
+}
+
+.modern-alert.alert-warning {
+    border-left-color: #f59e0b;
+}
+
+.alert-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    margin-right: 20px;
+}
+
+.btn-gradient {
+    background: var(--primary-gradient);
+    border: none;
+    color: white;
+    padding: 12px 30px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-gradient:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 30px 20px;
+    }
+    
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .timeline-step {
+        padding-left: 70px;
+    }
+}
+
+/* Animation d'entrée */
+.fade-in {
+    animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 </style>
+{% endblock %}
+
+{% block content %}
+<div class="validation-container">
+    <div class="container">
+        
+        <!-- Hero Section -->
+        <div class="hero-section fade-in">
+            <div class="text-center">
+                <div class="hero-icon">
+                    <i class="fas fa-{% if role_actif.type == 'PROMOTEUR' %}hammer{% else %}chart-line{% endif %}"></i>
+                </div>
+                
+                <h1 class="hero-title">
+                    Bienvenue sur CrowdBuilding !
+                </h1>
+                
+                <p class="hero-subtitle">
+                    {% if role_actif.type == 'PROMOTEUR' %}
+                        🏗️ Votre profil <strong>Promoteur</strong> est en cours de validation
+                    {% else %}
+                        💰 Votre profil <strong>Investisseur</strong> est en cours de validation
+                    {% endif %}
+                </p>
+                
+                <div class="status-badge">
+                    <i class="fas fa-clock me-2"></i>
+                    Validation en cours (24-48h)
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            
+            <!-- Section Documents -->
+            <div class="col-lg-6 mb-4">
+                <div class="modern-card">
+                    <div class="card-icon icon-documents">
+                        <i class="fas fa-file-upload"></i>
+                    </div>
+                    
+                    <h3 class="card-title">
+                        📄 Documents requis
+                    </h3>
+                    
+                    {% if documents_manquants %}
+                    <div class="modern-alert alert-warning mb-3">
+                        <div class="d-flex align-items-start">
+                            <div class="alert-icon" style="background: #f59e0b;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Documents manquants</h6>
+                                <p class="mb-0 small">Veuillez uploader les documents suivants :</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {% for type_doc in documents_manquants %}
+                        <div class="document-item">
+                            <div>
+                                <i class="fas fa-file-alt me-2 text-muted"></i>
+                                <strong>{{ type_doc }}</strong>
+                            </div>
+                            <span class="doc-badge badge-warning">Manquant</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <a href="{% url 'documents:upload' %}" class="btn btn-gradient w-100">
+                        <i class="fas fa-cloud-upload-alt me-2"></i>Uploader mes documents
+                    </a>
+                    
+                    {% else %}
+                    <div class="modern-alert alert-success">
+                        <div class="d-flex align-items-start">
+                            <div class="alert-icon" style="background: #10b981;">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Documents complets ✅</h6>
+                                <p class="mb-0 small">Tous vos documents sont en cours de validation.</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Documents uploadés -->
+                    {% if documents_utilisateur %}
+                    <div class="mt-4">
+                        <h6 class="fw-bold mb-3">Mes documents uploadés</h6>
+                        {% for document in documents_utilisateur %}
+                        <div class="document-item">
+                            <div>
+                                <i class="fas fa-file-check me-2"></i>
+                                <strong>{{ document.nom }}</strong>
+                                <br>
+                                <small class="text-muted">{{ document.get_type_display }}</small>
+                            </div>
+                            <span class="doc-badge badge-{% if document.statut == 'VALIDE' %}success{% elif document.statut == 'REFUSE' %}danger{% else %}warning{% endif %}">
+                                {{ document.get_statut_display }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Timeline de validation -->
+            <div class="col-lg-6 mb-4">
+                <div class="modern-card">
+                    <div class="card-icon icon-timeline">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    
+                    <h3 class="card-title">
+                        🚀 Processus de validation
+                    </h3>
+                    
+                    <div class="modern-timeline">
+                        <!-- Étape 1 : Inscription -->
+                        <div class="timeline-step completed">
+                            <div class="timeline-icon">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Inscription terminée</h6>
+                                <p class="text-muted mb-0 small">Votre compte a été créé avec succès</p>
+                                <span class="timeline-date">
+                                    <i class="far fa-calendar me-1"></i>
+                                    {{ user.date_inscription|date:"d/m/Y à H:i" }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Étape 2 : Documents -->
+                        <div class="timeline-step {% if documents_utilisateur %}completed{% else %}active{% endif %}">
+                            <div class="timeline-icon">
+                                <i class="fas fa-{% if documents_utilisateur %}check{% else %}upload{% endif %}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Documents uploadés</h6>
+                                <p class="text-muted mb-0 small">
+                                    {% if documents_utilisateur %}
+                                        Tous les documents requis ont été soumis
+                                    {% else %}
+                                        En attente de vos documents
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Étape 3 : Validation -->
+                        <div class="timeline-step {% if not documents_manquants %}active{% else %}pending{% endif %}">
+                            <div class="timeline-icon">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Validation administrative</h6>
+                                <p class="text-muted mb-0 small">
+                                    {% if not documents_manquants %}
+                                        Examen de votre dossier en cours
+                                    {% else %}
+                                        En attente des documents
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Étape 4 : Compte actif -->
+                        <div class="timeline-step pending">
+                            <div class="timeline-icon">
+                                <i class="fas fa-rocket"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Compte validé 🎉</h6>
+                                <p class="text-muted mb-0 small">Accès complet à toutes les fonctionnalités</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="row mb-4">
+            <div class="col-12 mb-3">
+                <h3 class="text-white text-center fw-bold">
+                    ✨ Que faire en attendant ?
+                </h3>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="action-card">
+                    <div class="action-icon" style="background: var(--success-gradient);">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Explorer les projets</h5>
+                    <p class="text-muted small mb-3">
+                        Découvrez les projets immobiliers disponibles
+                    </p>
+                    <a href="{% url 'projects:list' %}" class="action-btn" style="background: var(--success-gradient); color: white;">
+                        Voir les projets
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="action-card">
+                    <div class="action-icon" style="background: var(--info-gradient);">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Documentation</h5>
+                    <p class="text-muted small mb-3">
+                        Apprenez comment fonctionne le crowdfunding
+                    </p>
+                    <a href="{% url 'core:help' %}" class="action-btn" style="background: var(--info-gradient); color: white;">
+                        Centre d'aide
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="action-card">
+                    <div class="action-icon" style="background: var(--primary-gradient);">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Nous contacter</h5>
+                    <p class="text-muted small mb-3">
+                        Notre équipe est là pour vous aider
+                    </p>
+                    <a href="{% url 'core:contact' %}" class="action-btn" style="background: var(--primary-gradient); color: white;">
+                        Contact
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projets en vedette -->
+        {% if projets_decouverte %}
+        <div class="modern-card mb-4">
+            <div class="card-icon icon-projects">
+                <i class="fas fa-building"></i>
+            </div>
+            
+            <h3 class="card-title mb-4">
+                🏘️ Projets en vedette
+            </h3>
+            
+            <p class="text-muted mb-4">
+                Explorez les opportunités d'investissement. Une fois votre compte validé, vous pourrez 
+                {% if role_actif.type == 'PROMOTEUR' %}
+                    créer vos propres projets.
+                {% else %}
+                    investir dans ces projets.
+                {% endif %}
+            </p>
+            
+            <div class="row">
+                {% for projet in projets_decouverte %}
+                <div class="col-md-4 mb-3">
+                    <div class="project-preview">
+                        <div class="project-header">
+                            <h6 class="project-title">{{ projet.titre }}</h6>
+                            <p class="text-muted small mb-0">
+                                {{ projet.description|truncatewords:12 }}
+                            </p>
+                        </div>
+                        <div class="project-progress">
+                            <div class="progress-bar-modern">
+                                <div class="progress-fill" style="width: {{ projet.taux_financement }}%"></div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">
+                                    <i class="fas fa-chart-line me-1"></i>
+                                    {{ projet.taux_financement|floatformat:0 }}% financé
+                                </small>
+                                <small class="text-muted">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {{ projet.jours_restants }} jours
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="text-center mt-4">
+                <a href="{% url 'projects:list' %}" class="btn btn-gradient">
+                    Voir tous les projets
+                    <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animation des barres de progression au chargement
+document.addEventListener('DOMContentLoaded', function() {
+    const progressBars = document.querySelectorAll('.progress-fill');
+    
+    setTimeout(() => {
+        progressBars.forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 100);
+        });
+    }, 300);
+});
+</script>
+{% endblock %}

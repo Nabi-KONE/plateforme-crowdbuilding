@@ -862,7 +862,7 @@ function validerUtilisateur(userId) {
         return;
     }
     
-    fetch(`/accounts/admin/users/${userId}/validate/`, {
+    fetch(`/admin-perso/utilisateurs/${userId}/valider/`, {  // ✅ CORRIGÉ
         method: 'POST',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -912,7 +912,7 @@ document.getElementById('refuseForm').addEventListener('submit', function(e) {
     formData.append('motif', motif);
     formData.append('csrfmiddlewaretoken', getCSRFToken());
     
-    fetch(`/accounts/admin/users/${currentUserId}/reject/`, {
+    fetch(`/admin-perso/utilisateurs/${currentUserId}/refuser/`, {  // ✅ CORRIGÉ
         method: 'POST',
         body: formData,
     })
@@ -961,7 +961,7 @@ document.getElementById('suspendForm').addEventListener('submit', function(e) {
     formData.append('motif', motif);
     formData.append('csrfmiddlewaretoken', getCSRFToken());
     
-    fetch(`/accounts/admin/users/${currentUserId}/suspend/`, {
+    fetch(`/admin-perso/utilisateurs/${currentUserId}/suspendre/`, {  // ✅ CORRIGÉ
         method: 'POST',
         body: formData,
     })
@@ -998,7 +998,7 @@ function showNotification(type, message) {
     // Ne pas afficher les notifications de succès (optionnel)
     if (type === 'success') {
         console.log('✅ Succès:', message);
-        return; // ← AJOUTEZ CETTE LIGNE pour supprimer les notifications de succès
+        return;
     }
     
     const icons = {
@@ -1037,7 +1037,7 @@ function validerDocument(documentId) {
         return;
     }
     
-    fetch(`/projects/document/${documentId}/valider/`, {
+    fetch(`/admin-perso/documents/${documentId}/valider/`, {  // ✅ CORRIGÉ
         method: 'POST',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -1073,7 +1073,7 @@ function refuserDocument(documentId) {
     formData.append('motif', motif);
     formData.append('csrfmiddlewaretoken', getCSRFToken());
     
-    fetch(`/projects/document/${documentId}/refuser/`, {
+    fetch(`/admin-perso/documents/${documentId}/refuser/`, {  // ✅ CORRIGÉ
         method: 'POST',
         body: formData,
     })

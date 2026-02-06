@@ -31,6 +31,7 @@ urlpatterns = [
     # Une seule URL pour les étapes AJAX
     path('ajax/get-etapes-projet/', views.ajax_get_etapes_projet, name='ajax_get_etapes_projet'),
     path('notifications/', views.notifications_promoteur, name='notifications')
+    
 
 
     

@@ -253,7 +253,7 @@
 function validerDocument(documentId) {
     if (confirm('Êtes-vous sûr de vouloir valider ce document ?')) {
         // Envoyer la requête AJAX pour valider
-        fetch(`/documents/admin/validate/${documentId}/action/`, {
+       fetch(`/admin-perso/documents/${documentId}/valider/`, {
             method: 'POST',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',

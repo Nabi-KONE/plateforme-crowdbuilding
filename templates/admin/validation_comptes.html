@@ -182,7 +182,7 @@
                                         <!-- Actions CORRIGÉES -->
                                         <div class="d-grid gap-2">
                                             <!-- Bouton Valider -->
-                                            <form method="post" action="{% url 'accounts:validate_user' utilisateur.id %}" class="d-inline">
+                                            <form method="post" action="{% url 'admin_perso:valider_utilisateur' utilisateur.id %}" class="d-inline">
                                                 {% csrf_token %}
                                                 <button type="submit" class="btn btn-success w-100" 
                                                         onclick="return confirm('Êtes-vous sûr de vouloir valider le compte de {{ utilisateur.prenom }} {{ utilisateur.nom }} ?')">
